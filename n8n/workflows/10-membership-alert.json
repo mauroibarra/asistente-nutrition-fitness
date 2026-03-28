@@ -1,21 +1,13 @@
 {
-  "updatedAt": "2026-03-27T16:34:21.840Z",
+  "updatedAt": "2026-03-28T12:15:40.707Z",
   "createdAt": "2026-03-27T16:34:21.840Z",
   "id": "I4Q4C6SOPY2fnK3W",
   "name": "FitAI - Membership Alert",
   "description": null,
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
-      "id": "node-w10-1",
-      "name": "Schedule Trigger",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        240,
-        300
-      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -25,63 +17,70 @@
             }
           ]
         }
-      }
+      },
+      "id": "node-w10-1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        304
+      ]
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.telegram_id, u.first_name, m.expires_at, m.plan_type FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.status = 'active' AND m.expires_at BETWEEN NOW() AND NOW() + INTERVAL '3 days' AND u.is_active = true",
+        "options": {}
+      },
       "id": "node-w10-2",
       "name": "Get Expiring Memberships",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        460,
-        300
+        464,
+        304
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT u.telegram_id, u.first_name, m.expires_at, m.plan_type FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.status = 'active' AND m.expires_at BETWEEN NOW() AND NOW() + INTERVAL '3 days' AND u.is_active = true",
-        "additionalFields": {}
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
       }
     },
     {
-      "id": "node-w10-3",
-      "name": "Split In Batches",
-      "type": "n8n-nodes-base.splitInBatches",
-      "typeVersion": 3,
-      "position": [
-        680,
-        300
-      ],
       "parameters": {
-        "batchSize": 1,
-        "options": {}
-      }
-    },
-    {
+        "jsCode": "const data = $input.first().json;\n\nconst now = new Date();\nconst expiresAt = new Date(data.expires_at);\nconst diffMs = expiresAt - now;\nconst daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));\n\nconst expiresAtFormatted = expiresAt.toLocaleDateString('es-ES', {\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric'\n});\n\nconst planTypeLabel = {\n  'monthly': 'mensual',\n  'quarterly': 'trimestral',\n  'annual': 'anual',\n  'weekly': 'semanal'\n}[data.plan_type] || data.plan_type;\n\nreturn [{\n  json: {\n    telegramId: data.telegram_id,\n    firstName: data.first_name,\n    planType: planTypeLabel,\n    daysLeft,\n    expiresAt: expiresAtFormatted\n  }\n}];"
+      },
       "id": "node-w10-4",
       "name": "Calculate Days Left",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
-        300
-      ],
-      "parameters": {
-        "jsCode": "const data = $input.first().json;\n\nconst now = new Date();\nconst expiresAt = new Date(data.expires_at);\nconst diffMs = expiresAt - now;\nconst daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));\n\nconst expiresAtFormatted = expiresAt.toLocaleDateString('es-ES', {\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric'\n});\n\nconst planTypeLabel = {\n  'monthly': 'mensual',\n  'quarterly': 'trimestral',\n  'annual': 'anual',\n  'weekly': 'semanal'\n}[data.plan_type] || data.plan_type;\n\nreturn [{\n  json: {\n    telegramId: data.telegram_id,\n    firstName: data.first_name,\n    planType: planTypeLabel,\n    daysLeft,\n    expiresAt: expiresAtFormatted\n  }\n}];"
-      }
+        912,
+        304
+      ]
     },
     {
+      "parameters": {
+        "chatId": "={{ $json.telegramId }}",
+        "text": "={{ '⚠️ Hola ' + $json.firstName + ', tu membresía ' + $json.planType + ' vence en ' + $json.daysLeft + ' día(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
+        "additionalFields": {}
+      },
       "id": "node-w10-5",
       "name": "Send Expiry Alert",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
         1120,
-        300
+        304
       ],
-      "parameters": {
-        "chatId": "={{ $json.telegramId }}",
-        "text": "={{ '\u26a0\ufe0f Hola ' + $json.firstName + ', tu membres\u00eda ' + $json.planType + ' vence en ' + $json.daysLeft + ' d\u00eda(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
-        "additionalFields": {}
+      "webhookId": "6577c22b-625e-4d6f-a29a-67348f71babf",
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
       }
     }
   ],
@@ -98,17 +97,6 @@
       ]
     },
     "Get Expiring Memberships": {
-      "main": [
-        [
-          {
-            "node": "Split In Batches",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split In Batches": {
       "main": [
         [
           {
@@ -136,13 +124,17 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "staticData": null,
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    }
+  },
   "meta": null,
-  "pinData": null,
-  "versionId": "25c2cdf1-598a-4969-964e-3b5c1c9bc5fe",
-  "activeVersionId": null,
-  "versionCounter": 1,
-  "triggerCount": 0,
+  "pinData": {},
+  "versionId": "d31d3abb-5d96-4039-98bf-f1ac68b4e80e",
+  "activeVersionId": "d31d3abb-5d96-4039-98bf-f1ac68b4e80e",
+  "versionCounter": 16,
+  "triggerCount": 1,
   "shared": [
     {
       "updatedAt": "2026-03-27T16:34:21.843Z",
@@ -163,5 +155,137 @@
     }
   ],
   "tags": [],
-  "activeVersion": null
+  "activeVersion": {
+    "updatedAt": "2026-03-28T12:15:40.707Z",
+    "createdAt": "2026-03-28T12:15:40.707Z",
+    "versionId": "d31d3abb-5d96-4039-98bf-f1ac68b4e80e",
+    "workflowId": "I4Q4C6SOPY2fnK3W",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 9 * * *"
+              }
+            ]
+          }
+        },
+        "id": "node-w10-1",
+        "name": "Schedule Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          240,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT u.telegram_id, u.first_name, m.expires_at, m.plan_type FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.status = 'active' AND m.expires_at BETWEEN NOW() AND NOW() + INTERVAL '3 days' AND u.is_active = true",
+          "options": {}
+        },
+        "id": "node-w10-2",
+        "name": "Get Expiring Memberships",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          464,
+          304
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = $input.first().json;\n\nconst now = new Date();\nconst expiresAt = new Date(data.expires_at);\nconst diffMs = expiresAt - now;\nconst daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));\n\nconst expiresAtFormatted = expiresAt.toLocaleDateString('es-ES', {\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric'\n});\n\nconst planTypeLabel = {\n  'monthly': 'mensual',\n  'quarterly': 'trimestral',\n  'annual': 'anual',\n  'weekly': 'semanal'\n}[data.plan_type] || data.plan_type;\n\nreturn [{\n  json: {\n    telegramId: data.telegram_id,\n    firstName: data.first_name,\n    planType: planTypeLabel,\n    daysLeft,\n    expiresAt: expiresAtFormatted\n  }\n}];"
+        },
+        "id": "node-w10-4",
+        "name": "Calculate Days Left",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          912,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "chatId": "={{ $json.telegramId }}",
+          "text": "={{ '⚠️ Hola ' + $json.firstName + ', tu membresía ' + $json.planType + ' vence en ' + $json.daysLeft + ' día(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
+          "additionalFields": {}
+        },
+        "id": "node-w10-5",
+        "name": "Send Expiry Alert",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1120,
+          304
+        ],
+        "webhookId": "6577c22b-625e-4d6f-a29a-67348f71babf",
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Schedule Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Expiring Memberships",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Expiring Memberships": {
+        "main": [
+          [
+            {
+              "node": "Calculate Days Left",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calculate Days Left": {
+        "main": [
+          [
+            {
+              "node": "Send Expiry Alert",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-28T12:15:41.760Z",
+        "id": 104,
+        "workflowId": "I4Q4C6SOPY2fnK3W",
+        "versionId": "d31d3abb-5d96-4039-98bf-f1ac68b4e80e",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
 }

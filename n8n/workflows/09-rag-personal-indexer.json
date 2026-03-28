@@ -1,79 +1,131 @@
 {
-  "updatedAt": "2026-03-27T16:34:14.906Z",
+  "updatedAt": "2026-03-28T13:12:45.940Z",
   "createdAt": "2026-03-27T16:34:14.906Z",
   "id": "vAqqjXg2IE1ldgg3",
   "name": "FitAI - RAG Personal Indexer",
   "description": null,
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
+      "parameters": {},
       "id": "node-w9-1",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
       "position": [
         240,
-        300
-      ],
-      "parameters": {}
+        304
+      ]
     },
     {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nif (!input || !input.userId) {\n  throw new Error('RAG Indexer requiere userId');\n}\n\nconst { userId, query } = input;\nlet eventType, eventData;\n\n// Strategy 1: Try to parse query as JSON (the expected format from AI agent)\nif (query) {\n  try {\n    const parsed = JSON.parse(query);\n    if (parsed.eventType) {\n      eventType = parsed.eventType;\n      const { eventType: _, ...rest } = parsed;\n      eventData = rest;\n    }\n  } catch(e) {\n    // Not valid JSON — fall back to pattern matching\n  }\n}\n\n// Strategy 2: Pattern matching for common Spanish weight/meal phrases\nif (!eventType && query) {\n  const q = query.toLowerCase();\n  // Weight patterns: \"peso 77 kg\", \"78 kilos\", \"weight_log: 77\"\n  const weightMatch = q.match(/(?:peso|weight)[:\\s]+(\\d+(?:[.,]\\d+)?)\\s*(?:kg|kilos?)?/i) ||\n                      q.match(/(\\d+(?:[.,]\\d+)?)\\s*(?:kg|kilos?)/i);\n  // Meal patterns\n  const mealMatch = q.match(/(?:comi|desayun|almorz|cen|eat|ate|meal)[:\\s]+(.+)/i);\n  // Goal patterns\n  const goalMatch = q.match(/(?:meta|objetivo|goal)[:\\s]+(.+)/i);\n\n  if (weightMatch) {\n    eventType = 'weight_log';\n    const kg = parseFloat(weightMatch[1].replace(',', '.'));\n    eventData = { weight_kg: kg };\n  } else if (mealMatch) {\n    eventType = 'meal_reported';\n    eventData = { meal_description: mealMatch[1].trim() };\n  } else if (goalMatch) {\n    eventType = 'goal_set';\n    eventData = { description: goalMatch[1].trim() };\n  } else {\n    eventType = 'general';\n    eventData = { description: query };\n  }\n}\n\nif (!eventType) {\n  throw new Error('No se pudo determinar eventType del query: ' + query);\n}\n\nconst now = (eventData && eventData.date) ? eventData.date : new Date().toISOString().split('T')[0];\nlet text = '';\n\nswitch (eventType) {\n  case 'weight_log':\n    text = `On ${now}, user logged weight: ${eventData.weight_kg}kg`;\n    if (eventData.notes) text += `. Notes: ${eventData.notes}`;\n    break;\n  case 'meal_reported':\n    text = `On ${now}, user ate: ${eventData.meal_description}`;\n    if (eventData.calories) text += `. Estimated calories: ${eventData.calories} kcal`;\n    if (eventData.meal_type) text += `. Meal type: ${eventData.meal_type}`;\n    break;\n  case 'profile_update':\n    const changes = Object.entries(eventData)\n      .filter(([k]) => k !== 'date')\n      .map(([k, v]) => `${k}: ${v}`)\n      .join(', ');\n    text = `On ${now}, user updated profile: ${changes}`;\n    break;\n  case 'goal_set':\n    text = `On ${now}, user set goal: ${eventData.goal_type || eventData.description || 'general'}`;\n    if (eventData.target_weight_kg) text += `. Target weight: ${eventData.target_weight_kg}kg`;\n    if (eventData.target_date) text += `. Target date: ${eventData.target_date}`;\n    break;\n  default:\n    text = `On ${now}, user event: ${eventType}. Data: ${JSON.stringify(eventData)}`;\n}\n\nconst today = new Date().toISOString().split('T')[0];\nconst idBase = `${userId}-${eventType}-${today}`;\nconst pointId = idBase.replace(/[^a-zA-Z0-9]/g, '').substring(0, 32).padEnd(32, '0');\nconst formattedId = [\n  pointId.substring(0, 8),\n  pointId.substring(8, 12),\n  pointId.substring(12, 16),\n  pointId.substring(16, 20),\n  pointId.substring(20, 32)\n].join('-');\n\nreturn [{ json: { userId, eventType, eventData, text, pointId: formattedId, date: now } }];"
+      },
       "id": "node-w9-2",
       "name": "Prepare Document",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        460,
-        300
-      ],
-      "parameters": {
-        "jsCode": "const { userId, eventType, eventData } = $input.first().json;\n\nconst now = eventData.date || new Date().toISOString().split('T')[0];\nlet text = '';\n\nswitch (eventType) {\n  case 'weight_log':\n    text = `On ${now}, user logged weight: ${eventData.weight_kg}kg`;\n    if (eventData.notes) text += `. Notes: ${eventData.notes}`;\n    break;\n  case 'meal_reported':\n    text = `On ${now}, user ate: ${eventData.meal_description}`;\n    if (eventData.calories) text += `. Estimated calories: ${eventData.calories} kcal`;\n    if (eventData.meal_type) text += `. Meal type: ${eventData.meal_type}`;\n    break;\n  case 'profile_update':\n    const changes = Object.entries(eventData)\n      .filter(([k]) => k !== 'date')\n      .map(([k, v]) => `${k}: ${v}`)\n      .join(', ');\n    text = `On ${now}, user updated profile: ${changes}`;\n    break;\n  case 'goal_set':\n    text = `On ${now}, user set goal: ${eventData.goal_type || 'general'}`;\n    if (eventData.target_weight_kg) text += `. Target weight: ${eventData.target_weight_kg}kg`;\n    if (eventData.target_date) text += `. Target date: ${eventData.target_date}`;\n    if (eventData.description) text += `. Description: ${eventData.description}`;\n    break;\n  default:\n    text = `On ${now}, user event: ${eventType}. Data: ${JSON.stringify(eventData)}`;\n}\n\n// Generate a deterministic UUID-like ID from userId + eventType + date\nconst idBase = `${userId}-${eventType}-${now}-${Date.now()}`;\nconst pointId = idBase.replace(/[^a-zA-Z0-9]/g, '').substring(0, 32).padEnd(32, '0');\n// Format as UUID\nconst formattedId = [\n  pointId.substring(0, 8),\n  pointId.substring(8, 12),\n  pointId.substring(12, 16),\n  pointId.substring(16, 20),\n  pointId.substring(20, 32)\n].join('-');\n\nreturn [{\n  json: {\n    userId,\n    eventType,\n    eventData,\n    text,\n    pointId: formattedId,\n    date: now\n  }\n}];"
-      }
+        464,
+        304
+      ]
     },
     {
-      "id": "node-w9-3",
-      "name": "Create Embedding",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1.8,
-      "position": [
-        680,
-        300
-      ],
       "parameters": {
-        "resource": "embedding",
-        "operation": "create",
-        "model": "text-embedding-3-small",
-        "input": "={{ $json.text }}"
-      }
-    },
-    {
-      "id": "node-w9-4",
-      "name": "Upsert to Qdrant",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        900,
-        300
-      ],
-      "parameters": {
-        "method": "PUT",
-        "url": "http://qdrant:6333/collections/user_rag/points",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "user_rag",
+          "mode": "list",
+          "cachedResultName": "user_rag"
         },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ points: [{ id: $('Prepare Document').first().json.pointId, vector: $json.data[0].embedding, payload: { user_id: $('Prepare Document').first().json.userId, event_type: $('Prepare Document').first().json.eventType, date: $('Prepare Document').first().json.date, text: $('Prepare Document').first().json.text } }] }) }}",
         "options": {}
+      },
+      "id": "node-w9-4",
+      "name": "Upsert to Qdrant Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1,
+      "position": [
+        720,
+        304
+      ],
+      "credentials": {
+        "qdrantApi": {
+          "id": "ZgvYkNPmxRynoz3F",
+          "name": "Qdrant account Fitia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Prepare Document').item.json.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "userId",
+                "value": "={{ $('Prepare Document').item.json.userId }}"
+              },
+              {
+                "name": "eventType",
+                "value": "={{ $('Prepare Document').item.json.eventType }}"
+              },
+              {
+                "name": "date",
+                "value": "={{ $('Prepare Document').item.json.date }}"
+              },
+              {
+                "name": "pointId",
+                "value": "={{ $('Prepare Document').item.json.pointId }}"
+              }
+            ]
+          },
+          "textSplittingMode": "simple"
+        }
+      },
+      "id": "node-w9-5",
+      "name": "Document Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        672,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "node-w9-6",
+      "name": "OpenAI Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        960,
+        480
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "NOJoPVNWDXiywRgw",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "id": "node-w9-text-splitter",
+      "name": "Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        528,
+        560
+      ],
+      "parameters": {
+        "chunkSize": 1000,
+        "chunkOverlap": 0
       }
     }
   ],
@@ -93,19 +145,41 @@
       "main": [
         [
           {
-            "node": "Create Embedding",
+            "node": "Upsert to Qdrant Vector Store",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Create Embedding": {
-      "main": [
+    "Document Loader": {
+      "ai_document": [
         [
           {
-            "node": "Upsert to Qdrant",
-            "type": "main",
+            "node": "Upsert to Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Upsert to Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Document Loader",
+            "type": "ai_textSplitter",
             "index": 0
           }
         ]
@@ -119,10 +193,10 @@
   },
   "staticData": null,
   "meta": null,
-  "pinData": null,
-  "versionId": "739b57f2-2565-4a68-8759-92a63040fd16",
-  "activeVersionId": null,
-  "versionCounter": 1,
+  "pinData": {},
+  "versionId": "90b41adc-c34e-4aa3-b2f0-99d4d96a59b1",
+  "activeVersionId": "90b41adc-c34e-4aa3-b2f0-99d4d96a59b1",
+  "versionCounter": 32,
   "triggerCount": 0,
   "shared": [
     {
@@ -144,5 +218,212 @@
     }
   ],
   "tags": [],
-  "activeVersion": null
+  "activeVersion": {
+    "updatedAt": "2026-03-28T13:12:45.941Z",
+    "createdAt": "2026-03-28T13:12:45.941Z",
+    "versionId": "90b41adc-c34e-4aa3-b2f0-99d4d96a59b1",
+    "workflowId": "vAqqjXg2IE1ldgg3",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "node-w9-1",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nif (!input || !input.userId) {\n  throw new Error('RAG Indexer requiere userId');\n}\n\nconst { userId, query } = input;\nlet eventType, eventData;\n\n// Strategy 1: Try to parse query as JSON (the expected format from AI agent)\nif (query) {\n  try {\n    const parsed = JSON.parse(query);\n    if (parsed.eventType) {\n      eventType = parsed.eventType;\n      const { eventType: _, ...rest } = parsed;\n      eventData = rest;\n    }\n  } catch(e) {\n    // Not valid JSON — fall back to pattern matching\n  }\n}\n\n// Strategy 2: Pattern matching for common Spanish weight/meal phrases\nif (!eventType && query) {\n  const q = query.toLowerCase();\n  // Weight patterns: \"peso 77 kg\", \"78 kilos\", \"weight_log: 77\"\n  const weightMatch = q.match(/(?:peso|weight)[:\\s]+(\\d+(?:[.,]\\d+)?)\\s*(?:kg|kilos?)?/i) ||\n                      q.match(/(\\d+(?:[.,]\\d+)?)\\s*(?:kg|kilos?)/i);\n  // Meal patterns\n  const mealMatch = q.match(/(?:comi|desayun|almorz|cen|eat|ate|meal)[:\\s]+(.+)/i);\n  // Goal patterns\n  const goalMatch = q.match(/(?:meta|objetivo|goal)[:\\s]+(.+)/i);\n\n  if (weightMatch) {\n    eventType = 'weight_log';\n    const kg = parseFloat(weightMatch[1].replace(',', '.'));\n    eventData = { weight_kg: kg };\n  } else if (mealMatch) {\n    eventType = 'meal_reported';\n    eventData = { meal_description: mealMatch[1].trim() };\n  } else if (goalMatch) {\n    eventType = 'goal_set';\n    eventData = { description: goalMatch[1].trim() };\n  } else {\n    eventType = 'general';\n    eventData = { description: query };\n  }\n}\n\nif (!eventType) {\n  throw new Error('No se pudo determinar eventType del query: ' + query);\n}\n\nconst now = (eventData && eventData.date) ? eventData.date : new Date().toISOString().split('T')[0];\nlet text = '';\n\nswitch (eventType) {\n  case 'weight_log':\n    text = `On ${now}, user logged weight: ${eventData.weight_kg}kg`;\n    if (eventData.notes) text += `. Notes: ${eventData.notes}`;\n    break;\n  case 'meal_reported':\n    text = `On ${now}, user ate: ${eventData.meal_description}`;\n    if (eventData.calories) text += `. Estimated calories: ${eventData.calories} kcal`;\n    if (eventData.meal_type) text += `. Meal type: ${eventData.meal_type}`;\n    break;\n  case 'profile_update':\n    const changes = Object.entries(eventData)\n      .filter(([k]) => k !== 'date')\n      .map(([k, v]) => `${k}: ${v}`)\n      .join(', ');\n    text = `On ${now}, user updated profile: ${changes}`;\n    break;\n  case 'goal_set':\n    text = `On ${now}, user set goal: ${eventData.goal_type || eventData.description || 'general'}`;\n    if (eventData.target_weight_kg) text += `. Target weight: ${eventData.target_weight_kg}kg`;\n    if (eventData.target_date) text += `. Target date: ${eventData.target_date}`;\n    break;\n  default:\n    text = `On ${now}, user event: ${eventType}. Data: ${JSON.stringify(eventData)}`;\n}\n\nconst today = new Date().toISOString().split('T')[0];\nconst idBase = `${userId}-${eventType}-${today}`;\nconst pointId = idBase.replace(/[^a-zA-Z0-9]/g, '').substring(0, 32).padEnd(32, '0');\nconst formattedId = [\n  pointId.substring(0, 8),\n  pointId.substring(8, 12),\n  pointId.substring(12, 16),\n  pointId.substring(16, 20),\n  pointId.substring(20, 32)\n].join('-');\n\nreturn [{ json: { userId, eventType, eventData, text, pointId: formattedId, date: now } }];"
+        },
+        "id": "node-w9-2",
+        "name": "Prepare Document",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          464,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "insert",
+          "qdrantCollection": {
+            "__rl": true,
+            "value": "user_rag",
+            "mode": "list",
+            "cachedResultName": "user_rag"
+          },
+          "options": {}
+        },
+        "id": "node-w9-4",
+        "name": "Upsert to Qdrant Vector Store",
+        "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+        "typeVersion": 1,
+        "position": [
+          720,
+          304
+        ],
+        "credentials": {
+          "qdrantApi": {
+            "id": "ZgvYkNPmxRynoz3F",
+            "name": "Qdrant account Fitia"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsonMode": "expressionData",
+          "jsonData": "={{ $('Prepare Document').item.json.text }}",
+          "options": {
+            "metadata": {
+              "metadataValues": [
+                {
+                  "name": "userId",
+                  "value": "={{ $('Prepare Document').item.json.userId }}"
+                },
+                {
+                  "name": "eventType",
+                  "value": "={{ $('Prepare Document').item.json.eventType }}"
+                },
+                {
+                  "name": "date",
+                  "value": "={{ $('Prepare Document').item.json.date }}"
+                },
+                {
+                  "name": "pointId",
+                  "value": "={{ $('Prepare Document').item.json.pointId }}"
+                }
+              ]
+            },
+            "textSplittingMode": "simple"
+          }
+        },
+        "id": "node-w9-5",
+        "name": "Document Loader",
+        "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+        "typeVersion": 1,
+        "position": [
+          672,
+          496
+        ]
+      },
+      {
+        "parameters": {
+          "model": "text-embedding-3-small",
+          "options": {}
+        },
+        "id": "node-w9-6",
+        "name": "OpenAI Embeddings",
+        "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+        "typeVersion": 1,
+        "position": [
+          960,
+          480
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "NOJoPVNWDXiywRgw",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "id": "node-w9-text-splitter",
+        "name": "Text Splitter",
+        "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+        "typeVersion": 1,
+        "position": [
+          528,
+          560
+        ],
+        "parameters": {
+          "chunkSize": 1000,
+          "chunkOverlap": 0
+        }
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Prepare Document",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Document": {
+        "main": [
+          [
+            {
+              "node": "Upsert to Qdrant Vector Store",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Document Loader": {
+        "ai_document": [
+          [
+            {
+              "node": "Upsert to Qdrant Vector Store",
+              "type": "ai_document",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Embeddings": {
+        "ai_embedding": [
+          [
+            {
+              "node": "Upsert to Qdrant Vector Store",
+              "type": "ai_embedding",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Text Splitter": {
+        "ai_textSplitter": [
+          [
+            {
+              "node": "Document Loader",
+              "type": "ai_textSplitter",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-28T13:12:45.964Z",
+        "id": 120,
+        "workflowId": "vAqqjXg2IE1ldgg3",
+        "versionId": "90b41adc-c34e-4aa3-b2f0-99d4d96a59b1",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      },
+      {
+        "createdAt": "2026-03-28T13:12:45.958Z",
+        "id": 119,
+        "workflowId": "vAqqjXg2IE1ldgg3",
+        "versionId": "90b41adc-c34e-4aa3-b2f0-99d4d96a59b1",
+        "event": "deactivated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
 }

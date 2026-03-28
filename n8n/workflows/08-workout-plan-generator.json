@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-03-27T16:34:01.770Z",
+  "updatedAt": "2026-03-28T01:59:08.030Z",
   "createdAt": "2026-03-27T16:34:01.770Z",
   "id": "ETjiYAUhXfsVSyWQ",
   "name": "FitAI - Workout Plan Generator",
   "description": null,
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -16,7 +16,9 @@
         240,
         300
       ],
-      "parameters": {}
+      "parameters": {
+        "options": {}
+      }
     },
     {
       "id": "node-w8-2",
@@ -32,6 +34,15 @@
         "query": "SELECT * FROM user_profiles WHERE user_id = $1",
         "additionalFields": {
           "queryParams": "={{ JSON.stringify([$json.userId]) }}"
+        },
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
         }
       }
     },
@@ -49,8 +60,18 @@
         "query": "SELECT plan_json FROM exercise_plans WHERE user_id = $1 AND is_active = true LIMIT 1",
         "additionalFields": {
           "queryParams": "={{ JSON.stringify([$('Execute Workflow Trigger').first().json.userId]) }}"
+        },
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
         }
-      }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "node-w8-4",
@@ -62,38 +83,8 @@
         300
       ],
       "parameters": {
-        "jsCode": "const triggerData = $('Execute Workflow Trigger').first().json;\nconst profile = $('Get User Profile').first().json;\nconst prevPlan = $('Get Previous Exercise Plan').all();\nconst previousPlan = prevPlan.length > 0 ? prevPlan[0].json.plan_json : null;\n\nconst prompt = `Eres un entrenador personal experto. Crea un plan de entrenamiento semanal detallado y personalizado.\n\nPerfil del usuario:\n- Nivel de fitness: ${profile.fitness_level || 'principiante'}\n- D\u00edas de entrenamiento por semana: ${profile.training_days_per_week || 3}\n- Equipamiento disponible: ${profile.available_equipment || 'sin equipamiento'}\n- Lesiones o restricciones: ${profile.injuries || 'ninguna'}\n- Objetivo principal: ${profile.goal || 'mejorar condici\u00f3n f\u00edsica general'}\n- Edad: ${profile.age || 'no especificada'}\n- Peso actual: ${profile.current_weight_kg || 'no especificado'} kg\n- Altura: ${profile.height_cm || 'no especificada'} cm\n\n${previousPlan ? 'Plan anterior (para evitar repetici\u00f3n y asegurar progresi\u00f3n):\\n' + JSON.stringify(previousPlan, null, 2) : 'Es el primer plan del usuario.'}\n\nDevuelve el plan en formato JSON con la siguiente estructura:\n{\n  \"week_summary\": \"descripci\u00f3n breve del plan\",\n  \"days\": [\n    {\n      \"day\": \"Lunes\",\n      \"focus\": \"Tren superior\",\n      \"exercises\": [\n        {\n          \"name\": \"nombre del ejercicio\",\n          \"sets\": 3,\n          \"reps\": \"10-12\",\n          \"rest\": \"60 segundos\",\n          \"notes\": \"indicaciones t\u00e9cnicas\"\n        }\n      ],\n      \"duration_minutes\": 45,\n      \"warmup\": \"descripci\u00f3n del calentamiento\",\n      \"cooldown\": \"descripci\u00f3n del enfriamiento\"\n    }\n  ],\n  \"weekly_tips\": [\"consejo 1\", \"consejo 2\"]\n}`;\n\nreturn [{\n  json: {\n    userId: triggerData.userId,\n    requestType: triggerData.requestType,\n    fitnessLevel: profile.fitness_level,\n    prompt,\n    profile\n  }\n}];"
-      }
-    },
-    {
-      "id": "node-w8-5",
-      "name": "Generate Workout Plan",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1.8,
-      "position": [
-        1120,
-        300
-      ],
-      "parameters": {
-        "resource": "chat",
-        "operation": "message",
-        "model": "gpt-4o",
-        "messages": {
-          "values": [
-            {
-              "role": "system",
-              "content": "Eres un entrenador personal experto en fitness y nutrici\u00f3n. Siempre respondes en JSON v\u00e1lido."
-            },
-            {
-              "role": "user",
-              "content": "={{ $json.prompt }}"
-            }
-          ]
-        },
-        "options": {
-          "temperature": 0.7,
-          "maxTokens": 3000
-        }
+        "jsCode": "const triggerData = $('Execute Workflow Trigger').first().json;\nconst profile = $('Get User Profile').first().json;\nconst prevPlan = $('Get Previous Exercise Plan').all();\nconst previousPlan = prevPlan.length > 0 ? prevPlan[0].json.plan_json : null;\n\nconst prompt = `Eres un entrenador personal experto. Crea un plan de entrenamiento semanal detallado y personalizado.\n\nPerfil del usuario:\n- Nivel de fitness: ${profile.fitness_level || 'principiante'}\n- Días de entrenamiento por semana: ${profile.training_days_per_week || 3}\n- Equipamiento disponible: ${profile.available_equipment || 'sin equipamiento'}\n- Lesiones o restricciones: ${profile.injuries || 'ninguna'}\n- Objetivo principal: ${profile.goal || 'mejorar condición física general'}\n- Edad: ${profile.age || 'no especificada'}\n- Peso actual: ${profile.current_weight_kg || 'no especificado'} kg\n- Altura: ${profile.height_cm || 'no especificada'} cm\n\n${previousPlan ? 'Plan anterior (para evitar repetición y asegurar progresión):\\n' + JSON.stringify(previousPlan, null, 2) : 'Es el primer plan del usuario.'}\n\nDevuelve el plan en formato JSON con la siguiente estructura:\n{\n  \"week_summary\": \"descripción breve del plan\",\n  \"days\": [\n    {\n      \"day\": \"Lunes\",\n      \"focus\": \"Tren superior\",\n      \"exercises\": [\n        {\n          \"name\": \"nombre del ejercicio\",\n          \"sets\": 3,\n          \"reps\": \"10-12\",\n          \"rest\": \"60 segundos\",\n          \"notes\": \"indicaciones técnicas\"\n        }\n      ],\n      \"duration_minutes\": 45,\n      \"warmup\": \"descripción del calentamiento\",\n      \"cooldown\": \"descripción del enfriamiento\"\n    }\n  ],\n  \"weekly_tips\": [\"consejo 1\", \"consejo 2\"]\n}`;\n\nreturn [{\n  json: {\n    userId: triggerData.userId,\n    requestType: triggerData.requestType,\n    fitnessLevel: profile.fitness_level,\n    prompt,\n    profile\n  }\n}];",
+        "options": {}
       }
     },
     {
@@ -106,7 +97,8 @@
         300
       ],
       "parameters": {
-        "jsCode": "const triggerData = $('Execute Workflow Trigger').first().json;\nconst profile = $('Get User Profile').first().json;\nconst rawContent = $input.first().json.message.content;\n\nlet planJson;\ntry {\n  // Extract JSON from markdown code blocks if present\n  const jsonMatch = rawContent.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  const jsonStr = jsonMatch ? jsonMatch[1] : rawContent;\n  planJson = JSON.parse(jsonStr.trim());\n} catch (e) {\n  planJson = { raw: rawContent, parse_error: e.message };\n}\n\nconst now = new Date();\nconst weekNumber = Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000));\n\nreturn [{\n  json: {\n    userId: triggerData.userId,\n    planJson,\n    weekNumber,\n    year: now.getFullYear(),\n    fitnessLevel: profile.fitness_level || 'beginner'\n  }\n}];"
+        "jsCode": "const triggerData = $('Execute Workflow Trigger').first().json;\nconst profile = $('Get User Profile').first().json;\nconst rawContent = $input.first().json.text || '';\n\nlet planJson;\ntry {\n  // Extract JSON from markdown code blocks if present\n  const jsonMatch = rawContent.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  const jsonStr = jsonMatch ? jsonMatch[1] : rawContent;\n  planJson = JSON.parse(jsonStr.trim());\n} catch (e) {\n  planJson = { raw: rawContent, parse_error: e.message };\n}\n\nconst now = new Date();\nconst weekNumber = Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000));\n\nreturn [{\n  json: {\n    userId: triggerData.userId,\n    planJson,\n    weekNumber,\n    year: now.getFullYear(),\n    fitnessLevel: profile.fitness_level || 'beginner'\n  }\n}];",
+        "options": {}
       }
     },
     {
@@ -123,6 +115,15 @@
         "query": "UPDATE exercise_plans SET is_active = false WHERE user_id = $1 AND is_active = true",
         "additionalFields": {
           "queryParams": "={{ JSON.stringify([$json.userId]) }}"
+        },
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
         }
       }
     },
@@ -140,6 +141,15 @@
         "query": "INSERT INTO exercise_plans (user_id, week_number, year, plan_json, fitness_level, is_active, created_at) VALUES ($1, $2, $3, $4::jsonb, $5, true, NOW()) RETURNING id",
         "additionalFields": {
           "queryParams": "={{ JSON.stringify([$json.userId, $json.weekNumber, $json.year, JSON.stringify($json.planJson), $json.fitnessLevel]) }}"
+        },
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Parse Workout Plan').first().json.weekNumber, $('Parse Workout Plan').first().json.year, JSON.stringify($('Parse Workout Plan').first().json.planJson), $('Parse Workout Plan').first().json.fitnessLevel] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
         }
       }
     },
@@ -153,7 +163,8 @@
         300
       ],
       "parameters": {
-        "jsCode": "const data = $('Parse Workout Plan').first().json;\nconst plan = data.planJson;\n\nlet message = '\ud83d\udcaa *Tu Plan de Entrenamiento Semanal*\\n\\n';\n\nif (plan.week_summary) {\n  message += '\ud83d\udccb ' + plan.week_summary + '\\n\\n';\n}\n\nif (plan.days && Array.isArray(plan.days)) {\n  for (const day of plan.days) {\n    message += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\\n';\n    message += '\ud83d\uddd3 *' + day.day + '* \u2014 ' + day.focus + '\\n';\n    message += '\u23f1 Duraci\u00f3n: ' + (day.duration_minutes || '?') + ' min\\n\\n';\n    \n    if (day.exercises && Array.isArray(day.exercises)) {\n      for (const ex of day.exercises) {\n        message += '\u2022 *' + ex.name + '*: ' + ex.sets + ' series x ' + ex.reps + ' reps';\n        if (ex.rest) message += ' (descanso: ' + ex.rest + ')';\n        message += '\\n';\n        if (ex.notes) message += '  _' + ex.notes + '_\\n';\n      }\n    }\n    message += '\\n';\n  }\n}\n\nif (plan.weekly_tips && Array.isArray(plan.weekly_tips)) {\n  message += '\ud83d\udca1 *Consejos de la semana:*\\n';\n  for (const tip of plan.weekly_tips) {\n    message += '\u2022 ' + tip + '\\n';\n  }\n}\n\nreturn [{ json: { message, planJson: plan } }];"
+        "jsCode": "const data = $('Parse Workout Plan').first().json;\nconst plan = data.planJson;\n\nlet message = '💪 *Tu Plan de Entrenamiento Semanal*\\n\\n';\n\nif (plan.week_summary) {\n  message += '📋 ' + plan.week_summary + '\\n\\n';\n}\n\nif (plan.days && Array.isArray(plan.days)) {\n  for (const day of plan.days) {\n    message += '━━━━━━━━━━━━━━\\n';\n    message += '🗓 *' + day.day + '* — ' + day.focus + '\\n';\n    message += '⏱ Duración: ' + (day.duration_minutes || '?') + ' min\\n\\n';\n    \n    if (day.exercises && Array.isArray(day.exercises)) {\n      for (const ex of day.exercises) {\n        message += '• *' + ex.name + '*: ' + ex.sets + ' series x ' + ex.reps + ' reps';\n        if (ex.rest) message += ' (descanso: ' + ex.rest + ')';\n        message += '\\n';\n        if (ex.notes) message += '  _' + ex.notes + '_\\n';\n      }\n    }\n    message += '\\n';\n  }\n}\n\nif (plan.weekly_tips && Array.isArray(plan.weekly_tips)) {\n  message += '💡 *Consejos de la semana:*\\n';\n  for (const tip of plan.weekly_tips) {\n    message += '• ' + tip + '\\n';\n  }\n}\n\nreturn [{ json: { message, planJson: plan } }];",
+        "options": {}
       }
     },
     {
@@ -165,7 +176,50 @@
         2220,
         300
       ],
-      "parameters": {}
+      "parameters": {
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}"
+      },
+      "id": "workout-chain-llm",
+      "name": "Generate Workout Plan",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "id": "workout-lm-node",
+      "name": "OpenAI Workout Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        160
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "NOJoPVNWDXiywRgw",
+          "name": "OpenAi account"
+        }
+      }
     }
   ],
   "connections": {
@@ -267,6 +321,17 @@
           }
         ]
       ]
+    },
+    "OpenAI Workout Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Workout Plan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -277,9 +342,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "d934f5a9-c213-4367-846f-98820fcfba81",
-  "activeVersionId": null,
-  "versionCounter": 1,
+  "versionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
+  "activeVersionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
+  "versionCounter": 26,
   "triggerCount": 0,
   "shared": [
     {
@@ -301,5 +366,360 @@
     }
   ],
   "tags": [],
-  "activeVersion": null
+  "activeVersion": {
+    "updatedAt": "2026-03-28T01:59:08.035Z",
+    "createdAt": "2026-03-28T01:59:08.035Z",
+    "versionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
+    "workflowId": "ETjiYAUhXfsVSyWQ",
+    "nodes": [
+      {
+        "id": "node-w8-1",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {
+          "options": {}
+        }
+      },
+      {
+        "id": "node-w8-2",
+        "name": "Get User Profile",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM user_profiles WHERE user_id = $1",
+          "additionalFields": {
+            "queryParams": "={{ JSON.stringify([$json.userId]) }}"
+          },
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "id": "node-w8-3",
+        "name": "Get Previous Exercise Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          680,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT plan_json FROM exercise_plans WHERE user_id = $1 AND is_active = true LIMIT 1",
+          "additionalFields": {
+            "queryParams": "={{ JSON.stringify([$('Execute Workflow Trigger').first().json.userId]) }}"
+          },
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "alwaysOutputData": true
+      },
+      {
+        "id": "node-w8-4",
+        "name": "Build Workout Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const triggerData = $('Execute Workflow Trigger').first().json;\nconst profile = $('Get User Profile').first().json;\nconst prevPlan = $('Get Previous Exercise Plan').all();\nconst previousPlan = prevPlan.length > 0 ? prevPlan[0].json.plan_json : null;\n\nconst prompt = `Eres un entrenador personal experto. Crea un plan de entrenamiento semanal detallado y personalizado.\n\nPerfil del usuario:\n- Nivel de fitness: ${profile.fitness_level || 'principiante'}\n- Días de entrenamiento por semana: ${profile.training_days_per_week || 3}\n- Equipamiento disponible: ${profile.available_equipment || 'sin equipamiento'}\n- Lesiones o restricciones: ${profile.injuries || 'ninguna'}\n- Objetivo principal: ${profile.goal || 'mejorar condición física general'}\n- Edad: ${profile.age || 'no especificada'}\n- Peso actual: ${profile.current_weight_kg || 'no especificado'} kg\n- Altura: ${profile.height_cm || 'no especificada'} cm\n\n${previousPlan ? 'Plan anterior (para evitar repetición y asegurar progresión):\\n' + JSON.stringify(previousPlan, null, 2) : 'Es el primer plan del usuario.'}\n\nDevuelve el plan en formato JSON con la siguiente estructura:\n{\n  \"week_summary\": \"descripción breve del plan\",\n  \"days\": [\n    {\n      \"day\": \"Lunes\",\n      \"focus\": \"Tren superior\",\n      \"exercises\": [\n        {\n          \"name\": \"nombre del ejercicio\",\n          \"sets\": 3,\n          \"reps\": \"10-12\",\n          \"rest\": \"60 segundos\",\n          \"notes\": \"indicaciones técnicas\"\n        }\n      ],\n      \"duration_minutes\": 45,\n      \"warmup\": \"descripción del calentamiento\",\n      \"cooldown\": \"descripción del enfriamiento\"\n    }\n  ],\n  \"weekly_tips\": [\"consejo 1\", \"consejo 2\"]\n}`;\n\nreturn [{\n  json: {\n    userId: triggerData.userId,\n    requestType: triggerData.requestType,\n    fitnessLevel: profile.fitness_level,\n    prompt,\n    profile\n  }\n}];",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-w8-6",
+        "name": "Parse Workout Plan",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1340,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const triggerData = $('Execute Workflow Trigger').first().json;\nconst profile = $('Get User Profile').first().json;\nconst rawContent = $input.first().json.text || '';\n\nlet planJson;\ntry {\n  // Extract JSON from markdown code blocks if present\n  const jsonMatch = rawContent.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  const jsonStr = jsonMatch ? jsonMatch[1] : rawContent;\n  planJson = JSON.parse(jsonStr.trim());\n} catch (e) {\n  planJson = { raw: rawContent, parse_error: e.message };\n}\n\nconst now = new Date();\nconst weekNumber = Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000));\n\nreturn [{\n  json: {\n    userId: triggerData.userId,\n    planJson,\n    weekNumber,\n    year: now.getFullYear(),\n    fitnessLevel: profile.fitness_level || 'beginner'\n  }\n}];",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-w8-7",
+        "name": "Deactivate Old Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1560,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE exercise_plans SET is_active = false WHERE user_id = $1 AND is_active = true",
+          "additionalFields": {
+            "queryParams": "={{ JSON.stringify([$json.userId]) }}"
+          },
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "id": "node-w8-8",
+        "name": "Save New Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1780,
+          300
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO exercise_plans (user_id, week_number, year, plan_json, fitness_level, is_active, created_at) VALUES ($1, $2, $3, $4::jsonb, $5, true, NOW()) RETURNING id",
+          "additionalFields": {
+            "queryParams": "={{ JSON.stringify([$json.userId, $json.weekNumber, $json.year, JSON.stringify($json.planJson), $json.fitnessLevel]) }}"
+          },
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Parse Workout Plan').first().json.weekNumber, $('Parse Workout Plan').first().json.year, JSON.stringify($('Parse Workout Plan').first().json.planJson), $('Parse Workout Plan').first().json.fitnessLevel] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "id": "node-w8-9",
+        "name": "Format for Telegram",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2000,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const data = $('Parse Workout Plan').first().json;\nconst plan = data.planJson;\n\nlet message = '💪 *Tu Plan de Entrenamiento Semanal*\\n\\n';\n\nif (plan.week_summary) {\n  message += '📋 ' + plan.week_summary + '\\n\\n';\n}\n\nif (plan.days && Array.isArray(plan.days)) {\n  for (const day of plan.days) {\n    message += '━━━━━━━━━━━━━━\\n';\n    message += '🗓 *' + day.day + '* — ' + day.focus + '\\n';\n    message += '⏱ Duración: ' + (day.duration_minutes || '?') + ' min\\n\\n';\n    \n    if (day.exercises && Array.isArray(day.exercises)) {\n      for (const ex of day.exercises) {\n        message += '• *' + ex.name + '*: ' + ex.sets + ' series x ' + ex.reps + ' reps';\n        if (ex.rest) message += ' (descanso: ' + ex.rest + ')';\n        message += '\\n';\n        if (ex.notes) message += '  _' + ex.notes + '_\\n';\n      }\n    }\n    message += '\\n';\n  }\n}\n\nif (plan.weekly_tips && Array.isArray(plan.weekly_tips)) {\n  message += '💡 *Consejos de la semana:*\\n';\n  for (const tip of plan.weekly_tips) {\n    message += '• ' + tip + '\\n';\n  }\n}\n\nreturn [{ json: { message, planJson: plan } }];",
+          "options": {}
+        }
+      },
+      {
+        "id": "node-w8-10",
+        "name": "Return Result",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          2220,
+          300
+        ],
+        "parameters": {
+          "options": {}
+        }
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.prompt }}"
+        },
+        "id": "workout-chain-llm",
+        "name": "Generate Workout Plan",
+        "type": "@n8n/n8n-nodes-langchain.chainLlm",
+        "typeVersion": 1.5,
+        "position": [
+          1120,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "value": "gpt-4o-mini",
+            "mode": "list",
+            "cachedResultName": "gpt-4o-mini"
+          },
+          "options": {
+            "responseFormat": "json_object"
+          }
+        },
+        "id": "workout-lm-node",
+        "name": "OpenAI Workout Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.3,
+        "position": [
+          1120,
+          160
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "NOJoPVNWDXiywRgw",
+            "name": "OpenAi account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get User Profile",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get User Profile": {
+        "main": [
+          [
+            {
+              "node": "Get Previous Exercise Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Previous Exercise Plan": {
+        "main": [
+          [
+            {
+              "node": "Build Workout Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Workout Prompt": {
+        "main": [
+          [
+            {
+              "node": "Generate Workout Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Workout Plan": {
+        "main": [
+          [
+            {
+              "node": "Parse Workout Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Workout Plan": {
+        "main": [
+          [
+            {
+              "node": "Deactivate Old Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Deactivate Old Plan": {
+        "main": [
+          [
+            {
+              "node": "Save New Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save New Plan": {
+        "main": [
+          [
+            {
+              "node": "Format for Telegram",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format for Telegram": {
+        "main": [
+          [
+            {
+              "node": "Return Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Workout Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Generate Workout Plan",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-28T01:59:08.092Z",
+        "id": 96,
+        "workflowId": "ETjiYAUhXfsVSyWQ",
+        "versionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      },
+      {
+        "createdAt": "2026-03-28T01:59:08.083Z",
+        "id": 95,
+        "workflowId": "ETjiYAUhXfsVSyWQ",
+        "versionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
+        "event": "deactivated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
 }
