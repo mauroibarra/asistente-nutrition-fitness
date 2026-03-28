@@ -121,7 +121,39 @@ docker compose logs -f n8n
 docker compose restart n8n
 ```
 
-### Importar/Exportar Workflows de n8n
+### Sincronizar Workflows n8n → Repositorio
+
+**REGLA: Después de cualquier cambio en un workflow de n8n, sincronizar al repo inmediatamente.**
+
+```python
+# Exportar un workflow específico al repo (usar su ID y filename correspondiente)
+import urllib.request, json
+
+API_KEY = "..."  # N8N_API_KEY del .env
+WF_ID = "fI5u4rs3iXPfeXFl"
+FILENAME = "n8n/workflows/01-telegram-webhook-handler.json"
+
+req = urllib.request.Request(f"http://localhost:5678/api/v1/workflows/{WF_ID}",
+    headers={"X-N8N-API-KEY": API_KEY})
+with urllib.request.urlopen(req) as r:
+    data = json.loads(r.read())
+with open(FILENAME, 'w') as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+```
+
+Mapa de IDs → archivos del repo:
+| Workflow ID | Archivo |
+|-------------|---------|
+| `fI5u4rs3iXPfeXFl` | `n8n/workflows/01-telegram-webhook-handler.json` |
+| `bhJ8qqZXr68Id3pH` | `n8n/workflows/07-progress-calculator.json` |
+| `KQhP9lQNxCKeOsbJ` | `n8n/workflows/04-meal-plan-generator.json` |
+| `ETjiYAUhXfsVSyWQ` | `n8n/workflows/08-workout-plan-generator.json` |
+| `vAqqjXg2IE1ldgg3` | `n8n/workflows/09-rag-personal-indexer.json` |
+| `SntGuE97yl9efvo5` | `n8n/workflows/05-meal-reminder-scheduler.json` |
+| `tkSAHhjJnO4nTFsM` | `n8n/workflows/06-weight-update-requester.json` |
+| `I4Q4C6SOPY2fnK3W` | `n8n/workflows/10-membership-alert.json` |
+
+### Importar/Exportar Workflows de n8n (CLI)
 
 ```bash
 # Exportar todos los workflows
