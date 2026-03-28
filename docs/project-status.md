@@ -88,12 +88,12 @@ El sistema está corriendo localmente con Docker. Los flujos principales de conv
 | 10 | `docs/api-integrations.md` | ✅ Completo | Telegram, OpenAI, Qdrant, PostgreSQL, Redis |
 | 11 | `docs/admin-panel.md` | ✅ Completo | Wireframes, endpoints, auth, integración |
 | 12 | `docs/deployment.md` | ✅ Completo | Guía VPS, Docker, SSL, backups, monitoreo |
-| 13 | `skills/nutrition.md` | ✅ Completo | Fórmulas, macros, alimentos |
-| 14 | `skills/fitness.md` | ✅ Completo | Principios, rutinas completas |
-| 15 | `skills/habit-psychology.md` | ✅ Completo | Modelo de hábito, coaching |
-| 16 | `skills/metrics-calculation.md` | ✅ Completo | 9 funciones JS de cálculo |
-| 17 | `skills/n8n-workflow-debugging.md` | ✅ Nuevo | Guía de debugging de workflows n8n |
-| 18 | `skills/n8n-ai-agent-tools.md` | ✅ Nuevo | Patrones correctos de AI Agent + toolWorkflow |
+| 13 | `skills/business/nutrition.md` | ✅ Completo | Fórmulas, macros, alimentos |
+| 14 | `skills/business/fitness.md` | ✅ Completo | Principios, rutinas completas |
+| 15 | `skills/business/habit-psychology.md` | ✅ Completo | Modelo de hábito, coaching |
+| 16 | `skills/business/metrics-calculation.md` | ✅ Completo | 9 funciones JS de cálculo |
+| 17 | `skills/dev/n8n-workflow-debugging.md` | ✅ Nuevo | Guía de debugging de workflows n8n |
+| 18 | `skills/dev/n8n-ai-agent-tools.md` | ✅ Nuevo | Patrones correctos de AI Agent + toolWorkflow |
 | 19 | `prompts/system-prompt.md` | ✅ Completo | System prompt con personalidad y reglas |
 | 20 | `prompts/onboarding.md` | ✅ Completo | 17 preguntas de onboarding |
 | 21 | `prompts/meal-plan-generation.md` | ✅ Completo | Templates de planes de comidas |

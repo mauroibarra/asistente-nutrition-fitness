@@ -59,12 +59,14 @@ asistente-nutrition-fitness/
 │   ├── deployment.md            # Guía de despliegue en VPS
 │   └── project-status.md        # Estado actual y próximos pasos
 ├── skills/
-│   ├── nutrition.md             # Base de conocimiento nutricional
-│   ├── fitness.md               # Base de conocimiento de fitness
-│   ├── habit-psychology.md      # Psicología del hábito y coaching
-│   ├── metrics-calculation.md   # Funciones JS de cálculo de métricas
-│   ├── n8n-workflow-debugging.md # Guía de debugging de workflows n8n
-│   └── n8n-ai-agent-tools.md   # Patrones correctos de AI Agent + toolWorkflow
+│   ├── dev/                     # Skills de DESARROLLO — uso exclusivo de Claude Code
+│   │   ├── n8n-workflow-debugging.md  # Debugging de workflows n8n: causas raíz + checklist
+│   │   └── n8n-ai-agent-tools.md     # Patrones AI Agent + toolWorkflow: fields.values, $fromAI
+│   └── business/                # Skills de NEGOCIO — base de conocimiento del agente OpenAI
+│       ├── nutrition.md         # Nutrición: fórmulas, macros, restricciones, alertas
+│       ├── fitness.md           # Fitness: principios, rutinas completas, recuperación
+│       ├── habit-psychology.md  # Psicología del hábito: coaching, meseta, motivación
+│       └── metrics-calculation.md # Métricas: 9 funciones JS (BMI, TMB, progreso, etc.)
 ├── prompts/
 │   ├── system-prompt.md         # System prompt del agente OpenAI
 │   ├── onboarding.md            # Flujo completo de onboarding
@@ -303,6 +305,42 @@ def update_workflow(wf_id, payload):
 2. Probar localmente con `docker compose up admin-panel`
 3. Verificar la conexión con PostgreSQL
 4. Probar flujos CRUD completos
+
+---
+
+## Skills — Cuándo y Cómo Usarlas
+
+Los skills están divididos en dos categorías con propósitos distintos. **Claude Code DEBE leer el skill correspondiente antes de ejecutar cada tipo de tarea.**
+
+### Skills de Desarrollo — `skills/dev/`
+
+Uso exclusivo de Claude Code durante el desarrollo. No llegan al agente OpenAI en producción.
+
+| Skill | Cuándo leerlo OBLIGATORIAMENTE |
+|-------|-------------------------------|
+| [`skills/dev/n8n-workflow-debugging.md`](skills/dev/n8n-workflow-debugging.md) | Antes de modificar cualquier workflow de n8n. Antes de diagnosticar un error en una ejecución. Antes de cambiar la forma en que se actualiza un workflow activo. |
+| [`skills/dev/n8n-ai-agent-tools.md`](skills/dev/n8n-ai-agent-tools.md) | Antes de crear o modificar nodos `toolWorkflow`. Antes de cambiar cómo el AI Agent pasa datos a sub-workflows. Antes de configurar `fields.values` o `$fromAI()`. |
+
+**Regla:** Si vas a tocar n8n y no has leído el skill correspondiente en esta sesión, léelo primero.
+
+---
+
+### Skills de Negocio — `skills/business/`
+
+Base de conocimiento del dominio. Son los documentos que el agente OpenAI en producción usa para generar respuestas correctas. Claude Code los usa para:
+- Generar o revisar prompts del sistema
+- Diseñar flujos de onboarding
+- Validar que los planes generados son coherentes con las reglas del negocio
+- Indexar en Qdrant (`knowledge_rag`) para RAG
+
+| Skill | Cuándo usarlo |
+|-------|--------------|
+| [`skills/business/nutrition.md`](skills/business/nutrition.md) | Al escribir o revisar prompts de planes de comidas. Al validar cálculos calóricos. Al diseñar el onboarding nutricional. Al indexar en Qdrant. |
+| [`skills/business/fitness.md`](skills/business/fitness.md) | Al escribir o revisar prompts de rutinas de ejercicio. Al validar que las rutinas generadas sean seguras y coherentes con el nivel del usuario. |
+| [`skills/business/habit-psychology.md`](skills/business/habit-psychology.md) | Al diseñar mensajes de motivación, recordatorios y respuestas ante abandono. Al revisar el tono del system prompt. |
+| [`skills/business/metrics-calculation.md`](skills/business/metrics-calculation.md) | Al implementar o revisar el nodo de cálculo de progreso. Al validar fórmulas de BMI, TMB, deficit calórico y proyecciones de peso. |
+
+**Regla:** Antes de generar un plan de comidas, rutina o respuesta sobre progreso, leer el skill de negocio correspondiente para garantizar coherencia con las reglas del dominio.
 
 ---
 
