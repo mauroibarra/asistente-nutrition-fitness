@@ -1,607 +1,1877 @@
 {
-  "updatedAt": "2026-03-27T16:32:30.143Z",
-  "createdAt": "2026-03-27T16:32:30.143Z",
-  "id": "mTH32CWhJqhNzMpZ",
-  "name": "FitAI - Telegram Webhook Handler",
-  "description": null,
-  "active": false,
-  "isArchived": false,
-  "nodes": [
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "fitai-telegram",
-        "responseMode": "responseNode",
-        "options": {
-          "rawBody": true
-        }
-      },
-      "id": "a1b2c3d4-0001-4000-8000-000000000001",
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        0,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const update = $input.first().json;\nconst message = update.body.message || update.body.edited_message;\n\nif (!message) {\n  return [{ json: { skip: true, reason: 'no_message' } }];\n}\n\nconst chatId = message.chat.id;\nconst telegramId = message.from.id;\nconst firstName = message.from.first_name || '';\nconst lastName = message.from.last_name || '';\nconst username = message.from.username || '';\nconst text = message.text || '';\nconst messageType = message.photo ? 'photo'\n  : message.voice ? 'voice'\n  : message.document ? 'document'\n  : message.location ? 'location'\n  : 'text';\nconst messageId = message.message_id;\nconst date = new Date(message.date * 1000).toISOString();\n\nreturn [{\n  json: {\n    skip: false,\n    chatId,\n    telegramId,\n    firstName,\n    lastName,\n    username,\n    text,\n    messageType,\n    messageId,\n    date\n  }\n}];"
-      },
-      "id": "a1b2c3d4-0002-4000-8000-000000000002",
-      "name": "Extract Telegram Data",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        250,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "cond-skip",
-              "leftValue": "={{ $json.skip }}",
-              "rightValue": false,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
+    "updatedAt": "2026-03-28T13:21:19.560Z",
+    "createdAt": "2026-03-27T19:56:57.516Z",
+    "id": "fI5u4rs3iXPfeXFl",
+    "name": "FitAI - Telegram Webhook Handler",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+        {
+            "parameters": {
+                "updates": [
+                    "message",
+                    "callback_query"
+                ],
+                "additionalFields": {}
+            },
+            "id": "11111111-0001-4000-8000-000000000001",
+            "type": "n8n-nodes-base.telegramTrigger",
+            "typeVersion": 1.2,
+            "name": "Telegram Trigger",
+            "position": [
+                0,
+                320
+            ],
+            "webhookId": "63001b72-4471-4896-b3b3-8ec56a0d9da6",
+            "credentials": {
+                "telegramApi": {
+                    "id": "1duS64x2hsrz3moJ",
+                    "name": "Telegram account fitia"
+                }
             }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "a1b2c3d4-0003-4000-8000-000000000003",
-      "name": "Should Process?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        500,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "cond-type",
-              "leftValue": "={{ $json.messageType }}",
-              "rightValue": "text",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "version": 2,
+                                    "caseSensitive": true,
+                                    "typeValidation": "loose"
+                                },
+                                "combinator": "and",
+                                "conditions": [
+                                    {
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "exists",
+                                            "singleValue": true
+                                        },
+                                        "leftValue": "={{ $json.message.text }}",
+                                        "rightValue": ""
+                                    }
+                                ]
+                            },
+                            "renameOutput": true,
+                            "outputKey": "text"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "version": 2,
+                                    "caseSensitive": true,
+                                    "typeValidation": "loose"
+                                },
+                                "combinator": "and",
+                                "conditions": [
+                                    {
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "exists",
+                                            "singleValue": true
+                                        },
+                                        "leftValue": "={{ $json.message.voice.file_id }}",
+                                        "rightValue": ""
+                                    }
+                                ]
+                            },
+                            "renameOutput": true,
+                            "outputKey": "voice"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "version": 2,
+                                    "caseSensitive": true,
+                                    "typeValidation": "loose"
+                                },
+                                "combinator": "and",
+                                "conditions": [
+                                    {
+                                        "operator": {
+                                            "type": "boolean",
+                                            "operation": "exists",
+                                            "singleValue": true
+                                        },
+                                        "leftValue": "={{ $json.callback_query.data }}",
+                                        "rightValue": ""
+                                    }
+                                ]
+                            },
+                            "renameOutput": true,
+                            "outputKey": "callback"
+                        }
+                    ]
+                },
+                "looseTypeValidation": true,
+                "options": {}
+            },
+            "id": "11111111-0002-4000-8000-000000000002",
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.2,
+            "name": "Route Message Type",
+            "position": [
+                256,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "file",
+                "fileId": "={{ $json.message.voice.file_id }}",
+                "additionalFields": {}
+            },
+            "id": "11111111-0003-4000-8000-000000000003",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "name": "Get Voice File",
+            "position": [
+                512,
+                512
+            ],
+            "webhookId": "5debfbcc-0498-4e8f-a50a-4b70b1694912",
+            "credentials": {
+                "telegramApi": {
+                    "id": "1duS64x2hsrz3moJ",
+                    "name": "Telegram account fitia"
+                }
             }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "a1b2c3d4-0004-4000-8000-000000000004",
-      "name": "Check Supported Type",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        750,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Telegram Data').item.json.chatId }}",
-        "text": "Por el momento solo puedo procesar mensajes de texto. Escr\u00edbeme tu consulta y con gusto te ayudo.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "a1b2c3d4-0005-4000-8000-000000000005",
-      "name": "Unsupported Type Response",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1000,
-        150
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "incr",
-        "key": "=rate_limit:{{ $('Extract Telegram Data').item.json.telegramId }}"
-      },
-      "id": "a1b2c3d4-0006-4000-8000-000000000006",
-      "name": "Check Rate Limit",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        1000,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "expire",
-        "key": "=rate_limit:{{ $('Extract Telegram Data').item.json.telegramId }}",
-        "expire": 60
-      },
-      "id": "a1b2c3d4-0007-4000-8000-000000000007",
-      "name": "Set Rate Limit TTL",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        1250,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "cond-ratelimit",
-              "leftValue": "={{ $json.value }}",
-              "rightValue": 10,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
+        },
+        {
+            "parameters": {
+                "resource": "audio",
+                "operation": "transcribe",
+                "options": {}
+            },
+            "id": "11111111-0004-4000-8000-000000000004",
+            "type": "@n8n/n8n-nodes-langchain.openAi",
+            "typeVersion": 1.8,
+            "name": "Transcribe Voice",
+            "position": [
+                752,
+                512
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "NOJoPVNWDXiywRgw",
+                    "name": "OpenAi account"
+                }
             }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "a1b2c3d4-0008-4000-8000-000000000008",
-      "name": "Rate Limit Exceeded?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1500,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Telegram Data').item.json.chatId }}",
-        "text": "Est\u00e1s enviando mensajes muy r\u00e1pido. Espera un momento antes de continuar.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "a1b2c3d4-0009-4000-8000-000000000009",
-      "name": "Rate Limit Message",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1750,
-        150
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name, u.is_active,\n       m.plan_type, m.status AS membership_status, m.expires_at\nFROM users u\nLEFT JOIN memberships m ON u.id = m.user_id\n  AND m.status = 'active'\n  AND m.expires_at > NOW()\nWHERE u.telegram_id = $1\nORDER BY m.expires_at DESC\nLIMIT 1;",
-        "additionalFields": {
-          "queryParams": "={{ [$('Extract Telegram Data').item.json.telegramId] }}"
-        }
-      },
-      "id": "a1b2c3d4-0010-4000-8000-000000000010",
-      "name": "Verify Membership",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        1750,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "cond-exists",
-              "leftValue": "={{ $json.user_id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty"
-              }
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "v1",
+                            "name": "message.text",
+                            "type": "string",
+                            "value": "={{ $json.text }}"
+                        },
+                        {
+                            "id": "v2",
+                            "name": "chatId",
+                            "type": "string",
+                            "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+                        },
+                        {
+                            "id": "v3",
+                            "name": "telegramId",
+                            "type": "string",
+                            "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+                        },
+                        {
+                            "id": "v4",
+                            "name": "firstName",
+                            "type": "string",
+                            "value": "={{ $('Telegram Trigger').item.json.message.from.first_name }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "11111111-0005-4000-8000-000000000005",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "name": "Set Text from Voice",
+            "position": [
+                1008,
+                512
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "t1",
+                            "name": "message.text",
+                            "type": "string",
+                            "value": "={{ $json.message.text || $json.callback_query.data }}"
+                        },
+                        {
+                            "id": "t2",
+                            "name": "chatId",
+                            "type": "string",
+                            "value": "={{ $json.message.chat.id || $json.callback_query.message.chat.id }}"
+                        },
+                        {
+                            "id": "t3",
+                            "name": "telegramId",
+                            "type": "string",
+                            "value": "={{ $json.message.from.id || $json.callback_query.from.id }}"
+                        },
+                        {
+                            "id": "t4",
+                            "name": "firstName",
+                            "type": "string",
+                            "value": "={{ $json.message.from.first_name || $json.callback_query.from.first_name }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "11111111-0006-4000-8000-000000000006",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "name": "Set Text from Message",
+            "position": [
+                752,
+                224
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT u.id as user_id, u.first_name, u.is_active, COALESCE(m.status::text, 'none') as membership_status, CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed FROM users u LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW() LEFT JOIN user_profiles up ON up.user_id = u.id WHERE u.telegram_id = $1 LIMIT 1",
+                "options": {
+                    "queryReplacement": "={{ $('Set Text from Message').item.json.telegramId }}"
+                }
+            },
+            "id": "11111111-0007-4000-8000-000000000007",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.5,
+            "name": "Check User & Membership",
+            "position": [
+                1264,
+                304
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "QLEgAnHDncQkLeNb",
+                    "name": "Postgres account Fitia"
+                }
             }
-          ],
-          "combinator": "and"
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "INSERT INTO users (telegram_id, first_name, last_name, username, language_code) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (telegram_id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = COALESCE(EXCLUDED.last_name, users.last_name), username = COALESCE(EXCLUDED.username, users.username), updated_at = NOW() RETURNING id, telegram_id, first_name",
+                "options": {
+                    "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), String($('Set Text from Message').item.json.firstName || ''), ($('Telegram Trigger').item.json.message?.from?.last_name || null), ($('Telegram Trigger').item.json.message?.from?.username || null), ($('Telegram Trigger').item.json.message?.from?.language_code || 'es')] }}"
+                }
+            },
+            "id": "11111111-0008-4000-8000-000000000008",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.5,
+            "name": "Upsert User",
+            "position": [
+                1504,
+                304
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "QLEgAnHDncQkLeNb",
+                    "name": "Postgres account Fitia"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "loose",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "id": "m1",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            },
+                            "leftValue": "={{ $json.membership_status }}",
+                            "rightValue": "active"
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {
+                    "looseTypeValidation": true
+                }
+            },
+            "id": "11111111-0009-4000-8000-000000000009",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "name": "Has Active Membership?",
+            "position": [
+                1760,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+                "text": "=Hola {{ $('Set Text from Message').item.json.firstName }}! No tienes una membresia activa. Para acceder al asistente FitAI contacta al administrador.",
+                "additionalFields": {
+                    "appendAttribution": false
+                }
+            },
+            "id": "11111111-0010-4000-8000-000000000010",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "name": "No Membership Message",
+            "position": [
+                2000,
+                512
+            ],
+            "webhookId": "20379d01-666f-4ea3-834a-e62dc6c5ff5a",
+            "credentials": {
+                "telegramApi": {
+                    "id": "1duS64x2hsrz3moJ",
+                    "name": "Telegram account fitia"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "loose",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "id": "o1",
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            },
+                            "leftValue": "={{ $json.onboarding_completed }}",
+                            "rightValue": "true"
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {
+                    "looseTypeValidation": true
+                }
+            },
+            "id": "11111111-0011-4000-8000-000000000011",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "name": "Onboarding Complete?",
+            "position": [
+                2000,
+                208
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $('Set Text from Message').item.json.message.text }}",
+                "options": {
+                    "systemMessage": "=Eres FitAI, un asistente personal de nutricion y fitness que opera por Telegram.\n\nUSUARIO:\n- Nombre: {{ $('Check User & Membership').item.json.first_name }}\n- ID: {{ $('Check User & Membership').item.json.user_id }}\n- Chat ID: {{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}\n- userId para herramientas: {{ $('Check User & Membership').item.json.user_id }}\n- Fecha actual: {{ $now.format('dd/MM/yyyy') }}\n\nROL:\nAyudas al usuario a mejorar su alimentacion, ejercicio y habitos de salud. Eres empatico, motivador y practico.\n\nHERRAMIENTAS DISPONIBLES:\n- Progreso: calcula metricas y progreso del usuario\n- PlanComidas: genera un nuevo plan de alimentacion semanal\n- Rutina: genera una nueva rutina de ejercicio\n- RegistrarEvento: guarda eventos del usuario en memoria personal (peso, comidas, perfil, metas)\n\nCUANDO USAR RegistrarEvento:\n- El usuario reporta su peso actual (ej: \"hoy peso 80 kg\") \u2192 eventType: weight_log\n- El usuario dice lo que comio (ej: \"desayune avena\") \u2192 eventType: meal_reported\n- El usuario actualiza un dato de perfil (ej: \"cambie mi objetivo a 75 kg\") \u2192 eventType: profile_update\n- El usuario establece una meta nueva \u2192 eventType: goal_set\nSiempre registra ANTES de responder al usuario.\n\nREGLAS:\n- Responde SIEMPRE en espanol\n- Mant\u00e9n respuestas cortas (Telegram: max 3 parrafos)\n- Usa emojis con moderacion\n- Si el usuario reporta una comida, ayudalo a registrarla y compararla con su plan\n- Si pide su plan de comidas o ejercicio, consulta la base de datos\n- Si necesita un nuevo plan, ofrece generarlo\n- Tono: amigable, como un coach personal cercano\n- NUNCA hagas diagnosticos medicos\n- Si hay una crisis de salud, deriva a profesionales\n\nFORMATO DE SALIDA:\nSolo el mensaje para el usuario, sin metadatos ni explicaciones."
+                }
+            },
+            "id": "11111111-0012-4000-8000-000000000012",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2,
+            "name": "FitAI Main AI Agent",
+            "position": [
+                2448,
+                0
+            ]
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "mode": "list",
+                    "value": "gpt-4o",
+                    "cachedResultName": "gpt-4o"
+                },
+                "options": {
+                    "maxTokens": 1024,
+                    "temperature": 0.7
+                }
+            },
+            "id": "11111111-0013-4000-8000-000000000013",
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "name": "OpenAI Chat Model",
+            "position": [
+                2304,
+                144
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "NOJoPVNWDXiywRgw",
+                    "name": "OpenAi account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sessionIdType": "customKey",
+                "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id || $('Telegram Trigger').item.json.callback_query.message.chat.id }}",
+                "contextWindowLength": 10
+            },
+            "id": "11111111-0014-4000-8000-000000000014",
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "name": "FitAI Memory",
+            "position": [
+                2448,
+                144
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $('Set Text from Message').item.json['message.text'] }}",
+                "options": {
+                    "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n\nCuando tengas TODOS los datos, responde con este JSON exacto al final:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- Confirma cada dato antes de avanzar al siguiente\n- Al final presenta un resumen del perfil para confirmacion"
+                }
+            },
+            "id": "11111111-0015-4000-8000-000000000015",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 2,
+            "name": "Onboarding Agent",
+            "position": [
+                2528,
+                592
+            ]
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "mode": "list",
+                    "value": "gpt-4o-mini",
+                    "cachedResultName": "gpt-4o-mini"
+                },
+                "options": {
+                    "temperature": 0.5
+                }
+            },
+            "id": "11111111-0016-4000-8000-000000000016",
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "name": "OpenAI Chat Model Onboarding",
+            "position": [
+                2448,
+                800
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "NOJoPVNWDXiywRgw",
+                    "name": "OpenAi account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sessionIdType": "customKey",
+                "sessionKey": "=onboarding_{{ $('Telegram Trigger').item.json.message.chat.id }}",
+                "contextWindowLength": 20
+            },
+            "id": "11111111-0017-4000-8000-000000000017",
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "name": "Onboarding Memory",
+            "position": [
+                2624,
+                800
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+                "text": "={{ $json.output }}",
+                "additionalFields": {
+                    "appendAttribution": false,
+                    "parse_mode": "Markdown"
+                }
+            },
+            "id": "11111111-0018-4000-8000-000000000018",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "name": "Send Response",
+            "position": [
+                3424,
+                288
+            ],
+            "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
+            "credentials": {
+                "telegramApi": {
+                    "id": "1duS64x2hsrz3moJ",
+                    "name": "Telegram account fitia"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "name": "Progreso",
+                "description": "Calcula el progreso de peso y m\u00e9tricas del usuario. \u00dasala cuando el usuario pregunte por su progreso, evoluci\u00f3n de peso, o estad\u00edsticas.",
+                "workflowId": {
+                    "__rl": true,
+                    "value": "bhJ8qqZXr68Id3pH",
+                    "mode": "id"
+                },
+                "fields": {
+                    "values": [
+                        {
+                            "name": "userId",
+                            "type": "numberValue",
+                            "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+                        },
+                        {
+                            "name": "chatId",
+                            "type": "numberValue",
+                            "numberValue": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+                        }
+                    ]
+                }
+            },
+            "id": "tool-w1-progress",
+            "name": "Tool: Progreso",
+            "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+            "typeVersion": 1.3,
+            "position": [
+                2992,
+                288
+            ]
+        },
+        {
+            "parameters": {
+                "name": "Plan_Comidas",
+                "description": "Genera un plan de alimentaci\u00f3n personalizado. \u00dasala cuando el usuario pida un plan de comidas, dieta, o quiera cambiar su nutrici\u00f3n.",
+                "workflowId": {
+                    "__rl": true,
+                    "value": "KQhP9lQNxCKeOsbJ",
+                    "mode": "id"
+                },
+                "fields": {
+                    "values": [
+                        {
+                            "name": "userId",
+                            "type": "numberValue",
+                            "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+                        },
+                        {
+                            "name": "chatId",
+                            "type": "numberValue",
+                            "numberValue": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+                        }
+                    ]
+                }
+            },
+            "id": "tool-w2-meal",
+            "name": "Tool: Plan Comidas",
+            "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+            "typeVersion": 1.3,
+            "position": [
+                2672,
+                288
+            ]
+        },
+        {
+            "parameters": {
+                "name": "Rutina",
+                "description": "Genera una rutina de ejercicios personalizada. \u00dasala cuando el usuario pida una rutina de entrenamiento, ejercicios, o gym.",
+                "workflowId": {
+                    "__rl": true,
+                    "value": "ETjiYAUhXfsVSyWQ",
+                    "mode": "id"
+                },
+                "fields": {
+                    "values": [
+                        {
+                            "name": "userId",
+                            "type": "numberValue",
+                            "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+                        },
+                        {
+                            "name": "chatId",
+                            "type": "numberValue",
+                            "numberValue": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+                        }
+                    ]
+                }
+            },
+            "id": "tool-w3-workout",
+            "name": "Tool: Rutina",
+            "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+            "typeVersion": 1.3,
+            "position": [
+                2832,
+                288
+            ]
+        },
+        {
+            "parameters": {
+                "name": "RegistrarEvento",
+                "description": "Registra eventos del usuario en su memoria personal RAG: peso registrado, comida reportada, cambios de perfil, metas establecidas. Usa esta herramienta CADA VEZ que el usuario reporte algo nuevo sobre su salud o progreso (peso actual, lo que comio, un nuevo objetivo).",
+                "workflowId": {
+                    "__rl": true,
+                    "value": "vAqqjXg2IE1ldgg3",
+                    "mode": "id"
+                },
+                "fields": {
+                    "values": [
+                        {
+                            "name": "userId",
+                            "type": "numberValue",
+                            "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+                        },
+                        {
+                            "name": "eventType",
+                            "stringValue": "={{ $fromAI('eventType', 'Tipo de evento: weight_log | meal_reported | profile_update | goal_set') }}"
+                        },
+                        {
+                            "name": "eventDataJson",
+                            "stringValue": "={{ $fromAI('eventData', 'JSON string con los datos del evento. Para weight_log: {\"weight_kg\": 80.5, \"notes\": \"opcional\"}. Para meal_reported: {\"meal_description\": \"desc\", \"calories\": 350, \"meal_type\": \"breakfast|lunch|dinner\"}. Para profile_update: {\"campo\": \"valor\"}. Para goal_set: {\"goal_type\": \"tipo\", \"target_weight_kg\": 75}') }}"
+                        }
+                    ]
+                }
+            },
+            "id": "tool-w4-rag",
+            "name": "Tool: Registrar Evento",
+            "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+            "typeVersion": 1.3,
+            "position": [
+                2512,
+                288
+            ]
         }
-      },
-      "id": "a1b2c3d4-0011-4000-8000-000000000011",
-      "name": "User Exists?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2000,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Telegram Data').item.json.chatId }}",
-        "text": "No tienes una cuenta registrada en FitAI.\n\nContacta al administrador para activar tu acceso:\n@fitai_admin",
-        "additionalFields": {
-          "parse_mode": "Markdown"
+    ],
+    "connections": {
+        "Telegram Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Route Message Type",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Route Message Type": {
+            "main": [
+                [
+                    {
+                        "node": "Set Text from Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Get Voice File",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Set Text from Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Voice File": {
+            "main": [
+                [
+                    {
+                        "node": "Transcribe Voice",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Transcribe Voice": {
+            "main": [
+                [
+                    {
+                        "node": "Set Text from Voice",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Text from Voice": {
+            "main": [
+                [
+                    {
+                        "node": "Upsert User",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Text from Message": {
+            "main": [
+                [
+                    {
+                        "node": "Upsert User",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Upsert User": {
+            "main": [
+                [
+                    {
+                        "node": "Check User & Membership",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check User & Membership": {
+            "main": [
+                [
+                    {
+                        "node": "Has Active Membership?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Has Active Membership?": {
+            "main": [
+                [
+                    {
+                        "node": "Onboarding Complete?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "No Membership Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Onboarding Complete?": {
+            "main": [
+                [
+                    {
+                        "node": "FitAI Main AI Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Onboarding Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "FitAI Main AI Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Send Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Onboarding Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Send Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "FitAI Main AI Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "FitAI Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "FitAI Main AI Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Chat Model Onboarding": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Onboarding Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Onboarding Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "Onboarding Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Tool: Progreso": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "FitAI Main AI Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Tool: Plan Comidas": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "FitAI Main AI Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Tool: Rutina": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "FitAI Main AI Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Tool: Registrar Evento": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "FitAI Main AI Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
         }
-      },
-      "id": "a1b2c3d4-0012-4000-8000-000000000012",
-      "name": "Unknown User Response",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        2250,
-        150
-      ]
     },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
+    "settings": {
+        "executionOrder": "v1",
+        "callerPolicy": "workflowsFromSameOwner",
+        "availableInMCP": false
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "62955a8b-8768-4dab-87ff-490ec5f4ddda",
+    "activeVersionId": "62955a8b-8768-4dab-87ff-490ec5f4ddda",
+    "versionCounter": 140,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-03-27T19:56:57.528Z",
+            "createdAt": "2026-03-27T19:56:57.528Z",
+            "role": "workflow:owner",
+            "workflowId": "fI5u4rs3iXPfeXFl",
+            "projectId": "GE3JULxyP9D4KS9G",
+            "project": {
+                "updatedAt": "2026-03-12T16:58:26.122Z",
+                "createdAt": "2026-03-12T15:02:21.486Z",
+                "id": "GE3JULxyP9D4KS9G",
+                "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": {
+        "updatedAt": "2026-03-28T13:21:30.000Z",
+        "createdAt": "2026-03-28T13:21:19.561Z",
+        "versionId": "62955a8b-8768-4dab-87ff-490ec5f4ddda",
+        "workflowId": "fI5u4rs3iXPfeXFl",
+        "nodes": [
             {
-              "id": "cond-membership",
-              "leftValue": "={{ $json.membership_status }}",
-              "rightValue": "active",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
+                "parameters": {
+                    "updates": [
+                        "message",
+                        "callback_query"
+                    ],
+                    "additionalFields": {}
+                },
+                "id": "11111111-0001-4000-8000-000000000001",
+                "type": "n8n-nodes-base.telegramTrigger",
+                "typeVersion": 1.2,
+                "name": "Telegram Trigger",
+                "position": [
+                    0,
+                    320
+                ],
+                "webhookId": "63001b72-4471-4896-b3b3-8ec56a0d9da6",
+                "credentials": {
+                    "telegramApi": {
+                        "id": "1duS64x2hsrz3moJ",
+                        "name": "Telegram account fitia"
+                    }
+                }
             },
             {
-              "id": "cond-active",
-              "leftValue": "={{ $json.is_active }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "a1b2c3d4-0013-4000-8000-000000000013",
-      "name": "Has Active Membership?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2250,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Extract Telegram Data').item.json.chatId }}",
-        "text": "Tu membres\u00eda no est\u00e1 activa o ha expirado.\n\nPara renovar tu suscripci\u00f3n, contacta al administrador:\n@fitai_admin\n\nEstaremos encantados de tenerte de vuelta.",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "a1b2c3d4-0014-4000-8000-000000000014",
-      "name": "No Membership Response",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        2500,
-        150
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT onboarding_completed\nFROM user_profiles\nWHERE user_id = $1;",
-        "additionalFields": {
-          "queryParams": "={{ [$json.user_id] }}"
-        }
-      },
-      "id": "a1b2c3d4-0015-4000-8000-000000000015",
-      "name": "Check Onboarding Status",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        2500,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
+                "parameters": {
+                    "rules": {
+                        "values": [
+                            {
+                                "conditions": {
+                                    "options": {
+                                        "version": 2,
+                                        "caseSensitive": true,
+                                        "typeValidation": "loose"
+                                    },
+                                    "combinator": "and",
+                                    "conditions": [
+                                        {
+                                            "operator": {
+                                                "type": "boolean",
+                                                "operation": "exists",
+                                                "singleValue": true
+                                            },
+                                            "leftValue": "={{ $json.message.text }}",
+                                            "rightValue": ""
+                                        }
+                                    ]
+                                },
+                                "renameOutput": true,
+                                "outputKey": "text"
+                            },
+                            {
+                                "conditions": {
+                                    "options": {
+                                        "version": 2,
+                                        "caseSensitive": true,
+                                        "typeValidation": "loose"
+                                    },
+                                    "combinator": "and",
+                                    "conditions": [
+                                        {
+                                            "operator": {
+                                                "type": "boolean",
+                                                "operation": "exists",
+                                                "singleValue": true
+                                            },
+                                            "leftValue": "={{ $json.message.voice.file_id }}",
+                                            "rightValue": ""
+                                        }
+                                    ]
+                                },
+                                "renameOutput": true,
+                                "outputKey": "voice"
+                            },
+                            {
+                                "conditions": {
+                                    "options": {
+                                        "version": 2,
+                                        "caseSensitive": true,
+                                        "typeValidation": "loose"
+                                    },
+                                    "combinator": "and",
+                                    "conditions": [
+                                        {
+                                            "operator": {
+                                                "type": "boolean",
+                                                "operation": "exists",
+                                                "singleValue": true
+                                            },
+                                            "leftValue": "={{ $json.callback_query.data }}",
+                                            "rightValue": ""
+                                        }
+                                    ]
+                                },
+                                "renameOutput": true,
+                                "outputKey": "callback"
+                            }
+                        ]
+                    },
+                    "looseTypeValidation": true,
+                    "options": {}
+                },
+                "id": "11111111-0002-4000-8000-000000000002",
+                "type": "n8n-nodes-base.switch",
+                "typeVersion": 3.2,
+                "name": "Route Message Type",
+                "position": [
+                    256,
+                    304
+                ]
+            },
             {
-              "id": "cond-onboarding",
-              "leftValue": "={{ $json.onboarding_completed }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
+                "parameters": {
+                    "resource": "file",
+                    "fileId": "={{ $json.message.voice.file_id }}",
+                    "additionalFields": {}
+                },
+                "id": "11111111-0003-4000-8000-000000000003",
+                "type": "n8n-nodes-base.telegram",
+                "typeVersion": 1.2,
+                "name": "Get Voice File",
+                "position": [
+                    512,
+                    512
+                ],
+                "webhookId": "5debfbcc-0498-4e8f-a50a-4b70b1694912",
+                "credentials": {
+                    "telegramApi": {
+                        "id": "1duS64x2hsrz3moJ",
+                        "name": "Telegram account fitia"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "resource": "audio",
+                    "operation": "transcribe",
+                    "options": {}
+                },
+                "id": "11111111-0004-4000-8000-000000000004",
+                "type": "@n8n/n8n-nodes-langchain.openAi",
+                "typeVersion": 1.8,
+                "name": "Transcribe Voice",
+                "position": [
+                    752,
+                    512
+                ],
+                "credentials": {
+                    "openAiApi": {
+                        "id": "NOJoPVNWDXiywRgw",
+                        "name": "OpenAi account"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "assignments": {
+                        "assignments": [
+                            {
+                                "id": "v1",
+                                "name": "message.text",
+                                "type": "string",
+                                "value": "={{ $json.text }}"
+                            },
+                            {
+                                "id": "v2",
+                                "name": "chatId",
+                                "type": "string",
+                                "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+                            },
+                            {
+                                "id": "v3",
+                                "name": "telegramId",
+                                "type": "string",
+                                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+                            },
+                            {
+                                "id": "v4",
+                                "name": "firstName",
+                                "type": "string",
+                                "value": "={{ $('Telegram Trigger').item.json.message.from.first_name }}"
+                            }
+                        ]
+                    },
+                    "options": {}
+                },
+                "id": "11111111-0005-4000-8000-000000000005",
+                "type": "n8n-nodes-base.set",
+                "typeVersion": 3.4,
+                "name": "Set Text from Voice",
+                "position": [
+                    1008,
+                    512
+                ]
+            },
+            {
+                "parameters": {
+                    "assignments": {
+                        "assignments": [
+                            {
+                                "id": "t1",
+                                "name": "message.text",
+                                "type": "string",
+                                "value": "={{ $json.message.text || $json.callback_query.data }}"
+                            },
+                            {
+                                "id": "t2",
+                                "name": "chatId",
+                                "type": "string",
+                                "value": "={{ $json.message.chat.id || $json.callback_query.message.chat.id }}"
+                            },
+                            {
+                                "id": "t3",
+                                "name": "telegramId",
+                                "type": "string",
+                                "value": "={{ $json.message.from.id || $json.callback_query.from.id }}"
+                            },
+                            {
+                                "id": "t4",
+                                "name": "firstName",
+                                "type": "string",
+                                "value": "={{ $json.message.from.first_name || $json.callback_query.from.first_name }}"
+                            }
+                        ]
+                    },
+                    "options": {}
+                },
+                "id": "11111111-0006-4000-8000-000000000006",
+                "type": "n8n-nodes-base.set",
+                "typeVersion": 3.4,
+                "name": "Set Text from Message",
+                "position": [
+                    752,
+                    224
+                ]
+            },
+            {
+                "parameters": {
+                    "operation": "executeQuery",
+                    "query": "SELECT u.id as user_id, u.first_name, u.is_active, COALESCE(m.status::text, 'none') as membership_status, CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed FROM users u LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW() LEFT JOIN user_profiles up ON up.user_id = u.id WHERE u.telegram_id = $1 LIMIT 1",
+                    "options": {
+                        "queryReplacement": "={{ $('Set Text from Message').item.json.telegramId }}"
+                    }
+                },
+                "id": "11111111-0007-4000-8000-000000000007",
+                "type": "n8n-nodes-base.postgres",
+                "typeVersion": 2.5,
+                "name": "Check User & Membership",
+                "position": [
+                    1264,
+                    304
+                ],
+                "credentials": {
+                    "postgres": {
+                        "id": "QLEgAnHDncQkLeNb",
+                        "name": "Postgres account Fitia"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "operation": "executeQuery",
+                    "query": "INSERT INTO users (telegram_id, first_name, last_name, username, language_code) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (telegram_id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = COALESCE(EXCLUDED.last_name, users.last_name), username = COALESCE(EXCLUDED.username, users.username), updated_at = NOW() RETURNING id, telegram_id, first_name",
+                    "options": {
+                        "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), String($('Set Text from Message').item.json.firstName || ''), ($('Telegram Trigger').item.json.message?.from?.last_name || null), ($('Telegram Trigger').item.json.message?.from?.username || null), ($('Telegram Trigger').item.json.message?.from?.language_code || 'es')] }}"
+                    }
+                },
+                "id": "11111111-0008-4000-8000-000000000008",
+                "type": "n8n-nodes-base.postgres",
+                "typeVersion": 2.5,
+                "name": "Upsert User",
+                "position": [
+                    1504,
+                    304
+                ],
+                "credentials": {
+                    "postgres": {
+                        "id": "QLEgAnHDncQkLeNb",
+                        "name": "Postgres account Fitia"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "conditions": {
+                        "options": {
+                            "caseSensitive": true,
+                            "leftValue": "",
+                            "typeValidation": "loose",
+                            "version": 1
+                        },
+                        "conditions": [
+                            {
+                                "id": "m1",
+                                "operator": {
+                                    "type": "string",
+                                    "operation": "equals"
+                                },
+                                "leftValue": "={{ $json.membership_status }}",
+                                "rightValue": "active"
+                            }
+                        ],
+                        "combinator": "and"
+                    },
+                    "options": {
+                        "looseTypeValidation": true
+                    }
+                },
+                "id": "11111111-0009-4000-8000-000000000009",
+                "type": "n8n-nodes-base.if",
+                "typeVersion": 2,
+                "name": "Has Active Membership?",
+                "position": [
+                    1760,
+                    304
+                ]
+            },
+            {
+                "parameters": {
+                    "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+                    "text": "=Hola {{ $('Set Text from Message').item.json.firstName }}! No tienes una membresia activa. Para acceder al asistente FitAI contacta al administrador.",
+                    "additionalFields": {
+                        "appendAttribution": false
+                    }
+                },
+                "id": "11111111-0010-4000-8000-000000000010",
+                "type": "n8n-nodes-base.telegram",
+                "typeVersion": 1.2,
+                "name": "No Membership Message",
+                "position": [
+                    2000,
+                    512
+                ],
+                "webhookId": "20379d01-666f-4ea3-834a-e62dc6c5ff5a",
+                "credentials": {
+                    "telegramApi": {
+                        "id": "1duS64x2hsrz3moJ",
+                        "name": "Telegram account fitia"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "conditions": {
+                        "options": {
+                            "caseSensitive": true,
+                            "leftValue": "",
+                            "typeValidation": "loose",
+                            "version": 1
+                        },
+                        "conditions": [
+                            {
+                                "id": "o1",
+                                "operator": {
+                                    "type": "boolean",
+                                    "operation": "true",
+                                    "singleValue": true
+                                },
+                                "leftValue": "={{ $json.onboarding_completed }}",
+                                "rightValue": "true"
+                            }
+                        ],
+                        "combinator": "and"
+                    },
+                    "options": {
+                        "looseTypeValidation": true
+                    }
+                },
+                "id": "11111111-0011-4000-8000-000000000011",
+                "type": "n8n-nodes-base.if",
+                "typeVersion": 2,
+                "name": "Onboarding Complete?",
+                "position": [
+                    2000,
+                    208
+                ]
+            },
+            {
+                "parameters": {
+                    "promptType": "define",
+                    "text": "={{ $('Set Text from Message').item.json.message.text }}",
+                    "options": {
+                        "systemMessage": "=Eres FitAI, un asistente personal de nutricion y fitness que opera por Telegram.\n\nUSUARIO:\n- Nombre: {{ $('Check User & Membership').item.json.first_name }}\n- ID: {{ $('Check User & Membership').item.json.user_id }}\n- Chat ID: {{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}\n- userId para herramientas: {{ $('Check User & Membership').item.json.user_id }}\n- Fecha actual: {{ $now.format('dd/MM/yyyy') }}\n\nROL:\nAyudas al usuario a mejorar su alimentacion, ejercicio y habitos de salud. Eres empatico, motivador y practico.\n\nHERRAMIENTAS DISPONIBLES:\n- Progreso: calcula metricas y progreso del usuario\n- PlanComidas: genera un nuevo plan de alimentacion semanal\n- Rutina: genera una nueva rutina de ejercicio\n- RegistrarEvento: guarda eventos del usuario en memoria personal (peso, comidas, perfil, metas)\n\nCUANDO USAR RegistrarEvento:\n- El usuario reporta su peso actual (ej: \"hoy peso 80 kg\") \u2192 eventType: weight_log\n- El usuario dice lo que comio (ej: \"desayune avena\") \u2192 eventType: meal_reported\n- El usuario actualiza un dato de perfil (ej: \"cambie mi objetivo a 75 kg\") \u2192 eventType: profile_update\n- El usuario establece una meta nueva \u2192 eventType: goal_set\nSiempre registra ANTES de responder al usuario.\n\nREGLAS:\n- Responde SIEMPRE en espanol\n- Mant\u00e9n respuestas cortas (Telegram: max 3 parrafos)\n- Usa emojis con moderacion\n- Si el usuario reporta una comida, ayudalo a registrarla y compararla con su plan\n- Si pide su plan de comidas o ejercicio, consulta la base de datos\n- Si necesita un nuevo plan, ofrece generarlo\n- Tono: amigable, como un coach personal cercano\n- NUNCA hagas diagnosticos medicos\n- Si hay una crisis de salud, deriva a profesionales\n\nFORMATO DE SALIDA:\nSolo el mensaje para el usuario, sin metadatos ni explicaciones."
+                    }
+                },
+                "id": "11111111-0012-4000-8000-000000000012",
+                "type": "@n8n/n8n-nodes-langchain.agent",
+                "typeVersion": 2,
+                "name": "FitAI Main AI Agent",
+                "position": [
+                    2448,
+                    0
+                ]
+            },
+            {
+                "parameters": {
+                    "model": {
+                        "__rl": true,
+                        "mode": "list",
+                        "value": "gpt-4o",
+                        "cachedResultName": "gpt-4o"
+                    },
+                    "options": {
+                        "maxTokens": 1024,
+                        "temperature": 0.7
+                    }
+                },
+                "id": "11111111-0013-4000-8000-000000000013",
+                "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+                "typeVersion": 1.2,
+                "name": "OpenAI Chat Model",
+                "position": [
+                    2304,
+                    144
+                ],
+                "credentials": {
+                    "openAiApi": {
+                        "id": "NOJoPVNWDXiywRgw",
+                        "name": "OpenAi account"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "sessionIdType": "customKey",
+                    "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id || $('Telegram Trigger').item.json.callback_query.message.chat.id }}",
+                    "contextWindowLength": 10
+                },
+                "id": "11111111-0014-4000-8000-000000000014",
+                "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+                "typeVersion": 1.3,
+                "name": "FitAI Memory",
+                "position": [
+                    2448,
+                    144
+                ]
+            },
+            {
+                "parameters": {
+                    "promptType": "define",
+                    "text": "={{ $('Set Text from Message').item.json['message.text'] }}",
+                    "options": {
+                        "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n\nCuando tengas TODOS los datos, responde con este JSON exacto al final:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- Confirma cada dato antes de avanzar al siguiente\n- Al final presenta un resumen del perfil para confirmacion"
+                    }
+                },
+                "id": "11111111-0015-4000-8000-000000000015",
+                "type": "@n8n/n8n-nodes-langchain.agent",
+                "typeVersion": 2,
+                "name": "Onboarding Agent",
+                "position": [
+                    2528,
+                    592
+                ]
+            },
+            {
+                "parameters": {
+                    "model": {
+                        "__rl": true,
+                        "mode": "list",
+                        "value": "gpt-4o-mini",
+                        "cachedResultName": "gpt-4o-mini"
+                    },
+                    "options": {
+                        "temperature": 0.5
+                    }
+                },
+                "id": "11111111-0016-4000-8000-000000000016",
+                "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+                "typeVersion": 1.2,
+                "name": "OpenAI Chat Model Onboarding",
+                "position": [
+                    2448,
+                    800
+                ],
+                "credentials": {
+                    "openAiApi": {
+                        "id": "NOJoPVNWDXiywRgw",
+                        "name": "OpenAi account"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "sessionIdType": "customKey",
+                    "sessionKey": "=onboarding_{{ $('Telegram Trigger').item.json.message.chat.id }}",
+                    "contextWindowLength": 20
+                },
+                "id": "11111111-0017-4000-8000-000000000017",
+                "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+                "typeVersion": 1.3,
+                "name": "Onboarding Memory",
+                "position": [
+                    2624,
+                    800
+                ]
+            },
+            {
+                "parameters": {
+                    "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+                    "text": "={{ $json.output }}",
+                    "additionalFields": {
+                        "appendAttribution": false,
+                        "parse_mode": "Markdown"
+                    }
+                },
+                "id": "11111111-0018-4000-8000-000000000018",
+                "type": "n8n-nodes-base.telegram",
+                "typeVersion": 1.2,
+                "name": "Send Response",
+                "position": [
+                    3424,
+                    288
+                ],
+                "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
+                "credentials": {
+                    "telegramApi": {
+                        "id": "1duS64x2hsrz3moJ",
+                        "name": "Telegram account fitia"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "name": "Progreso",
+                    "description": "Calcula el progreso de peso y m\u00e9tricas del usuario. \u00dasala cuando el usuario pregunte por su progreso, evoluci\u00f3n de peso, o estad\u00edsticas.",
+                    "workflowId": {
+                        "__rl": true,
+                        "value": "bhJ8qqZXr68Id3pH",
+                        "mode": "id"
+                    },
+                    "fields": {
+                        "values": [
+                            {
+                                "name": "userId",
+                                "type": "numberValue",
+                                "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+                            },
+                            {
+                                "name": "chatId",
+                                "type": "numberValue",
+                                "numberValue": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+                            }
+                        ]
+                    }
+                },
+                "id": "tool-w1-progress",
+                "name": "Tool: Progreso",
+                "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+                "typeVersion": 1.3,
+                "position": [
+                    2992,
+                    288
+                ]
+            },
+            {
+                "parameters": {
+                    "name": "Plan_Comidas",
+                    "description": "Genera un plan de alimentaci\u00f3n personalizado. \u00dasala cuando el usuario pida un plan de comidas, dieta, o quiera cambiar su nutrici\u00f3n.",
+                    "workflowId": {
+                        "__rl": true,
+                        "value": "KQhP9lQNxCKeOsbJ",
+                        "mode": "id"
+                    },
+                    "fields": {
+                        "values": [
+                            {
+                                "name": "userId",
+                                "type": "numberValue",
+                                "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+                            },
+                            {
+                                "name": "chatId",
+                                "type": "numberValue",
+                                "numberValue": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+                            }
+                        ]
+                    }
+                },
+                "id": "tool-w2-meal",
+                "name": "Tool: Plan Comidas",
+                "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+                "typeVersion": 1.3,
+                "position": [
+                    2672,
+                    288
+                ]
+            },
+            {
+                "parameters": {
+                    "name": "Rutina",
+                    "description": "Genera una rutina de ejercicios personalizada. \u00dasala cuando el usuario pida una rutina de entrenamiento, ejercicios, o gym.",
+                    "workflowId": {
+                        "__rl": true,
+                        "value": "ETjiYAUhXfsVSyWQ",
+                        "mode": "id"
+                    },
+                    "fields": {
+                        "values": [
+                            {
+                                "name": "userId",
+                                "type": "numberValue",
+                                "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+                            },
+                            {
+                                "name": "chatId",
+                                "type": "numberValue",
+                                "numberValue": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+                            }
+                        ]
+                    }
+                },
+                "id": "tool-w3-workout",
+                "name": "Tool: Rutina",
+                "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+                "typeVersion": 1.3,
+                "position": [
+                    2832,
+                    288
+                ]
+            },
+            {
+                "parameters": {
+                    "name": "RegistrarEvento",
+                    "description": "Registra eventos del usuario en su memoria personal RAG: peso registrado, comida reportada, cambios de perfil, metas establecidas. Usa esta herramienta CADA VEZ que el usuario reporte algo nuevo sobre su salud o progreso (peso actual, lo que comio, un nuevo objetivo).",
+                    "workflowId": {
+                        "__rl": true,
+                        "value": "vAqqjXg2IE1ldgg3",
+                        "mode": "id"
+                    },
+                    "fields": {
+                        "values": [
+                            {
+                                "name": "userId",
+                                "type": "numberValue",
+                                "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+                            },
+                            {
+                                "name": "eventType",
+                                "stringValue": "={{ $fromAI('eventType', 'Tipo de evento: weight_log | meal_reported | profile_update | goal_set') }}"
+                            },
+                            {
+                                "name": "eventDataJson",
+                                "stringValue": "={{ $fromAI('eventData', 'JSON string con los datos del evento. Para weight_log: {\"weight_kg\": 80.5, \"notes\": \"opcional\"}. Para meal_reported: {\"meal_description\": \"desc\", \"calories\": 350, \"meal_type\": \"breakfast|lunch|dinner\"}. Para profile_update: {\"campo\": \"valor\"}. Para goal_set: {\"goal_type\": \"tipo\", \"target_weight_kg\": 75}') }}"
+                            }
+                        ]
+                    }
+                },
+                "id": "tool-w4-rag",
+                "name": "Tool: Registrar Evento",
+                "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+                "typeVersion": 1.3,
+                "position": [
+                    2512,
+                    288
+                ]
             }
-          ],
-          "combinator": "and"
-        }
-      },
-      "id": "a1b2c3d4-0016-4000-8000-000000000016",
-      "name": "Onboarding Completed?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2750,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "mode": "name",
-          "value": "FitAI - Main AI Agent"
+        ],
+        "connections": {
+            "Telegram Trigger": {
+                "main": [
+                    [
+                        {
+                            "node": "Route Message Type",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Route Message Type": {
+                "main": [
+                    [
+                        {
+                            "node": "Set Text from Message",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ],
+                    [
+                        {
+                            "node": "Get Voice File",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ],
+                    [
+                        {
+                            "node": "Set Text from Message",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Get Voice File": {
+                "main": [
+                    [
+                        {
+                            "node": "Transcribe Voice",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Transcribe Voice": {
+                "main": [
+                    [
+                        {
+                            "node": "Set Text from Voice",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Set Text from Voice": {
+                "main": [
+                    [
+                        {
+                            "node": "Upsert User",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Set Text from Message": {
+                "main": [
+                    [
+                        {
+                            "node": "Upsert User",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Upsert User": {
+                "main": [
+                    [
+                        {
+                            "node": "Check User & Membership",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Check User & Membership": {
+                "main": [
+                    [
+                        {
+                            "node": "Has Active Membership?",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Has Active Membership?": {
+                "main": [
+                    [
+                        {
+                            "node": "Onboarding Complete?",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ],
+                    [
+                        {
+                            "node": "No Membership Message",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Onboarding Complete?": {
+                "main": [
+                    [
+                        {
+                            "node": "FitAI Main AI Agent",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ],
+                    [
+                        {
+                            "node": "Onboarding Agent",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "FitAI Main AI Agent": {
+                "main": [
+                    [
+                        {
+                            "node": "Send Response",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Onboarding Agent": {
+                "main": [
+                    [
+                        {
+                            "node": "Send Response",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "OpenAI Chat Model": {
+                "ai_languageModel": [
+                    [
+                        {
+                            "node": "FitAI Main AI Agent",
+                            "type": "ai_languageModel",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "FitAI Memory": {
+                "ai_memory": [
+                    [
+                        {
+                            "node": "FitAI Main AI Agent",
+                            "type": "ai_memory",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "OpenAI Chat Model Onboarding": {
+                "ai_languageModel": [
+                    [
+                        {
+                            "node": "Onboarding Agent",
+                            "type": "ai_languageModel",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Onboarding Memory": {
+                "ai_memory": [
+                    [
+                        {
+                            "node": "Onboarding Agent",
+                            "type": "ai_memory",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Tool: Progreso": {
+                "ai_tool": [
+                    [
+                        {
+                            "node": "FitAI Main AI Agent",
+                            "type": "ai_tool",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Tool: Plan Comidas": {
+                "ai_tool": [
+                    [
+                        {
+                            "node": "FitAI Main AI Agent",
+                            "type": "ai_tool",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Tool: Rutina": {
+                "ai_tool": [
+                    [
+                        {
+                            "node": "FitAI Main AI Agent",
+                            "type": "ai_tool",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Tool: Registrar Evento": {
+                "ai_tool": [
+                    [
+                        {
+                            "node": "FitAI Main AI Agent",
+                            "type": "ai_tool",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
         },
-        "options": {}
-      },
-      "id": "a1b2c3d4-0017-4000-8000-000000000017",
-      "name": "Execute Main Agent",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
-      "position": [
-        3000,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "mode": "name",
-          "value": "FitAI - Onboarding Flow"
-        },
-        "options": {}
-      },
-      "id": "a1b2c3d4-0018-4000-8000-000000000018",
-      "name": "Execute Onboarding",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
-      "position": [
-        3000,
-        150
-      ]
+        "authors": "Mauro Ibarra ",
+        "name": "Version 62955a8b",
+        "description": "",
+        "autosaved": true,
+        "workflowPublishHistory": [
+            {
+                "createdAt": "2026-03-28T13:21:30.911Z",
+                "id": 122,
+                "workflowId": "fI5u4rs3iXPfeXFl",
+                "versionId": "62955a8b-8768-4dab-87ff-490ec5f4ddda",
+                "event": "activated",
+                "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+            }
+        ]
     }
-  ],
-  "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Extract Telegram Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract Telegram Data": {
-      "main": [
-        [
-          {
-            "node": "Should Process?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Should Process?": {
-      "main": [
-        [
-          {
-            "node": "Check Supported Type",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "Check Supported Type": {
-      "main": [
-        [
-          {
-            "node": "Check Rate Limit",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Unsupported Type Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Rate Limit": {
-      "main": [
-        [
-          {
-            "node": "Set Rate Limit TTL",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Rate Limit TTL": {
-      "main": [
-        [
-          {
-            "node": "Rate Limit Exceeded?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Rate Limit Exceeded?": {
-      "main": [
-        [
-          {
-            "node": "Rate Limit Message",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Verify Membership",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Verify Membership": {
-      "main": [
-        [
-          {
-            "node": "User Exists?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "User Exists?": {
-      "main": [
-        [
-          {
-            "node": "Has Active Membership?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Unknown User Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Active Membership?": {
-      "main": [
-        [
-          {
-            "node": "Check Onboarding Status",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "No Membership Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Check Onboarding Status": {
-      "main": [
-        [
-          {
-            "node": "Onboarding Completed?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Onboarding Completed?": {
-      "main": [
-        [
-          {
-            "node": "Execute Main Agent",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Execute Onboarding",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
-  "settings": {
-    "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
-  },
-  "staticData": null,
-  "meta": null,
-  "pinData": null,
-  "versionId": "439bd737-0f77-4d5a-b6de-eb98abc13b90",
-  "activeVersionId": null,
-  "versionCounter": 1,
-  "triggerCount": 0,
-  "shared": [
-    {
-      "updatedAt": "2026-03-27T16:32:30.147Z",
-      "createdAt": "2026-03-27T16:32:30.147Z",
-      "role": "workflow:owner",
-      "workflowId": "mTH32CWhJqhNzMpZ",
-      "projectId": "GE3JULxyP9D4KS9G",
-      "project": {
-        "updatedAt": "2026-03-12T16:58:26.122Z",
-        "createdAt": "2026-03-12T15:02:21.486Z",
-        "id": "GE3JULxyP9D4KS9G",
-        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
-      }
-    }
-  ],
-  "tags": [],
-  "activeVersion": null
 }
