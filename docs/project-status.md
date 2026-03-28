@@ -4,9 +4,9 @@
 
 ---
 
-## Estado Actual: En Producción Local — Core Flows Funcionando
+## Estado Actual: En Producción Local — Todos los Flows Probados
 
-El sistema está corriendo localmente con Docker. Los flujos principales de conversación funcionan end-to-end con usuarios reales en Telegram.
+El sistema está corriendo localmente con Docker. Todos los workflows han sido probados E2E. Los cron workflows funcionan con lógica correcta; la alerta de membresía falla solo por datos de test (telegram_id falso).
 
 ---
 
@@ -18,10 +18,10 @@ El sistema está corriendo localmente con Docker. Los flujos principales de conv
 | `bhJ8qqZXr68Id3pH` | FitAI - Progress Calculator | ✅ E2E OK | Recibe userId+chatId vía toolWorkflow, calcula métricas, responde |
 | `KQhP9lQNxCKeOsbJ` | FitAI - Meal Plan Generator | ✅ E2E OK | Genera plan semanal con GPT-4o, guarda en DB, envía por Telegram |
 | `ETjiYAUhXfsVSyWQ` | FitAI - Workout Plan Generator | ✅ E2E OK | Genera rutina personalizada, guarda en DB, envía por Telegram |
-| `vAqqjXg2IE1ldgg3` | FitAI - RAG Personal Indexer | ✅ Construido | Usa LangChain nodes (VectorStoreQdrant + EmbeddingsOpenAI) |
-| `SntGuE97yl9efvo5` | FitAI - Meal Reminder Scheduler | ⏳ Sin probar | Cron workflow |
-| `tkSAHhjJnO4nTFsM` | FitAI - Weight Update Requester | ⏳ Sin probar | Cron workflow |
-| `I4Q4C6SOPY2fnK3W` | FitAI - Membership Alert | ⏳ Sin probar | Cron workflow |
+| `vAqqjXg2IE1ldgg3` | FitAI - RAG Personal Indexer | ✅ Construido | Usa LangChain nodes; pendiente conectar como tool en el Handler |
+| `SntGuE97yl9efvo5` | FitAI - Meal Reminder Scheduler | ✅ E2E OK | Envió mensaje real de recordatorio de desayuno (message_id=34) |
+| `tkSAHhjJnO4nTFsM` | FitAI - Weight Update Requester | ✅ Lógica OK | No envía mensajes (correcto: usuarios registraron peso hace <5 días) |
+| `I4Q4C6SOPY2fnK3W` | FitAI - Membership Alert | ✅ Lógica OK | Detecta vencimientos; falla Telegram solo por telegram_id=777001 de test |
 
 ---
 
@@ -69,6 +69,12 @@ El sistema está corriendo localmente con Docker. Los flujos principales de conv
   - `@n8n/n8n-nodes-langchain.vectorStoreQdrant` (modo insert)
   - `@n8n/n8n-nodes-langchain.documentDefaultDataLoader`
   - `@n8n/n8n-nodes-langchain.embeddingsOpenAi`
+- `Prepare Document`: añadida validación de input para manejar datos vacíos gracefully
+
+### Cron Workflows (SntGuE97yl9efvo5, tkSAHhjJnO4nTFsM, I4Q4C6SOPY2fnK3W)
+- **`Split In Batches` removido de los 3 workflows**: sin conexión de loop-back, el nodo enviaba todos los items al output[1] ("done") que no estaba conectado, deteniendo el flujo silenciosamente. Solución: conexión directa del nodo "get" al nodo de procesamiento.
+- **`Needs Weight Update` IF node**: `typeValidation: strict` → `loose` para manejar valores Date de PostgreSQL sin error de tipo.
+- **`Build Weight Request Message`**: referencia `$('Split In Batches').item.json` → `$('Get Active Members').item.json` tras remover Split In Batches.
 
 ---
 
@@ -107,9 +113,9 @@ El sistema está corriendo localmente con Docker. Los flujos principales de conv
 ## Próximos Pasos
 
 ### Inmediatos
-1. **Probar workflows cron** (Meal Reminder, Weight Update, Membership Alert) — ejecutar manualmente vía n8n UI
-2. **Indexar knowledge base** en Qdrant — ejecutar RAG Personal Indexer con los archivos de `skills/`
-3. **Configurar Vector Store Tool** en el AI Agent para consultas RAG
+1. **Conectar RAG Personal Indexer como tool** en el Handler — añadir `toolWorkflow` con `workflowId: vAqqjXg2IE1ldgg3` para que el agente indexe eventos (peso, comidas, cambios de perfil)
+2. **Indexar knowledge base** en Qdrant — ejecutar RAG Personal Indexer con los archivos de `skills/business/`
+3. **Configurar Vector Store Tool** en el AI Agent para consultas RAG (buscar contexto personal del usuario)
 
 ### Corto Plazo
 4. **Construir panel de administración** (Express + EJS) — gestión de usuarios, membresías, pagos

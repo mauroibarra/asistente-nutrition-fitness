@@ -180,7 +180,51 @@ Nota: n8n usa un formato JSON indexado donde las referencias son strings con ín
 
 ---
 
-## 8. Checklist de debugging rápido
+## 8. Split In Batches sin loop-back — flujo silencioso
+
+**Síntoma:** `lastNodeExecuted: "Split In Batches"`, los nodos downstream nunca se ejecutan. En los datos de ejecución: `output[0]: None`, `output[1]: N items`.
+
+**Causa:** `splitInBatches` tiene dos outputs:
+- `output[0]` (loop): batch actual a procesar
+- `output[1]` (done): se dispara cuando terminan todos los batches
+
+Sin conexión de loop-back desde el último nodo → Split In Batches, el nodo pone todos los items en output[1] ("done") que no está conectado a nada. El flujo se detiene silenciosamente.
+
+**Fix A — Loop-back completo:**
+```
+Get Members → Split In Batches → Process → IF → [true] Send → Split In Batches (loop)
+                                                 [false] → Split In Batches (loop)
+```
+
+**Fix B — Eliminar Split In Batches (recomendado para Telegram bots):**
+```
+Get Members → Process → IF → Send
+```
+n8n procesa múltiples items automáticamente. Solo usar `splitInBatches` cuando se necesita control real de batch size (ej: rate limits externos estrictos).
+
+---
+
+## 9. IF node typeVersion 2 con Date de PostgreSQL y typeValidation strict
+
+**Síntoma:** `Wrong type: 'Thu Mar 26 2026...' is an object but was expecting a string [condition N, item 0]`
+
+**Causa:** Un campo fecha de PostgreSQL (ej: `logged_at`) viene como string tipo Date. Una condición de tipo `string` con `typeValidation: "strict"` no puede coercionarlo.
+
+**Fix:** Cambiar `conditions.options.typeValidation` de `"strict"` a `"loose"`:
+```json
+{
+  "conditions": {
+    "options": {
+      "caseSensitive": true,
+      "typeValidation": "loose"
+    }
+  }
+}
+```
+
+---
+
+## 10. Checklist de debugging rápido
 
 Cuando un workflow no funciona como se espera:
 
@@ -191,3 +235,5 @@ Cuando un workflow no funciona como se espera:
 5. ✅ ¿El tipo del nodo está disponible? (no "install this node")
 6. ✅ Ver `lastNodeExecuted` en la ejecución para saber dónde se detuvo
 7. ✅ Buscar el error exacto en los datos de la ejecución (SQLite o UI)
+8. ✅ ¿`Split In Batches` tiene loop-back? (output[0] → proceso → loop-back → Split In Batches)
+9. ✅ ¿IF node con fechas de PG usa `typeValidation: loose`? (no strict con Date objects)
