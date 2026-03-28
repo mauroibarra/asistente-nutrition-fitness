@@ -4,9 +4,9 @@
 
 ---
 
-## Estado Actual: En Producción Local — Todos los Flows Probados
+## Estado Actual: En Producción Local — Todos los Flows E2E ✅
 
-El sistema está corriendo localmente con Docker. Todos los workflows han sido probados E2E. Los cron workflows funcionan con lógica correcta; la alerta de membresía falla solo por datos de test (telegram_id falso).
+El sistema está corriendo localmente con Docker. **Todos los 8 workflows han sido probados E2E.** Los cron workflows funcionan con lógica correcta; el RAG Indexer indexa datos de usuarios en Qdrant vía el AI Agent.
 
 ---
 
@@ -18,7 +18,7 @@ El sistema está corriendo localmente con Docker. Todos los workflows han sido p
 | `bhJ8qqZXr68Id3pH` | FitAI - Progress Calculator | ✅ E2E OK | Recibe userId+chatId vía toolWorkflow, calcula métricas, responde |
 | `KQhP9lQNxCKeOsbJ` | FitAI - Meal Plan Generator | ✅ E2E OK | Genera plan semanal con GPT-4o, guarda en DB, envía por Telegram |
 | `ETjiYAUhXfsVSyWQ` | FitAI - Workout Plan Generator | ✅ E2E OK | Genera rutina personalizada, guarda en DB, envía por Telegram |
-| `vAqqjXg2IE1ldgg3` | FitAI - RAG Personal Indexer | ✅ Construido | Usa LangChain nodes; pendiente conectar como tool en el Handler |
+| `vAqqjXg2IE1ldgg3` | FitAI - RAG Personal Indexer | ✅ E2E OK | Indexa en Qdrant vía tool del AI Agent; 1 punto confirmado en user_rag |
 | `SntGuE97yl9efvo5` | FitAI - Meal Reminder Scheduler | ✅ E2E OK | Envió mensaje real de recordatorio de desayuno (message_id=34) |
 | `tkSAHhjJnO4nTFsM` | FitAI - Weight Update Requester | ✅ Lógica OK | No envía mensajes (correcto: usuarios registraron peso hace <5 días) |
 | `I4Q4C6SOPY2fnK3W` | FitAI - Membership Alert | ✅ Lógica OK | Detecta vencimientos; falla Telegram solo por telegram_id=777001 de test |
@@ -69,7 +69,16 @@ El sistema está corriendo localmente con Docker. Todos los workflows han sido p
   - `@n8n/n8n-nodes-langchain.vectorStoreQdrant` (modo insert)
   - `@n8n/n8n-nodes-langchain.documentDefaultDataLoader`
   - `@n8n/n8n-nodes-langchain.embeddingsOpenAi`
-- `Prepare Document`: añadida validación de input para manejar datos vacíos gracefully
+- `Prepare Document`: parsing de campo `query` (enviado por AI Agent) cuando `$fromAI()` retorna "undefined"
+- `Document Loader`: requiere nodo `textSplitterCharacterTextSplitter` conectado como sub-nodo `ai_textSplitter`
+- Conectado al Handler como `Tool: Registrar Evento` (typeVersion 1.3, ai_tool)
+- Sistema prompt actualizado con instrucciones sobre cuándo usar `RegistrarEvento`
+
+### Handler — Tool: Registrar Evento
+- Nuevo `toolWorkflow` node conectado a `FitAI Main AI Agent` vía `ai_tool`
+- `workflowId`: `vAqqjXg2IE1ldgg3`
+- Campos: `userId` (fijo del contexto), `eventType` y `eventDataJson` (vía `$fromAI()`)
+- AI Agent llama la tool automáticamente al detectar peso, comidas, o cambios de perfil
 
 ### Cron Workflows (SntGuE97yl9efvo5, tkSAHhjJnO4nTFsM, I4Q4C6SOPY2fnK3W)
 - **`Split In Batches` removido de los 3 workflows**: sin conexión de loop-back, el nodo enviaba todos los items al output[1] ("done") que no estaba conectado, deteniendo el flujo silenciosamente. Solución: conexión directa del nodo "get" al nodo de procesamiento.
@@ -113,9 +122,8 @@ El sistema está corriendo localmente con Docker. Todos los workflows han sido p
 ## Próximos Pasos
 
 ### Inmediatos
-1. **Conectar RAG Personal Indexer como tool** en el Handler — añadir `toolWorkflow` con `workflowId: vAqqjXg2IE1ldgg3` para que el agente indexe eventos (peso, comidas, cambios de perfil)
-2. **Indexar knowledge base** en Qdrant — ejecutar RAG Personal Indexer con los archivos de `skills/business/`
-3. **Configurar Vector Store Tool** en el AI Agent para consultas RAG (buscar contexto personal del usuario)
+1. **Indexar knowledge base** en Qdrant — ejecutar RAG Personal Indexer con los archivos de `skills/business/` para la colección `knowledge_rag`
+2. **Configurar Vector Store Tool** en el AI Agent — añadir nodo `@n8n/n8n-nodes-langchain.vectorStoreQdrant` (modo retrieval) al AI Agent para que busque contexto personal del usuario en `user_rag`
 
 ### Corto Plazo
 4. **Construir panel de administración** (Express + EJS) — gestión de usuarios, membresías, pagos

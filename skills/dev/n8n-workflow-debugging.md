@@ -237,3 +237,5 @@ Cuando un workflow no funciona como se espera:
 7. ✅ Buscar el error exacto en los datos de la ejecución (SQLite o UI)
 8. ✅ ¿`Split In Batches` tiene loop-back? (output[0] → proceso → loop-back → Split In Batches)
 9. ✅ ¿IF node con fechas de PG usa `typeValidation: loose`? (no strict con Date objects)
+10. ✅ ¿`documentDefaultDataLoader` tiene text splitter sub-nodo? (`ai_textSplitter` → `Document Loader`)
+11. ✅ ¿`$fromAI()` retorna `"undefined"` string? → parsear desde campo `query` como fallback
