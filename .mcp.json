@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "n8n": {
+      "command": "npx",
+      "args": ["-y", "n8n-mcp"],
+      "env": {
+        "N8N_BASE_URL": "${N8N_BASE_URL}",
+        "N8N_API_KEY": "${N8N_API_KEY}"
+      },
+      "description": "Interactuar con la instancia de n8n: crear/editar workflows, ejecutar, obtener estado. Requiere que n8n esté corriendo y las variables N8N_BASE_URL y N8N_API_KEY estén configuradas en .env"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/mauro.ibarrap/Documents/github-personal/asistente-nutrition-fitness"
+      ],
+      "description": "Leer y escribir archivos del proyecto. La ruta apunta al directorio raíz del proyecto."
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      },
+      "description": "Ejecutar queries directos a PostgreSQL durante desarrollo. Requiere que PostgreSQL esté corriendo y DATABASE_URL esté configurada en .env"
+    }
+  }
+}

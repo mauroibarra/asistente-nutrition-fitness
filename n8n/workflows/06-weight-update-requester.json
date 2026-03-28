@@ -1,0 +1,243 @@
+{
+  "updatedAt": "2026-03-27T16:34:42.737Z",
+  "createdAt": "2026-03-27T16:34:42.737Z",
+  "id": "tkSAHhjJnO4nTFsM",
+  "name": "FitAI - Weight Update Requester",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Get Active Members",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.telegram_id, u.first_name, u.id AS user_id, up.weight_kg AS profile_weight, g.target_weight, g.start_weight FROM users u JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW() JOIN user_profiles up ON up.user_id = u.id AND up.onboarding_completed = true LEFT JOIN goals g ON g.user_id = u.id AND g.is_active = true WHERE u.is_active = true;",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        700,
+        300
+      ],
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Check Last Weight Log",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        940,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT logged_at, weight_kg FROM weight_logs WHERE user_id = $1 ORDER BY logged_at DESC LIMIT 1;",
+        "options": {
+          "queryReplacement": "={{ $json.user_id }}"
+        }
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Needs Weight Update",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.logged_at }}",
+              "rightValue": "={{ $now.minus({days: 5}).toISO() }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "before"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-6",
+      "name": "Build Weight Request Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const memberData = $('Split In Batches').item.json;\nconst lastLog = $('Check Last Weight Log').first()?.json;\n\nconst lastWeight = lastLog?.weight_kg || memberData.profile_weight;\nconst lastDate = lastLog?.logged_at\n  ? new Date(lastLog.logged_at).toLocaleDateString('es-MX')\n  : 'tu registro inicial';\nconst targetWeight = memberData.target_weight;\n\nlet motivationalNote = '';\nif (targetWeight && lastWeight) {\n  const remaining = Math.abs(lastWeight - targetWeight);\n  if (remaining < 1) {\n    motivationalNote = 'Estas muy cerca de tu objetivo!';\n  } else if (remaining < 5) {\n    motivationalNote = 'Te faltan solo ' + remaining.toFixed(1) + ' kg para tu meta. Sigue asi!';\n  } else {\n    motivationalNote = 'Cada semana cuenta. Vamos por esos ' + remaining.toFixed(1) + ' kg que te faltan!';\n  }\n}\n\nconst message = 'Buenos dias, ' + memberData.first_name + '! Es lunes de actualizacion de peso.\\n\\nTu ultimo peso registrado: ' + lastWeight + ' kg (' + lastDate + ')\\n' + (targetWeight ? 'Tu peso objetivo: ' + targetWeight + ' kg\\n' : '') + (motivationalNote ? motivationalNote + '\\n' : '') + '\\nCuanto pesas hoy? Solo dime el numero en kg (ej: 74.5) y lo registro.';\n\nreturn [{\n  json: {\n    telegramId: memberData.telegram_id,\n    firstName: memberData.first_name,\n    message\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Request Weight",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1660,
+        200
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegramId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Members",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Members": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Check Last Weight Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Last Weight Log": {
+      "main": [
+        [
+          {
+            "node": "Needs Weight Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Weight Update": {
+      "main": [
+        [
+          {
+            "node": "Build Weight Request Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Weight Request Message": {
+      "main": [
+        [
+          {
+            "node": "Request Weight",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "6a7415a1-4f58-4064-aafc-7fa7ef9e0fdc",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T16:34:42.740Z",
+      "createdAt": "2026-03-27T16:34:42.740Z",
+      "role": "workflow:owner",
+      "workflowId": "tkSAHhjJnO4nTFsM",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

@@ -1,0 +1,180 @@
+{
+  "updatedAt": "2026-03-27T16:33:56.395Z",
+  "createdAt": "2026-03-27T16:33:56.395Z",
+  "id": "SntGuE97yl9efvo5",
+  "name": "FitAI - Meal Reminder Scheduler",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 13 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 19 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Get Active Members",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.telegram_id, u.first_name, up.wake_up_time, up.meal_count, mp.plan_json FROM users u JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW() JOIN user_profiles up ON up.user_id = u.id AND up.onboarding_completed = true JOIN meal_plans mp ON mp.user_id = u.id AND mp.is_active = true WHERE u.is_active = true;",
+        "options": {}
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        700,
+        300
+      ],
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Get Today Meal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst currentHour = now.getHours();\nconst currentMinute = now.getMinutes();\nconst currentTime = currentHour * 60 + currentMinute;\n\nconst [wakeHour, wakeMin] = ($json.wake_up_time || '07:00').split(':').map(Number);\nconst wakeTime = wakeHour * 60 + wakeMin;\n\nconst minutesSinceWake = currentTime - wakeTime;\nlet mealType;\nif (minutesSinceWake <= 90) {\n  mealType = 'breakfast';\n} else if (minutesSinceWake <= 330) {\n  mealType = 'lunch';\n} else {\n  mealType = 'dinner';\n}\n\nconst dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];\nconst today = dayNames[now.getDay()];\n\nconst plan = typeof $json.plan_json === 'string' ? JSON.parse($json.plan_json) : $json.plan_json;\nconst todayPlan = plan.days?.[today];\nconst meal = todayPlan?.meals?.find(m => m.type === mealType);\n\nif (!meal) {\n  return [{ json: { skip: true } }];\n}\n\nconst foodList = meal.foods ? meal.foods.map(f => '- ' + f.name + ': ' + f.quantity + ' ' + (f.unit || '')).join('\\n') : '';\nconst mealTypeSpanish = { breakfast: 'desayuno', lunch: 'comida', dinner: 'cena', snack: 'snack' };\n\nreturn [{\n  json: {\n    skip: false,\n    telegramId: $json.telegram_id,\n    firstName: $json.first_name,\n    mealType: mealTypeSpanish[mealType] || mealType,\n    mealName: meal.name,\n    totalCalories: meal.total_calories,\n    foodList\n  }\n}];",
+        "runOnceForEachItem": true
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Send Reminder",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1180,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegramId }}",
+        "text": "=Hola {{ $json.firstName }}! Es hora de tu {{ $json.mealType }}.\n\n\ud83c\udf7d {{ $json.mealName }} (~{{ $json.totalCalories }} kcal)\n\n{{ $json.foodList }}\n\nBuen provecho! Si necesitas algun ajuste o sustitucion, solo dime.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Members",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Members": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Get Today Meal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today Meal": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "1419d4f8-b7f3-4e6c-9b6c-b8c1845d69e8",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T16:33:56.402Z",
+      "createdAt": "2026-03-27T16:33:56.402Z",
+      "role": "workflow:owner",
+      "workflowId": "SntGuE97yl9efvo5",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

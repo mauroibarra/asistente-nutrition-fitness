@@ -1,0 +1,607 @@
+{
+  "updatedAt": "2026-03-27T16:32:30.143Z",
+  "createdAt": "2026-03-27T16:32:30.143Z",
+  "id": "mTH32CWhJqhNzMpZ",
+  "name": "FitAI - Telegram Webhook Handler",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fitai-telegram",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const update = $input.first().json;\nconst message = update.body.message || update.body.edited_message;\n\nif (!message) {\n  return [{ json: { skip: true, reason: 'no_message' } }];\n}\n\nconst chatId = message.chat.id;\nconst telegramId = message.from.id;\nconst firstName = message.from.first_name || '';\nconst lastName = message.from.last_name || '';\nconst username = message.from.username || '';\nconst text = message.text || '';\nconst messageType = message.photo ? 'photo'\n  : message.voice ? 'voice'\n  : message.document ? 'document'\n  : message.location ? 'location'\n  : 'text';\nconst messageId = message.message_id;\nconst date = new Date(message.date * 1000).toISOString();\n\nreturn [{\n  json: {\n    skip: false,\n    chatId,\n    telegramId,\n    firstName,\n    lastName,\n    username,\n    text,\n    messageType,\n    messageId,\n    date\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Extract Telegram Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        250,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-skip",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Should Process?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-type",
+              "leftValue": "={{ $json.messageType }}",
+              "rightValue": "text",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Check Supported Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        750,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Telegram Data').item.json.chatId }}",
+        "text": "Por el momento solo puedo procesar mensajes de texto. Escr\u00edbeme tu consulta y con gusto te ayudo.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Unsupported Type Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1000,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "incr",
+        "key": "=rate_limit:{{ $('Extract Telegram Data').item.json.telegramId }}"
+      },
+      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "name": "Check Rate Limit",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "expire",
+        "key": "=rate_limit:{{ $('Extract Telegram Data').item.json.telegramId }}",
+        "expire": 60
+      },
+      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "name": "Set Rate Limit TTL",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-ratelimit",
+              "leftValue": "={{ $json.value }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "name": "Rate Limit Exceeded?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Telegram Data').item.json.chatId }}",
+        "text": "Est\u00e1s enviando mensajes muy r\u00e1pido. Espera un momento antes de continuar.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "a1b2c3d4-0009-4000-8000-000000000009",
+      "name": "Rate Limit Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1750,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name, u.is_active,\n       m.plan_type, m.status AS membership_status, m.expires_at\nFROM users u\nLEFT JOIN memberships m ON u.id = m.user_id\n  AND m.status = 'active'\n  AND m.expires_at > NOW()\nWHERE u.telegram_id = $1\nORDER BY m.expires_at DESC\nLIMIT 1;",
+        "additionalFields": {
+          "queryParams": "={{ [$('Extract Telegram Data').item.json.telegramId] }}"
+        }
+      },
+      "id": "a1b2c3d4-0010-4000-8000-000000000010",
+      "name": "Verify Membership",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1750,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-exists",
+              "leftValue": "={{ $json.user_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0011-4000-8000-000000000011",
+      "name": "User Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Telegram Data').item.json.chatId }}",
+        "text": "No tienes una cuenta registrada en FitAI.\n\nContacta al administrador para activar tu acceso:\n@fitai_admin",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "a1b2c3d4-0012-4000-8000-000000000012",
+      "name": "Unknown User Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2250,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-membership",
+              "leftValue": "={{ $json.membership_status }}",
+              "rightValue": "active",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-active",
+              "leftValue": "={{ $json.is_active }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0013-4000-8000-000000000013",
+      "name": "Has Active Membership?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extract Telegram Data').item.json.chatId }}",
+        "text": "Tu membres\u00eda no est\u00e1 activa o ha expirado.\n\nPara renovar tu suscripci\u00f3n, contacta al administrador:\n@fitai_admin\n\nEstaremos encantados de tenerte de vuelta.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "a1b2c3d4-0014-4000-8000-000000000014",
+      "name": "No Membership Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2500,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT onboarding_completed\nFROM user_profiles\nWHERE user_id = $1;",
+        "additionalFields": {
+          "queryParams": "={{ [$json.user_id] }}"
+        }
+      },
+      "id": "a1b2c3d4-0015-4000-8000-000000000015",
+      "name": "Check Onboarding Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2500,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-onboarding",
+              "leftValue": "={{ $json.onboarding_completed }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0016-4000-8000-000000000016",
+      "name": "Onboarding Completed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2750,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "FitAI - Main AI Agent"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0017-4000-8000-000000000017",
+      "name": "Execute Main Agent",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        3000,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "FitAI - Onboarding Flow"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0018-4000-8000-000000000018",
+      "name": "Execute Onboarding",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        3000,
+        150
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Telegram Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Telegram Data": {
+      "main": [
+        [
+          {
+            "node": "Should Process?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Process?": {
+      "main": [
+        [
+          {
+            "node": "Check Supported Type",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Check Supported Type": {
+      "main": [
+        [
+          {
+            "node": "Check Rate Limit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unsupported Type Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Rate Limit": {
+      "main": [
+        [
+          {
+            "node": "Set Rate Limit TTL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Rate Limit TTL": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Exceeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Exceeded?": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Verify Membership",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Membership": {
+      "main": [
+        [
+          {
+            "node": "User Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User Exists?": {
+      "main": [
+        [
+          {
+            "node": "Has Active Membership?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Unknown User Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Active Membership?": {
+      "main": [
+        [
+          {
+            "node": "Check Onboarding Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Membership Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Onboarding Status": {
+      "main": [
+        [
+          {
+            "node": "Onboarding Completed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Onboarding Completed?": {
+      "main": [
+        [
+          {
+            "node": "Execute Main Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Onboarding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "439bd737-0f77-4d5a-b6de-eb98abc13b90",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T16:32:30.147Z",
+      "createdAt": "2026-03-27T16:32:30.147Z",
+      "role": "workflow:owner",
+      "workflowId": "mTH32CWhJqhNzMpZ",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

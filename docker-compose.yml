@@ -1,0 +1,198 @@
+version: "3.8"
+
+# ============================================================
+# FitAI Assistant — Docker Compose Stack
+# ============================================================
+# Services: n8n, postgres, redis, qdrant, admin-panel, nginx
+# Usage: docker compose up -d
+# ============================================================
+
+services:
+  # ----------------------------------------------------------
+  # PostgreSQL — Main database
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: fitai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"  # Expose in dev only; remove in production
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - fitai-network
+
+  # ----------------------------------------------------------
+  # Redis — Cache and ephemeral state
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: fitai-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"  # dev only; remove in production
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fitai-network
+
+  # ----------------------------------------------------------
+  # Qdrant — Vector store for RAG
+  # ----------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: fitai-qdrant
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:-}
+    ports:
+      - "6333:6333"  # REST API (dev only; remove or firewall in production)
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'cat < /dev/null > /dev/tcp/localhost/6333' && echo ok || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fitai-network
+
+  # ----------------------------------------------------------
+  # n8n — Workflow orchestration
+  # ----------------------------------------------------------
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: fitai-n8n
+    restart: unless-stopped
+    environment:
+      # General
+      N8N_HOST: 0.0.0.0
+      N8N_PORT: 5678
+      N8N_PROTOCOL: https
+      WEBHOOK_URL: https://${DOMAIN:-localhost}/n8n/
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      GENERIC_TIMEZONE: America/Mexico_City
+
+      # Database (n8n stores its own data in the same PostgreSQL)
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Execution settings
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: 168  # 7 days in hours
+
+      # API access for n8n-mcp
+      N8N_API_ENABLED: "true"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/backups
+    ports:
+      - "5678:5678"  # Expose in dev only; nginx handles this in production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - fitai-network
+
+  # ----------------------------------------------------------
+  # Admin Panel — User and membership management (Express + EJS)
+  # ----------------------------------------------------------
+  admin-panel:
+    build:
+      context: ./admin-panel
+      dockerfile: Dockerfile
+    container_name: fitai-admin-panel
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${ADMIN_PANEL_PORT:-3000}
+      DATABASE_URL: ${DATABASE_URL}
+      SESSION_SECRET: ${ADMIN_PANEL_SECRET_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${ADMIN_PANEL_PORT:-3000}:${ADMIN_PANEL_PORT:-3000}"  # Expose in dev only
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${ADMIN_PANEL_PORT:-3000}/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - fitai-network
+
+  # ----------------------------------------------------------
+  # Nginx — Reverse proxy (production)
+  # ----------------------------------------------------------
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: fitai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot_webroot:/var/www/certbot:ro
+      - certbot_certs:/etc/letsencrypt:ro
+    depends_on:
+      - n8n
+      - admin-panel
+    networks:
+      - fitai-network
+
+# ----------------------------------------------------------
+# Volumes
+# ----------------------------------------------------------
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  qdrant_data:
+    driver: local
+  n8n_data:
+    driver: local
+  certbot_webroot:
+    driver: local
+  certbot_certs:
+    driver: local
+
+# ----------------------------------------------------------
+# Networks
+# ----------------------------------------------------------
+networks:
+  fitai-network:
+    driver: bridge

@@ -1,0 +1,167 @@
+{
+  "updatedAt": "2026-03-27T16:34:21.840Z",
+  "createdAt": "2026-03-27T16:34:21.840Z",
+  "id": "I4Q4C6SOPY2fnK3W",
+  "name": "FitAI - Membership Alert",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-w10-1",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-w10-2",
+      "name": "Get Expiring Memberships",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.telegram_id, u.first_name, m.expires_at, m.plan_type FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.status = 'active' AND m.expires_at BETWEEN NOW() AND NOW() + INTERVAL '3 days' AND u.is_active = true",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "node-w10-3",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-w10-4",
+      "name": "Calculate Days Left",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst now = new Date();\nconst expiresAt = new Date(data.expires_at);\nconst diffMs = expiresAt - now;\nconst daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));\n\nconst expiresAtFormatted = expiresAt.toLocaleDateString('es-ES', {\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric'\n});\n\nconst planTypeLabel = {\n  'monthly': 'mensual',\n  'quarterly': 'trimestral',\n  'annual': 'anual',\n  'weekly': 'semanal'\n}[data.plan_type] || data.plan_type;\n\nreturn [{\n  json: {\n    telegramId: data.telegram_id,\n    firstName: data.first_name,\n    planType: planTypeLabel,\n    daysLeft,\n    expiresAt: expiresAtFormatted\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-w10-5",
+      "name": "Send Expiry Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        300
+      ],
+      "parameters": {
+        "chatId": "={{ $json.telegramId }}",
+        "text": "={{ '\u26a0\ufe0f Hola ' + $json.firstName + ', tu membres\u00eda ' + $json.planType + ' vence en ' + $json.daysLeft + ' d\u00eda(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
+        "additionalFields": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Expiring Memberships",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Expiring Memberships": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Calculate Days Left",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Days Left": {
+      "main": [
+        [
+          {
+            "node": "Send Expiry Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "25c2cdf1-598a-4969-964e-3b5c1c9bc5fe",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T16:34:21.843Z",
+      "createdAt": "2026-03-27T16:34:21.843Z",
+      "role": "workflow:owner",
+      "workflowId": "I4Q4C6SOPY2fnK3W",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

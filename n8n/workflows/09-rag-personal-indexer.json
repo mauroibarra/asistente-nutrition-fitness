@@ -1,0 +1,148 @@
+{
+  "updatedAt": "2026-03-27T16:34:14.906Z",
+  "createdAt": "2026-03-27T16:34:14.906Z",
+  "id": "vAqqjXg2IE1ldgg3",
+  "name": "FitAI - RAG Personal Indexer",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "node-w9-1",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "node-w9-2",
+      "name": "Prepare Document",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const { userId, eventType, eventData } = $input.first().json;\n\nconst now = eventData.date || new Date().toISOString().split('T')[0];\nlet text = '';\n\nswitch (eventType) {\n  case 'weight_log':\n    text = `On ${now}, user logged weight: ${eventData.weight_kg}kg`;\n    if (eventData.notes) text += `. Notes: ${eventData.notes}`;\n    break;\n  case 'meal_reported':\n    text = `On ${now}, user ate: ${eventData.meal_description}`;\n    if (eventData.calories) text += `. Estimated calories: ${eventData.calories} kcal`;\n    if (eventData.meal_type) text += `. Meal type: ${eventData.meal_type}`;\n    break;\n  case 'profile_update':\n    const changes = Object.entries(eventData)\n      .filter(([k]) => k !== 'date')\n      .map(([k, v]) => `${k}: ${v}`)\n      .join(', ');\n    text = `On ${now}, user updated profile: ${changes}`;\n    break;\n  case 'goal_set':\n    text = `On ${now}, user set goal: ${eventData.goal_type || 'general'}`;\n    if (eventData.target_weight_kg) text += `. Target weight: ${eventData.target_weight_kg}kg`;\n    if (eventData.target_date) text += `. Target date: ${eventData.target_date}`;\n    if (eventData.description) text += `. Description: ${eventData.description}`;\n    break;\n  default:\n    text = `On ${now}, user event: ${eventType}. Data: ${JSON.stringify(eventData)}`;\n}\n\n// Generate a deterministic UUID-like ID from userId + eventType + date\nconst idBase = `${userId}-${eventType}-${now}-${Date.now()}`;\nconst pointId = idBase.replace(/[^a-zA-Z0-9]/g, '').substring(0, 32).padEnd(32, '0');\n// Format as UUID\nconst formattedId = [\n  pointId.substring(0, 8),\n  pointId.substring(8, 12),\n  pointId.substring(12, 16),\n  pointId.substring(16, 20),\n  pointId.substring(20, 32)\n].join('-');\n\nreturn [{\n  json: {\n    userId,\n    eventType,\n    eventData,\n    text,\n    pointId: formattedId,\n    date: now\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-w9-3",
+      "name": "Create Embedding",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "resource": "embedding",
+        "operation": "create",
+        "model": "text-embedding-3-small",
+        "input": "={{ $json.text }}"
+      }
+    },
+    {
+      "id": "node-w9-4",
+      "name": "Upsert to Qdrant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "http://qdrant:6333/collections/user_rag/points",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ points: [{ id: $('Prepare Document').first().json.pointId, vector: $json.data[0].embedding, payload: { user_id: $('Prepare Document').first().json.userId, event_type: $('Prepare Document').first().json.eventType, date: $('Prepare Document').first().json.date, text: $('Prepare Document').first().json.text } }] }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Document": {
+      "main": [
+        [
+          {
+            "node": "Create Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Embedding": {
+      "main": [
+        [
+          {
+            "node": "Upsert to Qdrant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "739b57f2-2565-4a68-8759-92a63040fd16",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-27T16:34:14.909Z",
+      "createdAt": "2026-03-27T16:34:14.909Z",
+      "role": "workflow:owner",
+      "workflowId": "vAqqjXg2IE1ldgg3",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}
