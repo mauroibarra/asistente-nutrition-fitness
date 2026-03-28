@@ -190,3 +190,34 @@ La `description` del tool es lo que el LLM lee para decidir cuándo llamarlo. De
 | `vectorStoreQdrant` (retrieve) | `ai_tool` o `ai_vectorStore` | Búsqueda semántica RAG |
 
 Todos se conectan al AI Agent via sus puertos especializados (no el puerto `main`).
+
+---
+
+## ADVERTENCIA: $fromAI() en fields.values no funciona como se espera
+
+`$fromAI('paramName', 'desc')` en `fields.values` de un `toolWorkflow` **retorna la string `"undefined"`** si el AI Agent no incluyó ese parámetro en su tool call. El AI Agent siempre envía el campo `query` pero puede no enviar campos custom.
+
+**Patrón INCORRECTO (parece funcionar pero falla silenciosamente):**
+```json
+{
+  "name": "eventType",
+  "type": "stringValue",
+  "stringValue": "={{ $fromAI('eventType', 'El tipo de evento') }}"
+}
+```
+El sub-workflow recibe `eventType: "undefined"` (string), no el valor esperado.
+
+**Patrón CORRECTO — JSON-in-query:**
+
+Instructar al AI en la descripción del tool a formatear `query` como JSON:
+```
+description: "Registra un evento. El campo query DEBE ser JSON: {\"eventType\":\"weight_log\",\"weight_kg\":77.5}"
+```
+
+En el sub-workflow, parsear `$json.query` como JSON:
+```javascript
+const { userId, query } = $input.first().json;
+const parsed = JSON.parse(query);  // { eventType, weight_kg, ... }
+```
+
+**Por qué:** El AI Agent llama las tools con un único campo `query` (auto-generado). Los `fields.values` con expresiones fijas (`={{ expresión }}`) funcionan para contexto del developer (userId, chatId). Los `$fromAI()` solo funcionan cuando el AI explícitamente pasa esos parámetros como parte del schema de la herramienta — lo cual requiere `Specify Input Schema` habilitado.
