@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-28T12:15:40.707Z",
+  "updatedAt": "2026-03-28T16:47:26.037Z",
   "createdAt": "2026-03-27T16:34:21.840Z",
   "id": "I4Q4C6SOPY2fnK3W",
   "name": "FitAI - Membership Alert",
@@ -50,7 +50,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json;\n\nconst now = new Date();\nconst expiresAt = new Date(data.expires_at);\nconst diffMs = expiresAt - now;\nconst daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));\n\nconst expiresAtFormatted = expiresAt.toLocaleDateString('es-ES', {\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric'\n});\n\nconst planTypeLabel = {\n  'monthly': 'mensual',\n  'quarterly': 'trimestral',\n  'annual': 'anual',\n  'weekly': 'semanal'\n}[data.plan_type] || data.plan_type;\n\nreturn [{\n  json: {\n    telegramId: data.telegram_id,\n    firstName: data.first_name,\n    planType: planTypeLabel,\n    daysLeft,\n    expiresAt: expiresAtFormatted\n  }\n}];"
+        "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n\n  const now = new Date();\n  const expiresAt = new Date(data.expires_at);\n  const diffMs = expiresAt - now;\n  const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));\n\n  const expiresAtFormatted = expiresAt.toLocaleDateString('es-ES', {\n    day: '2-digit',\n    month: '2-digit',\n    year: 'numeric'\n  });\n\n  const planTypeLabel = {\n    'monthly': 'mensual',\n    'quarterly': 'trimestral',\n    'annual': 'anual',\n    'weekly': 'semanal'\n  }[data.plan_type] || data.plan_type;\n\n  return {\n    json: {\n      telegramId: data.telegram_id,\n      firstName: data.first_name,\n      planType: planTypeLabel,\n      daysLeft,\n      expiresAt: expiresAtFormatted\n    }\n  };\n});"
       },
       "id": "node-w10-4",
       "name": "Calculate Days Left",
@@ -64,7 +64,7 @@
     {
       "parameters": {
         "chatId": "={{ $json.telegramId }}",
-        "text": "={{ '⚠️ Hola ' + $json.firstName + ', tu membresía ' + $json.planType + ' vence en ' + $json.daysLeft + ' día(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
+        "text": "={{ '\u26a0\ufe0f Hola ' + $json.firstName + ', tu membres\u00eda ' + $json.planType + ' vence en ' + $json.daysLeft + ' d\u00eda(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
         "additionalFields": {}
       },
       "id": "node-w10-5",
@@ -131,9 +131,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "d31d3abb-5d96-4039-98bf-f1ac68b4e80e",
-  "activeVersionId": "d31d3abb-5d96-4039-98bf-f1ac68b4e80e",
-  "versionCounter": 16,
+  "versionId": "c81f8d9f-194a-4f81-a245-a86d6af1af31",
+  "activeVersionId": "c81f8d9f-194a-4f81-a245-a86d6af1af31",
+  "versionCounter": 36,
   "triggerCount": 1,
   "shared": [
     {
@@ -156,9 +156,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-28T12:15:40.707Z",
-    "createdAt": "2026-03-28T12:15:40.707Z",
-    "versionId": "d31d3abb-5d96-4039-98bf-f1ac68b4e80e",
+    "updatedAt": "2026-03-28T16:47:26.038Z",
+    "createdAt": "2026-03-28T16:47:26.038Z",
+    "versionId": "c81f8d9f-194a-4f81-a245-a86d6af1af31",
     "workflowId": "I4Q4C6SOPY2fnK3W",
     "nodes": [
       {
@@ -204,7 +204,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const data = $input.first().json;\n\nconst now = new Date();\nconst expiresAt = new Date(data.expires_at);\nconst diffMs = expiresAt - now;\nconst daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));\n\nconst expiresAtFormatted = expiresAt.toLocaleDateString('es-ES', {\n  day: '2-digit',\n  month: '2-digit',\n  year: 'numeric'\n});\n\nconst planTypeLabel = {\n  'monthly': 'mensual',\n  'quarterly': 'trimestral',\n  'annual': 'anual',\n  'weekly': 'semanal'\n}[data.plan_type] || data.plan_type;\n\nreturn [{\n  json: {\n    telegramId: data.telegram_id,\n    firstName: data.first_name,\n    planType: planTypeLabel,\n    daysLeft,\n    expiresAt: expiresAtFormatted\n  }\n}];"
+          "jsCode": "return $input.all().map(item => {\n  const data = item.json;\n\n  const now = new Date();\n  const expiresAt = new Date(data.expires_at);\n  const diffMs = expiresAt - now;\n  const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));\n\n  const expiresAtFormatted = expiresAt.toLocaleDateString('es-ES', {\n    day: '2-digit',\n    month: '2-digit',\n    year: 'numeric'\n  });\n\n  const planTypeLabel = {\n    'monthly': 'mensual',\n    'quarterly': 'trimestral',\n    'annual': 'anual',\n    'weekly': 'semanal'\n  }[data.plan_type] || data.plan_type;\n\n  return {\n    json: {\n      telegramId: data.telegram_id,\n      firstName: data.first_name,\n      planType: planTypeLabel,\n      daysLeft,\n      expiresAt: expiresAtFormatted\n    }\n  };\n});"
         },
         "id": "node-w10-4",
         "name": "Calculate Days Left",
@@ -218,7 +218,7 @@
       {
         "parameters": {
           "chatId": "={{ $json.telegramId }}",
-          "text": "={{ '⚠️ Hola ' + $json.firstName + ', tu membresía ' + $json.planType + ' vence en ' + $json.daysLeft + ' día(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
+          "text": "={{ '\u26a0\ufe0f Hola ' + $json.firstName + ', tu membres\u00eda ' + $json.planType + ' vence en ' + $json.daysLeft + ' d\u00eda(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
           "additionalFields": {}
         },
         "id": "node-w10-5",
@@ -279,10 +279,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-28T12:15:41.760Z",
-        "id": 104,
+        "createdAt": "2026-03-28T16:47:27.092Z",
+        "id": 139,
         "workflowId": "I4Q4C6SOPY2fnK3W",
-        "versionId": "d31d3abb-5d96-4039-98bf-f1ac68b4e80e",
+        "versionId": "c81f8d9f-194a-4f81-a245-a86d6af1af31",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

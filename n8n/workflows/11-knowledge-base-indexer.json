@@ -1,0 +1,473 @@
+{
+  "updatedAt": "2026-03-28T16:19:25.692Z",
+  "createdAt": "2026-03-28T16:04:13.813Z",
+  "id": "3uXT5ld76uIUCENn",
+  "name": "FitAI - Knowledge Base Indexer",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "kb-node-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "kb-indexer-fitai",
+      "parameters": {
+        "path": "kb-indexer-fitai",
+        "responseMode": "responseNode",
+        "options": {},
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "kb-node-2",
+      "name": "Prepare Chunk",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst { text, source, section, chunkId } = body;\nif (!text) throw new Error('text is required');\nreturn [{ json: { text, source: source || 'unknown', section: section || '', chunkId: chunkId || 'chunk-0' } }];"
+      }
+    },
+    {
+      "id": "kb-node-3",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        900,
+        460
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, chunkId: $('Prepare Chunk').item.json.chunkId }) }}"
+      }
+    },
+    {
+      "id": "kb-node-4",
+      "name": "Upsert to knowledge_rag",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "knowledge_rag",
+          "mode": "list",
+          "cachedResultName": "knowledge_rag"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "qdrantApi": {
+          "id": "ZgvYkNPmxRynoz3F",
+          "name": "Qdrant account Fitia"
+        }
+      }
+    },
+    {
+      "id": "kb-node-5",
+      "name": "Doc Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        560,
+        460
+      ],
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Prepare Chunk').item.json.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "source",
+                "value": "={{ $('Prepare Chunk').item.json.source }}"
+              },
+              {
+                "name": "section",
+                "value": "={{ $('Prepare Chunk').item.json.section }}"
+              },
+              {
+                "name": "chunkId",
+                "value": "={{ $('Prepare Chunk').item.json.chunkId }}"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "kb-node-6",
+      "name": "Text Splitter KB",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        440,
+        480
+      ],
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 80
+      }
+    },
+    {
+      "id": "kb-node-7",
+      "name": "OpenAI Embeddings KB",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        680,
+        460
+      ],
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "NOJoPVNWDXiywRgw",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Chunk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Chunk": {
+      "main": [
+        [
+          {
+            "node": "Upsert to knowledge_rag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert to knowledge_rag": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doc Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Upsert to knowledge_rag",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Splitter KB": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Doc Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Embeddings KB": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Upsert to knowledge_rag",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "291888a2-e367-4944-adbb-55354bebcf59",
+  "activeVersionId": "291888a2-e367-4944-adbb-55354bebcf59",
+  "versionCounter": 11,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-28T16:04:13.858Z",
+      "createdAt": "2026-03-28T16:04:13.858Z",
+      "role": "workflow:owner",
+      "workflowId": "3uXT5ld76uIUCENn",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-28T16:19:25.693Z",
+    "createdAt": "2026-03-28T16:19:25.693Z",
+    "versionId": "291888a2-e367-4944-adbb-55354bebcf59",
+    "workflowId": "3uXT5ld76uIUCENn",
+    "nodes": [
+      {
+        "id": "kb-node-1",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          300
+        ],
+        "webhookId": "kb-indexer-fitai",
+        "parameters": {
+          "path": "kb-indexer-fitai",
+          "responseMode": "responseNode",
+          "options": {},
+          "httpMethod": "POST"
+        }
+      },
+      {
+        "id": "kb-node-2",
+        "name": "Prepare Chunk",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst { text, source, section, chunkId } = body;\nif (!text) throw new Error('text is required');\nreturn [{ json: { text, source: source || 'unknown', section: section || '', chunkId: chunkId || 'chunk-0' } }];"
+        }
+      },
+      {
+        "id": "kb-node-3",
+        "name": "Respond OK",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          900,
+          460
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ ok: true, chunkId: $('Prepare Chunk').item.json.chunkId }) }}"
+        }
+      },
+      {
+        "id": "kb-node-4",
+        "name": "Upsert to knowledge_rag",
+        "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+        "typeVersion": 1,
+        "position": [
+          680,
+          300
+        ],
+        "parameters": {
+          "mode": "insert",
+          "qdrantCollection": {
+            "__rl": true,
+            "value": "knowledge_rag",
+            "mode": "list",
+            "cachedResultName": "knowledge_rag"
+          },
+          "options": {}
+        },
+        "credentials": {
+          "qdrantApi": {
+            "id": "ZgvYkNPmxRynoz3F",
+            "name": "Qdrant account Fitia"
+          }
+        }
+      },
+      {
+        "id": "kb-node-5",
+        "name": "Doc Loader",
+        "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+        "typeVersion": 1,
+        "position": [
+          560,
+          460
+        ],
+        "parameters": {
+          "jsonMode": "expressionData",
+          "jsonData": "={{ $('Prepare Chunk').item.json.text }}",
+          "options": {
+            "metadata": {
+              "metadataValues": [
+                {
+                  "name": "source",
+                  "value": "={{ $('Prepare Chunk').item.json.source }}"
+                },
+                {
+                  "name": "section",
+                  "value": "={{ $('Prepare Chunk').item.json.section }}"
+                },
+                {
+                  "name": "chunkId",
+                  "value": "={{ $('Prepare Chunk').item.json.chunkId }}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "kb-node-6",
+        "name": "Text Splitter KB",
+        "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+        "typeVersion": 1,
+        "position": [
+          440,
+          480
+        ],
+        "parameters": {
+          "chunkSize": 800,
+          "chunkOverlap": 80
+        }
+      },
+      {
+        "id": "kb-node-7",
+        "name": "OpenAI Embeddings KB",
+        "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+        "typeVersion": 1,
+        "position": [
+          680,
+          460
+        ],
+        "parameters": {
+          "model": "text-embedding-3-small",
+          "options": {}
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "NOJoPVNWDXiywRgw",
+            "name": "OpenAi account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Prepare Chunk",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Chunk": {
+        "main": [
+          [
+            {
+              "node": "Upsert to knowledge_rag",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert to knowledge_rag": {
+        "main": [
+          [
+            {
+              "node": "Respond OK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Doc Loader": {
+        "ai_document": [
+          [
+            {
+              "node": "Upsert to knowledge_rag",
+              "type": "ai_document",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Text Splitter KB": {
+        "ai_textSplitter": [
+          [
+            {
+              "node": "Doc Loader",
+              "type": "ai_textSplitter",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Embeddings KB": {
+        "ai_embedding": [
+          [
+            {
+              "node": "Upsert to knowledge_rag",
+              "type": "ai_embedding",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-28T16:19:26.747Z",
+        "id": 129,
+        "workflowId": "3uXT5ld76uIUCENn",
+        "versionId": "291888a2-e367-4944-adbb-55354bebcf59",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
+}

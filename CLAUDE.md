@@ -152,6 +152,7 @@ Mapa de IDs → archivos del repo:
 | `SntGuE97yl9efvo5` | `n8n/workflows/05-meal-reminder-scheduler.json` |
 | `tkSAHhjJnO4nTFsM` | `n8n/workflows/06-weight-update-requester.json` |
 | `I4Q4C6SOPY2fnK3W` | `n8n/workflows/10-membership-alert.json` |
+| `3uXT5ld76uIUCENn` | `n8n/workflows/11-knowledge-base-indexer.json` |
 
 ### Importar/Exportar Workflows de n8n (CLI)
 

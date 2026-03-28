@@ -4,9 +4,9 @@
 
 ---
 
-## Estado Actual: En Producción Local — Todos los Flows E2E ✅
+## Estado Actual: En Producción Local — RAG Completo ✅
 
-El sistema está corriendo localmente con Docker. **Todos los 8 workflows han sido probados E2E.** Los cron workflows funcionan con lógica correcta; el RAG Indexer indexa datos de usuarios en Qdrant vía el AI Agent.
+El sistema está corriendo localmente con Docker. **Todos los 9 workflows activos.** RAG pipeline completo: `user_rag` indexa eventos personales vía AI Agent tool; `knowledge_rag` tiene 106 puntos (25 secciones de 4 skills). AI Agent puede buscar contexto personal vía `Tool: Contexto Personal`.
 
 ---
 
@@ -14,11 +14,13 @@ El sistema está corriendo localmente con Docker. **Todos los 8 workflows han si
 
 | ID | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | ✅ E2E OK | Handler unificado (18 nodos): onboarding check, AI Agent, send response |
+| `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | ✅ E2E OK | Handler unificado (24 nodos): onboarding, AI Agent + 5 tools + Vector Store RAG |
+| `3uXT5ld76uIUCENn` | FitAI - Knowledge Base Indexer | ✅ E2E OK | Webhook POST; indexó 25 secciones → 106 puntos en knowledge_rag |
 | `bhJ8qqZXr68Id3pH` | FitAI - Progress Calculator | ✅ E2E OK | Recibe userId+chatId vía toolWorkflow, calcula métricas, responde |
 | `KQhP9lQNxCKeOsbJ` | FitAI - Meal Plan Generator | ✅ E2E OK | Genera plan semanal con GPT-4o, guarda en DB, envía por Telegram |
 | `ETjiYAUhXfsVSyWQ` | FitAI - Workout Plan Generator | ✅ E2E OK | Genera rutina personalizada, guarda en DB, envía por Telegram |
-| `vAqqjXg2IE1ldgg3` | FitAI - RAG Personal Indexer | ✅ E2E OK | Indexa en Qdrant vía tool del AI Agent; 1 punto confirmado en user_rag |
+| `vAqqjXg2IE1ldgg3` | FitAI - RAG Personal Indexer | ✅ E2E OK | Indexa en Qdrant vía tool del AI Agent; fechas en hora Colombia |
+| `UfO8uMAfcfkxv4np` | FitAI - RAG Personal Search | ✅ E2E OK | Sub-workflow HTTP: embeddings → Qdrant search con filtro userId; contexto con fecha Colombia |
 | `SntGuE97yl9efvo5` | FitAI - Meal Reminder Scheduler | ✅ E2E OK | Envió mensaje real de recordatorio de desayuno (message_id=34) |
 | `tkSAHhjJnO4nTFsM` | FitAI - Weight Update Requester | ✅ Lógica OK | No envía mensajes (correcto: usuarios registraron peso hace <5 días) |
 | `I4Q4C6SOPY2fnK3W` | FitAI - Membership Alert | ✅ Lógica OK | Detecta vencimientos; falla Telegram solo por telegram_id=777001 de test |
@@ -32,7 +34,7 @@ El sistema está corriendo localmente con Docker. **Todos los 8 workflows han si
 | n8n 2.11.3 | ✅ Running | Docker standalone, puerto 5678, SQLite backend |
 | PostgreSQL 16 | ✅ Running | Contenedor `fitai-postgres`, red `fitai-network` |
 | Redis 7 | ✅ Running | Puerto 6379 expuesto al host |
-| Qdrant 1.7+ | ✅ Running | Puerto 6333, colecciones `user_rag` y `knowledge_rag` creadas |
+| Qdrant 1.13.0 | ✅ Running | Puerto 6333, colecciones `user_rag` y `knowledge_rag` — compatible con @langchain/qdrant@1.0.1 |
 | ngrok | ✅ Running | Expone n8n al exterior para el webhook de Telegram |
 
 ---
@@ -80,6 +82,22 @@ El sistema está corriendo localmente con Docker. **Todos los 8 workflows han si
 - Campos: `userId` (fijo del contexto), `eventType` y `eventDataJson` (vía `$fromAI()`)
 - AI Agent llama la tool automáticamente al detectar peso, comidas, o cambios de perfil
 
+### Handler — Tool: Contexto Personal (vectorStoreQdrant typeVersion 1.3) ✅ FINAL
+- **Root cause del bug**: `@langchain/qdrant@1.0.1` (n8n 2.11.3) usa `POST /points/query` — endpoint que solo existe en Qdrant ≥ 1.10.0. Con Qdrant 1.7.4 devolvía 404 "Not Found".
+- **Fix**: Qdrant actualizado a **v1.13.0** en `docker-compose.yml`. Volumen de datos preservado.
+- Nodo: `vectorStoreQdrant` typeVersion **1.3**, `mode: "retrieve-as-tool"`, `qdrantCollection.mode: "id"`
+- embeddingsOpenAi typeVersion **1**, `model: "text-embedding-3-small"` como **string** (NO Resource Locator `{__rl}`)
+- Validado exec 354: AI dice "Hoy, 28/03/2026..." con datos correctos del RAG ✅
+
+
+### Timezone Colombia
+- `GENERIC_TIMEZONE=America/Bogota` ya estaba en n8n → cron triggers correctos
+- `Prepare Document` (RAG Indexer) y `Format Results` (RAG Search) actualizados a `toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })` en lugar de `toISOString().split('T')[0]`
+
+### Knowledge Base Indexer (3uXT5ld76uIUCENn)
+- Nuevo workflow con webhook POST (path: `kb-indexer-fitai`)
+- Indexó 25 secciones de 4 skills (nutrition, fitness, habit-psychology, metrics-calculation) → 106 puntos en `knowledge_rag`
+
 ### Cron Workflows (SntGuE97yl9efvo5, tkSAHhjJnO4nTFsM, I4Q4C6SOPY2fnK3W)
 - **`Split In Batches` removido de los 3 workflows**: sin conexión de loop-back, el nodo enviaba todos los items al output[1] ("done") que no estaba conectado, deteniendo el flujo silenciosamente. Solución: conexión directa del nodo "get" al nodo de procesamiento.
 - **`Needs Weight Update` IF node**: `typeValidation: strict` → `loose` para manejar valores Date de PostgreSQL sin error de tipo.
@@ -114,6 +132,7 @@ El sistema está corriendo localmente con Docker. **Todos los 8 workflows han si
 | 21 | `prompts/meal-plan-generation.md` | ✅ Completo | Templates de planes de comidas |
 | 22 | `prompts/workout-plan-generation.md` | ✅ Completo | Templates de rutinas |
 | 23 | `n8n/workflows/README.md` | ✅ Completo | Guía de workflows |
+| 26 | `n8n/workflows/11-knowledge-base-indexer.json` | ✅ Completo | Workflow webhook POST; indexa skills/business/ en knowledge_rag |
 | 24 | `admin-panel/README.md` | ✅ Completo | Setup del panel admin |
 | 25 | `src/bot/handlers/README.md` | ✅ Completo | Descripción de handlers |
 
@@ -121,12 +140,8 @@ El sistema está corriendo localmente con Docker. **Todos los 8 workflows han si
 
 ## Próximos Pasos
 
-### Inmediatos
-1. **Indexar knowledge base** en Qdrant — ejecutar RAG Personal Indexer con los archivos de `skills/business/` para la colección `knowledge_rag`
-2. **Configurar Vector Store Tool** en el AI Agent — añadir nodo `@n8n/n8n-nodes-langchain.vectorStoreQdrant` (modo retrieval) al AI Agent para que busque contexto personal del usuario en `user_rag`
-
 ### Corto Plazo
-4. **Construir panel de administración** (Express + EJS) — gestión de usuarios, membresías, pagos
+1. **Construir panel de administración** (Express + EJS) — gestión de usuarios, membresías, pagos
 5. **Prueba E2E completa** — onboarding nuevo usuario → planes → progreso → recordatorios
 
 ### Producción

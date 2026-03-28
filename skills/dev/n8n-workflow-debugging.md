@@ -224,7 +224,42 @@ n8n procesa múltiples items automáticamente. Solo usar `splitInBatches` cuando
 
 ---
 
-## 10. Checklist de debugging rápido
+## 10. httpRequest typeVersion 4.2 — configuración correcta para body JSON
+
+**Síntoma:** OpenAI responde `"you must provide a model parameter"` aunque el body parece correcto. O el body llega vacío al endpoint externo.
+
+**Causa:** La config `body.mode: "raw"` + `rawBody` es sintaxis de typeVersion anterior. En typeVersion 4.2 se ignora silenciosamente.
+
+**Fix — config correcta:**
+```json
+{
+  "sendBody": true,
+  "specifyBody": "json",
+  "jsonBody": "={{ JSON.stringify({ model: 'text-embedding-3-small', input: $json.query }) }}"
+}
+```
+
+**Config INCORRECTA (typeVersion < 4.2):**
+```json
+{
+  "body": { "mode": "raw" },
+  "rawBody": "={{ JSON.stringify({...}) }}"
+}
+```
+
+**Para agregar headers custom (ej: Qdrant api-key):**
+```json
+{
+  "sendHeaders": true,
+  "headerParameters": {
+    "parameters": [{ "name": "api-key", "value": "tu-api-key-aqui" }]
+  }
+}
+```
+
+---
+
+## 11. Checklist de debugging rápido
 
 Cuando un workflow no funciona como se espera:
 
@@ -239,3 +274,5 @@ Cuando un workflow no funciona como se espera:
 9. ✅ ¿IF node con fechas de PG usa `typeValidation: loose`? (no strict con Date objects)
 10. ✅ ¿`documentDefaultDataLoader` tiene text splitter sub-nodo? (`ai_textSplitter` → `Document Loader`)
 11. ✅ ¿`$fromAI()` retorna `"undefined"` string? → usar JSON-in-query: instruir al AI a formatear `query` como JSON
+12. ✅ ¿httpRequest typeVersion 4.2 con body JSON? → usar `specifyBody: "json"` + `jsonBody`, NO `body.mode: "raw"` + `rawBody`
+13. ✅ ¿`vectorStoreQdrant` retrieve-as-tool lanza "Not Found"? → bug en n8n 2.11.3, reemplazar con `toolWorkflow` + sub-workflow HTTP (ver `skills/dev/n8n-ai-agent-tools.md`)

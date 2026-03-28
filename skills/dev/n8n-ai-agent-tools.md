@@ -187,9 +187,129 @@ La `description` del tool es lo que el LLM lee para decidir cuándo llamarlo. De
 | `toolWorkflow` | `ai_tool` | Llamar sub-workflows como tools |
 | `lmChatOpenAi` | `ai_languageModel` | Modelo de lenguaje (GPT-4o, etc.) |
 | `memoryBufferWindow` | `ai_memory` | Memoria de conversación (últimos N mensajes) |
-| `vectorStoreQdrant` (retrieve) | `ai_tool` o `ai_vectorStore` | Búsqueda semántica RAG |
+| `vectorStoreQdrant` (retrieve) | `ai_tool` o `ai_vectorStore` | **ROTO en n8n 2.11.3** — usar toolWorkflow en su lugar |
 
 Todos se conectan al AI Agent via sus puertos especializados (no el puerto `main`).
+
+---
+
+## BUG CONOCIDO: vectorStoreQdrant retrieve-as-tool — NodeOperationError "Not Found" (n8n 2.11.3)
+
+**Síntoma:** El nodo `vectorStoreQdrant` en modo `retrieve-as-tool` lanza `NodeOperationError: Not Found` antes de llegar a Qdrant. No se registran llamadas HTTP a Qdrant.
+
+**Causa real (confirmada):** Incompatibilidad de versiones. El paquete `@langchain/qdrant@1.0.1` que usa n8n 2.11.3 llama a `POST /collections/{name}/points/query` (la "Universal Query API" de Qdrant), que solo existe en **Qdrant ≥ 1.10.0**. Con Qdrant 1.7.4 ese endpoint devuelve 404 → NodeOperationError "Not Found". La inserción (upsert) funciona porque no usa ese endpoint.
+
+**Fix confirmado:**
+- Actualizar Qdrant a v1.13.0+ (`docker-compose.yml`: `image: qdrant/qdrant:v1.13.0`)
+- El volumen de datos se preserva en la actualización
+- Con Qdrant 1.13.0 el nodo funciona correctamente con `typeVersion: 1.3`
+
+**Fix confirmado — actualizar Qdrant + usar typeVersion 1.3:**
+
+**NO usar** el workaround toolWorkflow + HTTP. Actualizar Qdrant y usar el nodo nativo correctamente.
+
+### Configuración correcta de vectorStoreQdrant en retrieve-as-tool (typeVersion 1.3):
+
+```json
+{
+  "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+  "typeVersion": 1.3,
+  "parameters": {
+    "mode": "retrieve-as-tool",
+    "toolDescription": "Busca en la memoria personal del usuario: historial de peso, comidas reportadas, metas y eventos registrados.",
+    "qdrantCollection": { "__rl": true, "mode": "id", "value": "user_rag" },
+    "topK": 5,
+    "options": {}
+  },
+  "credentials": { "qdrantApi": { "id": "ZgvYkNPmxRynoz3F", "name": "Qdrant account Fitia" } }
+}
+```
+
+**embeddingsOpenAi que funciona** (`typeVersion: 1`, no 1.2; `model` como string, no Resource Locator):
+```json
+{
+  "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+  "typeVersion": 1,
+  "parameters": { "model": "text-embedding-3-small", "options": {} }
+}
+```
+
+Conectar embeddings → vectorStoreQdrant vía `ai_embedding`, y vectorStoreQdrant → AI Agent vía `ai_tool`.
+
+---
+
+### Workaround histórico (ya NO necesario):
+
+En versiones previas se usó toolWorkflow + sub-workflow HTTP. Mantener `12-rag-personal-search.json` como referencia, pero el Handler ya usa el nodo nativo.
+
+En el Handler, el workaround era reemplazar el nodo `vectorStoreQdrant` con un `toolWorkflow` que llamara a un sub-workflow dedicado:
+
+```json
+{
+  "name": "Tool: Contexto Personal",
+  "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+  "typeVersion": 1.3,
+  "parameters": {
+    "name": "ContextoPersonal",
+    "description": "Busca en la memoria personal del usuario: historial de peso, comidas reportadas, metas y eventos registrados. Úsala cuando el usuario mencione comidas, peso, o pregunte qué ha registrado.",
+    "source": "database",
+    "workflowId": { "__rl": true, "value": "UfO8uMAfcfkxv4np", "mode": "id" },
+    "fields": {
+      "values": [{ "name": "userId", "type": "numberValue", "numberValue": "={{ $('Check User & Membership').item.json.user_id }}" }]
+    }
+  }
+}
+```
+
+El sub-workflow (`FitAI - RAG Personal Search`, ID `UfO8uMAfcfkxv4np`) usa nodos HTTP Request:
+
+```
+Execute Workflow Trigger
+  → Get Embedding (httpRequest POST → api.openai.com/v1/embeddings, specifyBody: "json")
+  → Search Qdrant (httpRequest POST → host.docker.internal:6333/collections/user_rag/points/search, header api-key)
+  → Format Results (Code node → devuelve { context: "..." })
+  → Return Results (noOp)
+```
+
+**Config correcta del nodo httpRequest typeVersion 4.2 para JSON body:**
+```json
+{
+  "sendBody": true,
+  "specifyBody": "json",
+  "jsonBody": "={{ JSON.stringify({ model: 'text-embedding-3-small', input: $json.query }) }}"
+}
+```
+**INCORRECTO** (causa "you must provide a model parameter" en OpenAI):
+```json
+{
+  "body": { "mode": "raw" },
+  "rawBody": "={{ JSON.stringify({...}) }}"
+}
+```
+
+**Search Qdrant con filtro por userId:**
+```javascript
+JSON.stringify({
+  vector: $json.data[0].embedding,
+  limit: 5,
+  filter: { must: [{ key: 'metadata.userId', match: { value: $('Execute Workflow Trigger').first().json.userId } }] },
+  with_payload: true
+})
+```
+
+**Format Results Code node:**
+```javascript
+const results = $input.first().json.result || [];
+if (results.length === 0) {
+  return [{ json: { context: 'No hay registros previos del usuario en memoria.' } }];
+}
+const context = results
+  .map(r => r.payload?.content || JSON.stringify(r.payload))
+  .join('\n---\n');
+return [{ json: { context, found: results.length } }];
+```
+
+**Validado:** AI responde correctamente con historial de comidas del usuario (test real con chat_id 1435522255).
 
 ---
 

@@ -57,7 +57,7 @@ services:
   # Qdrant — Vector store for RAG
   # ----------------------------------------------------------
   qdrant:
-    image: qdrant/qdrant:v1.7.4
+    image: qdrant/qdrant:v1.13.0
     container_name: fitai-qdrant
     restart: unless-stopped
     volumes:
