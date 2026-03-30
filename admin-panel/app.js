@@ -1,4 +1,6 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+// .env.local overrides for local dev (gitignored, not present in production)
+require('dotenv').config({ path: require('path').join(__dirname, '../.env.local'), override: true });
 
 const express = require('express');
 const session = require('express-session');
