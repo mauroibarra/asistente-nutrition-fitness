@@ -1,0 +1,80 @@
+<%- include('_header', { pageTitle: 'Dashboard' }) %>
+
+<h1 class="page-title">Dashboard</h1>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Usuarios</div>
+    <div class="stat-value"><%= totalUsers %></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Membresias Activas</div>
+    <div class="stat-value"><%= activeMemberships %></div>
+    <div class="stat-sub"><%= totalUsers > 0 ? Math.round(activeMemberships / totalUsers * 100) : 0 %>% del total</div>
+  </div>
+  <div class="stat-card stat-warning">
+    <div class="stat-label">Por Vencer (7 dias)</div>
+    <div class="stat-value"><%= expiringSoon %></div>
+    <% if (expiringSoon > 0) { %><div class="stat-sub">Requieren atencion</div><% } %>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Ingresos del Mes</div>
+    <div class="stat-value">$<%= revenueThisMonth.toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></div>
+  </div>
+</div>
+
+<% if (expiringList.length > 0) { %>
+<section class="section">
+  <h2>Membresias por Vencer Pronto</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Plan</th>
+        <th>Expira</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% expiringList.forEach(function(m) { %>
+      <tr>
+        <td><a href="/users/<%= m.id %>"><%= m.first_name %> <%= m.last_name || '' %></a></td>
+        <td><span class="badge badge-<%= m.plan_type %>"><%= m.plan_type %></span></td>
+        <td><%= new Date(m.expires_at).toLocaleDateString('es-MX') %></td>
+        <td>
+          <a href="/users/<%= m.id %>" class="btn btn-sm btn-primary">Ver</a>
+        </td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</section>
+<% } %>
+
+<% if (recentPayments.length > 0) { %>
+<section class="section">
+  <h2>Ultimos Pagos Registrados</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Usuario</th>
+        <th>Monto</th>
+        <th>Metodo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% recentPayments.forEach(function(p) { %>
+      <tr>
+        <td><%= new Date(p.payment_date).toLocaleDateString('es-MX') %></td>
+        <td><%= p.first_name %> <%= p.last_name || '' %></td>
+        <td>$<%= parseFloat(p.amount).toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></td>
+        <td><%= p.payment_method %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</section>
+<% } %>
+
+<%- include('_footer') %>

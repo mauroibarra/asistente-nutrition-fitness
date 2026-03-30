@@ -1,0 +1,89 @@
+<%- include('../_header', { pageTitle: 'Usuarios' }) %>
+
+<div class="page-header">
+  <h1 class="page-title">Usuarios</h1>
+  <a href="/users/new" class="btn btn-primary">+ Nuevo Usuario</a>
+</div>
+
+<form method="GET" action="/users" class="filter-bar">
+  <select name="status">
+    <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>Todos los status</option>
+    <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Activo</option>
+    <option value="expired" <%= filters.status === 'expired' ? 'selected' : '' %>>Expirado</option>
+    <option value="paused" <%= filters.status === 'paused' ? 'selected' : '' %>>Pausado</option>
+    <option value="cancelled" <%= filters.status === 'cancelled' ? 'selected' : '' %>>Cancelado</option>
+    <option value="trial" <%= filters.status === 'trial' ? 'selected' : '' %>>Trial</option>
+  </select>
+  <select name="plan">
+    <option value="all" <%= filters.plan === 'all' ? 'selected' : '' %>>Todos los planes</option>
+    <option value="basic" <%= filters.plan === 'basic' ? 'selected' : '' %>>Basic</option>
+    <option value="pro" <%= filters.plan === 'pro' ? 'selected' : '' %>>Pro</option>
+    <option value="premium" <%= filters.plan === 'premium' ? 'selected' : '' %>>Premium</option>
+  </select>
+  <input type="text" name="search" placeholder="Buscar por nombre o Telegram ID" value="<%= filters.search %>">
+  <button type="submit" class="btn btn-secondary">Filtrar</button>
+  <% if (filters.status !== 'all' || filters.plan !== 'all' || filters.search) { %>
+    <a href="/users" class="btn btn-link">Limpiar</a>
+  <% } %>
+</form>
+
+<% if (users.length === 0) { %>
+  <div class="empty-state">No se encontraron usuarios con esos filtros.</div>
+<% } else { %>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Telegram ID</th>
+      <th>Plan</th>
+      <th>Status</th>
+      <th>Expira</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% users.forEach(function(u) { %>
+    <tr>
+      <td><a href="/users/<%= u.id %>"><%= u.first_name %> <%= u.last_name || '' %></a></td>
+      <td><code><%= u.telegram_id %></code></td>
+      <td>
+        <% if (u.plan_type) { %>
+          <span class="badge badge-<%= u.plan_type %>"><%= u.plan_type %></span>
+        <% } else { %>
+          <span class="text-muted">—</span>
+        <% } %>
+      </td>
+      <td>
+        <% if (u.status) { %>
+          <span class="status-<%= u.status %>"><%= u.status %></span>
+        <% } else { %>
+          <span class="text-muted">—</span>
+        <% } %>
+      </td>
+      <td>
+        <% if (u.expires_at) { %>
+          <%= new Date(u.expires_at).toLocaleDateString('es-MX') %>
+        <% } else { %>
+          <span class="text-muted">—</span>
+        <% } %>
+      </td>
+      <td>
+        <a href="/users/<%= u.id %>" class="btn btn-sm btn-primary">Ver</a>
+      </td>
+    </tr>
+    <% }); %>
+  </tbody>
+</table>
+
+<div class="pagination">
+  <span>Mostrando <%= (pagination.page - 1) * 20 + 1 %>–<%= Math.min(pagination.page * 20, pagination.totalUsers) %> de <%= pagination.totalUsers %></span>
+  <% if (pagination.page > 1) { %>
+    <a href="?page=<%= pagination.page - 1 %>&status=<%= filters.status %>&plan=<%= filters.plan %>&search=<%= filters.search %>" class="btn btn-sm btn-secondary">&laquo; Anterior</a>
+  <% } %>
+  <% if (pagination.page < pagination.totalPages) { %>
+    <a href="?page=<%= pagination.page + 1 %>&status=<%= filters.status %>&plan=<%= filters.plan %>&search=<%= filters.search %>" class="btn btn-sm btn-secondary">Siguiente &raquo;</a>
+  <% } %>
+</div>
+<% } %>
+
+<%- include('../_footer') %>

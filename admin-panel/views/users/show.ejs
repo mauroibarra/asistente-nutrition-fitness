@@ -1,0 +1,136 @@
+<%- include('../_header', { pageTitle: (user.first_name + ' ' + (user.last_name || '')) }) %>
+
+<div class="page-header">
+  <a href="/users" class="btn btn-link">&larr; Volver a lista</a>
+</div>
+
+<div class="detail-grid">
+  <section class="card">
+    <h2>Informacion del Usuario</h2>
+    <dl class="dl-grid">
+      <dt>Nombre</dt><dd><%= user.first_name %> <%= user.last_name || '' %></dd>
+      <dt>Telegram ID</dt><dd><code><%= user.telegram_id %></code></dd>
+      <% if (user.username) { %><dt>Username</dt><dd>@<%= user.username %></dd><% } %>
+      <dt>Registrado</dt><dd><%= new Date(user.created_at).toLocaleDateString('es-MX') %></dd>
+      <dt>Onboarding</dt><dd><%= user.onboarding_completed ? 'Completado' : 'Pendiente' %></dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Membresia Actual</h2>
+    <% if (membership) { %>
+    <dl class="dl-grid">
+      <dt>Plan</dt><dd><span class="badge badge-<%= membership.plan_type %>"><%= membership.plan_type %></span></dd>
+      <dt>Status</dt><dd><span class="status-<%= membership.status %>"><%= membership.status %></span></dd>
+      <dt>Inicio</dt><dd><%= new Date(membership.starts_at).toLocaleDateString('es-MX') %></dd>
+      <dt>Expira</dt><dd><%= new Date(membership.expires_at).toLocaleDateString('es-MX') %></dd>
+      <dt>Dias restantes</dt>
+      <dd>
+        <% const daysLeft = Math.ceil((new Date(membership.expires_at) - new Date()) / (1000 * 60 * 60 * 24)); %>
+        <%= daysLeft > 0 ? daysLeft + ' dias' : 'Expirada' %>
+      </dd>
+    </dl>
+    <div class="action-buttons">
+      <% if (membership.status === 'active') { %>
+        <form method="POST" action="/users/<%= user.id %>/pause" style="display:inline">
+          <button type="submit" class="btn btn-warning" onclick="return confirm('Pausar membresia?')">Pausar</button>
+        </form>
+        <form method="POST" action="/users/<%= user.id %>/cancel" style="display:inline">
+          <button type="submit" class="btn btn-danger" onclick="return confirm('Cancelar membresia?')">Cancelar</button>
+        </form>
+      <% } %>
+      <% if (['expired', 'cancelled', 'paused'].includes(membership.status)) { %>
+        <button onclick="document.getElementById('activate-form').style.display='block'" class="btn btn-primary">Renovar</button>
+      <% } %>
+    </div>
+    <% } else { %>
+      <p class="text-muted">Sin membresia registrada.</p>
+      <button onclick="document.getElementById('activate-form').style.display='block'" class="btn btn-primary">Crear Membresia</button>
+    <% } %>
+
+    <form id="activate-form" method="POST" action="/users/<%= user.id %>/activate" style="display:none;margin-top:1rem" class="inline-form">
+      <select name="plan_type" required>
+        <option value="basic">Basic</option>
+        <option value="pro">Pro</option>
+        <option value="premium">Premium</option>
+      </select>
+      <select name="duration_months" required>
+        <option value="1">1 mes</option>
+        <option value="3">3 meses</option>
+        <option value="6">6 meses</option>
+        <option value="12">12 meses</option>
+      </select>
+      <button type="submit" class="btn btn-primary">Confirmar</button>
+      <button type="button" onclick="document.getElementById('activate-form').style.display='none'" class="btn btn-secondary">Cancelar</button>
+    </form>
+  </section>
+</div>
+
+<% if (profile) { %>
+<section class="card">
+  <h2>Perfil de Salud</h2>
+  <dl class="dl-grid dl-grid-3">
+    <dt>Genero</dt><dd><%= profile.gender || '—' %></dd>
+    <dt>Edad</dt><dd><%= profile.age ? profile.age + ' años' : '—' %></dd>
+    <dt>Altura</dt><dd><%= profile.height_cm ? profile.height_cm + ' cm' : '—' %></dd>
+    <dt>Peso actual</dt><dd><%= profile.current_weight_kg ? profile.current_weight_kg + ' kg' : '—' %></dd>
+    <dt>Grasa corporal</dt><dd><%= profile.body_fat_pct ? profile.body_fat_pct + '%' : '—' %></dd>
+    <dt>Nivel actividad</dt><dd><%= profile.activity_level || '—' %></dd>
+    <dt>Nivel fitness</dt><dd><%= profile.fitness_level || '—' %></dd>
+    <dt>Objetivo</dt><dd><%= profile.goal || '—' %></dd>
+    <dt>Calorias target</dt><dd><%= profile.caloric_target ? profile.caloric_target + ' kcal' : '—' %></dd>
+    <dt>Proteina</dt><dd><%= profile.protein_target_g ? profile.protein_target_g + 'g' : '—' %></dd>
+    <dt>Restricciones</dt><dd><%= (profile.dietary_restrictions && profile.dietary_restrictions.length > 0) ? profile.dietary_restrictions.join(', ') : 'Ninguna' %></dd>
+  </dl>
+</section>
+<% } %>
+
+<% if (weights.length > 0) { %>
+<section class="card">
+  <h2>Historial de Peso</h2>
+  <div class="weight-chart">
+    <% const ws = weights; const minW = Math.min(...ws.map(w => parseFloat(w.weight_kg))); const maxW = Math.max(...ws.map(w => parseFloat(w.weight_kg))); %>
+    <% ws.forEach(function(w) { %>
+      <div class="weight-bar-wrap">
+        <div class="weight-bar" style="height:<%= maxW > minW ? Math.round((parseFloat(w.weight_kg) - minW) / (maxW - minW) * 80 + 10) : 50 %>px" title="<%= parseFloat(w.weight_kg).toFixed(1) %> kg — <%= new Date(w.logged_at).toLocaleDateString('es-MX') %>"></div>
+        <div class="weight-label"><%= parseFloat(w.weight_kg).toFixed(1) %></div>
+      </div>
+    <% }); %>
+  </div>
+  <% const firstW = parseFloat(weights[0].weight_kg); const lastW = parseFloat(weights[weights.length-1].weight_kg); %>
+  <p class="weight-summary">
+    Peso inicial: <strong><%= firstW.toFixed(1) %> kg</strong> &bull;
+    Peso actual: <strong><%= lastW.toFixed(1) %> kg</strong> &bull;
+    Cambio total: <strong class="<%= lastW < firstW ? 'text-success' : 'text-warning' %>"><%= (lastW - firstW >= 0 ? '+' : '') %><%= (lastW - firstW).toFixed(1) %> kg</strong>
+  </p>
+</section>
+<% } %>
+
+<section class="card">
+  <div class="section-header">
+    <h2>Historial de Pagos</h2>
+    <a href="/payments" class="btn btn-sm btn-primary">Registrar Pago</a>
+  </div>
+  <% if (payments.length === 0) { %>
+    <p class="text-muted">Sin pagos registrados.</p>
+  <% } else { %>
+  <table class="table">
+    <thead>
+      <tr><th>Fecha</th><th>Monto</th><th>Metodo</th><th>Referencia</th><th>Registrado por</th></tr>
+    </thead>
+    <tbody>
+      <% payments.forEach(function(p) { %>
+      <tr>
+        <td><%= new Date(p.payment_date).toLocaleDateString('es-MX') %></td>
+        <td>$<%= parseFloat(p.amount).toLocaleString('es-MX', { minimumFractionDigits: 2 }) %></td>
+        <td><%= p.payment_method %></td>
+        <td><%= p.reference_note || '—' %></td>
+        <td><%= p.registered_by_name || '—' %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+  <% } %>
+</section>
+
+<%- include('../_footer') %>

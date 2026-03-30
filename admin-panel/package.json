@@ -1,0 +1,18 @@
+{
+  "name": "fitai-admin-panel",
+  "version": "1.0.0",
+  "description": "FitAI Assistant — Panel de Administracion",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.10",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "pg": "^8.11.3"
+  }
+}
