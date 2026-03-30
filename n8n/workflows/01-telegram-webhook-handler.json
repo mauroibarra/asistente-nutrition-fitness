@@ -987,10 +987,9 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, first_name FROM users WHERE migration_token = UPPER(TRIM($1))   AND migration_token_expires_at > NOW() LIMIT 1",
+        "query": "SELECT id, first_name, true::boolean AS migration_match\nFROM users\nWHERE migration_token = UPPER(TRIM($1))\n  AND migration_token_expires_at > NOW()\nUNION ALL\nSELECT NULL::integer, NULL::text, false::boolean\nLIMIT 1",
         "options": {
-          "queryReplacement": "={{ [$('Set Text from Message').item.json['message.text']] }}",
-          "alwaysOutputData": true
+          "queryReplacement": "={{ [$('Set Text from Message').item.json['message.text']] }}"
         }
       },
       "credentials": {
