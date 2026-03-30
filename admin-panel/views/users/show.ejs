@@ -2,6 +2,8 @@
 
 <div class="page-header">
   <a href="/users" class="btn btn-link">&larr; Volver a lista</a>
+  <h1 class="page-title"><%= user.first_name %> <%= user.last_name || '' %></h1>
+  <a href="/users/<%= user.id %>/edit" class="btn btn-secondary">Editar</a>
 </div>
 
 <div class="detail-grid">

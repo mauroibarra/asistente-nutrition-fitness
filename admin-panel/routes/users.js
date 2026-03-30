@@ -82,7 +82,8 @@ router.get('/', async (req, res) => {
     res.render('users/index', {
       users: usersResult.rows,
       filters: { status: status || 'all', plan: plan || 'all', search: search || '' },
-      pagination: { page: parseInt(page), totalPages, totalUsers }
+      pagination: { page: parseInt(page), totalPages, totalUsers },
+      query: req.query
     });
   } catch (err) {
     console.error('User list error:', err.message);
@@ -259,6 +260,100 @@ router.post('/:id/cancel', async (req, res) => {
   } catch (err) {
     console.error('Cancel error:', err.message);
     res.status(500).render('error', { message: 'Error cancelando membresia' });
+  }
+});
+
+// GET /users/:id/edit — Edit form
+router.get('/:id/edit', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).render('error', { message: 'Usuario no encontrado' });
+    }
+    res.render('users/edit', { user: result.rows[0], error: null, query: req.query });
+  } catch (err) {
+    console.error('Edit form error:', err.message);
+    res.status(500).render('error', { message: 'Error cargando formulario de edicion' });
+  }
+});
+
+// POST /users/:id/update — Save changes
+router.post('/:id/update', async (req, res) => {
+  const { id } = req.params;
+  const {
+    first_name, last_name, telegram_id,
+    document_number, country, city, phone_number
+  } = req.body;
+
+  if (!first_name || !telegram_id) {
+    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    return res.render('users/edit', {
+      user: userResult.rows[0],
+      error: 'Nombre y Telegram ID son obligatorios'
+    });
+  }
+
+  try {
+    await pool.query(
+      `UPDATE users
+       SET first_name      = $1,
+           last_name       = $2,
+           telegram_id     = $3,
+           document_number = $4,
+           country         = $5,
+           city            = $6,
+           phone_number    = $7,
+           updated_at      = NOW()
+       WHERE id = $8`,
+      [
+        first_name.trim(),
+        last_name ? last_name.trim() : null,
+        parseInt(telegram_id),
+        document_number ? document_number.trim() : null,
+        country ? country.trim() : null,
+        city ? city.trim() : null,
+        phone_number ? phone_number.trim() : null,
+        id
+      ]
+    );
+    res.redirect(`/users/${id}`);
+  } catch (err) {
+    const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    const msg = err.code === '23505'
+      ? 'Ya existe un usuario con ese Telegram ID'
+      : 'Error actualizando el usuario';
+    console.error('Update user error:', err.message);
+    res.render('users/edit', { user: userResult.rows[0], error: msg });
+  }
+});
+
+// POST /users/:id/delete — Delete user (cascades to all related data)
+router.post('/:id/delete', async (req, res) => {
+  const { id } = req.params;
+  const { confirm_name } = req.body;
+
+  try {
+    const userResult = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1', [id]
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).render('error', { message: 'Usuario no encontrado' });
+    }
+
+    const user = userResult.rows[0];
+    const expected = `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}`.trim();
+
+    if (confirm_name !== expected) {
+      return res.redirect(`/users/${id}/edit?delete_error=nombre_incorrecto`);
+    }
+
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    res.redirect('/users?deleted=1');
+  } catch (err) {
+    console.error('Delete user error:', err.message);
+    res.status(500).render('error', { message: 'Error eliminando el usuario' });
   }
 });
 

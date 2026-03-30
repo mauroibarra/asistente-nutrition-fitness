@@ -156,6 +156,18 @@ code { background: #f3f4f6; padding: .1rem .3rem; border-radius: 3px; font-size:
 .action-buttons { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
 .pagination { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; font-size: .85rem; color: var(--muted); }
 
+/* ===== Alerts (all types) ===== */
+.alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+
+/* ===== Danger Zone ===== */
+.danger-zone { border-color: #fca5a5; background: #fff5f5; }
+.danger-zone h2 { color: var(--danger); border-bottom-color: #fca5a5; }
+.danger-zone p { font-size: .875rem; color: #7f1d1d; margin-bottom: 1rem; }
+.delete-confirm-box { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; padding: 1rem; }
+.delete-confirm-box p { margin-bottom: .75rem; font-size: .875rem; color: #7f1d1d; }
+.btn-danger-solid { background: var(--danger); color: white; border: none; }
+.btn-danger-solid:hover { background: #b91c1c; }
+
 /* ===== Prospects ===== */
 .badge-count { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; border-radius: 99px; padding: .2rem .75rem; font-size: .8rem; font-weight: 600; }
 .badge-readonly { background: #e0f2fe; color: #0369a1; border-radius: 4px; padding: .1rem .4rem; font-size: .7rem; font-weight: 500; vertical-align: middle; margin-left: .5rem; }

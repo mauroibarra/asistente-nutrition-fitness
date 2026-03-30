@@ -5,6 +5,10 @@
   <a href="/users/new" class="btn btn-primary">+ Nuevo Usuario</a>
 </div>
 
+<% if (typeof query !== 'undefined' && query.deleted) { %>
+  <div class="alert alert-success">Usuario eliminado correctamente.</div>
+<% } %>
+
 <form method="GET" action="/users" class="filter-bar">
   <select name="status">
     <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>Todos los status</option>
