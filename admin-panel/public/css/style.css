@@ -175,8 +175,8 @@ body {
 .table td:first-child { color: var(--text); font-weight: 500; }
 .table tbody tr:last-child td { border-bottom: none; }
 .table tbody tr:hover { background: var(--primary-light); }
-.table a { color: var(--primary); text-decoration: none; font-weight: 500; }
-.table a:hover { text-decoration: underline; }
+.table a:not(.btn) { color: var(--primary); text-decoration: none; font-weight: 500; }
+.table a:not(.btn):hover { text-decoration: underline; }
 
 /* ===== Badges & Status ===== */
 .badge {
