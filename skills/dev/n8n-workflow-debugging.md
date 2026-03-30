@@ -68,6 +68,20 @@ urllib.request.urlopen(req)
 
 Cuándo usarlo: queries "get previous X" donde el primer run no tiene historial, lookups opcionales, cualquier SELECT que pueda retornar 0 filas en un flujo que debe continuar.
 
+**⚠️ Excepción crítica — `executeQuery` con typeVersion 2.5:** `alwaysOutputData: true` **no funciona** con la operación `executeQuery` del nodo Postgres en typeVersion 2.5. Devuelve `[]` (array vacío real) en lugar de `[{json:{}}]`, y el flujo se detiene igual.
+
+**Fix para `executeQuery`:** Agregar un Code node inmediatamente después que garantice siempre un ítem:
+```javascript
+// Normalize Token Result — siempre produce output
+const rows = $input.all();
+const match = rows.length > 0 && rows[0].json && rows[0].json.id;
+if (match) {
+  return [{ json: { ...rows[0].json, result_found: true } }];
+}
+return [{ json: { id: null, result_found: false } }];
+```
+Luego el IF node verifica `$json.result_found` en lugar de `$json.id exists`.
+
 ---
 
 ## 3. $json tiene datos incorrectos / null unexpectedly
