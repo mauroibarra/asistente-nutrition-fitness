@@ -118,7 +118,8 @@
         "chatId": "={{ $json.chatId }}",
         "text": "={{ $json.message }}",
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "appendAttribution": false
         }
       },
       "id": "node-w7-7",

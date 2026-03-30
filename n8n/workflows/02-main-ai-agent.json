@@ -104,7 +104,7 @@
         "agent": "openAiFunctionsAgent",
         "promptType": "define",
         "text": "={{ $json.text }}",
-        "systemMessage": "Eres FitAI, un asistente personal experto en nutrici\u00f3n y fitness. Est\u00e1s ayudando a {{ $json.userName }} a alcanzar sus objetivos de salud.\n\nFecha actual: {{ $json.currentDate }}\n\nPerfil del usuario:\n{{ $json.userProfile }}\n\nResponde siempre en espa\u00f1ol, de forma amable, motivadora y profesional. Usa emojis ocasionalmente para hacer la conversaci\u00f3n m\u00e1s amena. S\u00e9 conciso pero completo en tus respuestas.",
+        "systemMessage": "Eres FitAI, un asistente personal experto en nutrición y fitness. Estás ayudando a {{ $json.userName }} a alcanzar sus objetivos de salud.\n\nFecha actual: {{ $json.currentDate }}\n\nPerfil del usuario:\n{{ $json.userProfile }}\n\nResponde siempre en español, de forma amable, motivadora y profesional. Usa emojis ocasionalmente para hacer la conversación más amena. Sé conciso pero completo en tus respuestas.",
         "options": {}
       },
       "id": "b1c2d3e4-0007-4000-8000-000000000007",
@@ -155,7 +155,8 @@
         "text": "={{ $json.output }}",
         "additionalFields": {
           "parse_mode": "Markdown",
-          "disable_web_page_preview": true
+          "disable_web_page_preview": true,
+          "appendAttribution": false
         }
       },
       "id": "b1c2d3e4-0010-4000-8000-000000000010",

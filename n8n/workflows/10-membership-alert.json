@@ -64,8 +64,10 @@
     {
       "parameters": {
         "chatId": "={{ $json.telegramId }}",
-        "text": "={{ '\u26a0\ufe0f Hola ' + $json.firstName + ', tu membres\u00eda ' + $json.planType + ' vence en ' + $json.daysLeft + ' d\u00eda(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
-        "additionalFields": {}
+        "text": "={{ '⚠️ Hola ' + $json.firstName + ', tu membresía ' + $json.planType + ' vence en ' + $json.daysLeft + ' día(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
       },
       "id": "node-w10-5",
       "name": "Send Expiry Alert",
@@ -218,7 +220,7 @@
       {
         "parameters": {
           "chatId": "={{ $json.telegramId }}",
-          "text": "={{ '\u26a0\ufe0f Hola ' + $json.firstName + ', tu membres\u00eda ' + $json.planType + ' vence en ' + $json.daysLeft + ' d\u00eda(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
+          "text": "={{ '⚠️ Hola ' + $json.firstName + ', tu membresía ' + $json.planType + ' vence en ' + $json.daysLeft + ' día(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
           "additionalFields": {}
         },
         "id": "node-w10-5",

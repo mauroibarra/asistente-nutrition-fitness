@@ -130,7 +130,8 @@
         "chatId": "={{ $json.telegramId }}",
         "text": "={{ $json.message }}",
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "appendAttribution": false
         }
       },
       "id": "node-7",

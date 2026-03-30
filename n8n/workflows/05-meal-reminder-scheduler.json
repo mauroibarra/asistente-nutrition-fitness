@@ -105,7 +105,8 @@
         "chatId": "={{ $json.telegramId }}",
         "text": "=Hola {{ $json.firstName }}! Es hora de tu {{ $json.mealType }}.\n\n🍽 {{ $json.mealName }} (~{{ $json.totalCalories }} kcal)\n\n{{ $json.foodList }}\n\nBuen provecho! Si necesitas algun ajuste o sustitucion, solo dime.",
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "appendAttribution": false
         }
       },
       "id": "node-5",
