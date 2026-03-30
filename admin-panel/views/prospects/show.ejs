@@ -65,14 +65,14 @@
           <div class="form-group">
             <label for="first_name">Nombre *</label>
             <input type="text" id="first_name" name="first_name" required
-                   placeholder="Nombre real del usuario"
-                   value="<%= (prospect.first_name && prospect.first_name.trim().length > 1) ? prospect.first_name.trim() : '' %>">
+                   placeholder="Nombre del usuario"
+                   value="<%= prospect.first_name %>">
           </div>
           <div class="form-group">
             <label for="last_name">Apellido</label>
             <input type="text" id="last_name" name="last_name"
                    placeholder="Apellido"
-                   value="<%= (prospect.last_name && prospect.last_name.trim().length > 1) ? prospect.last_name.trim() : '' %>">
+                   value="<%= prospect.last_name || '' %>">
           </div>
         </div>
 

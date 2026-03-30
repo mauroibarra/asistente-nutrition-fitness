@@ -292,7 +292,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO users (telegram_id, first_name, last_name, username, language_code) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (telegram_id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = COALESCE(EXCLUDED.last_name, users.last_name), username = COALESCE(EXCLUDED.username, users.username), updated_at = NOW() RETURNING id, telegram_id, first_name",
+        "query": "INSERT INTO users (telegram_id, first_name, last_name, username, language_code)\nVALUES ($1, $2, $3, $4, $5)\nON CONFLICT (telegram_id) DO UPDATE SET\n  first_name   = CASE\n                   WHEN LENGTH(TRIM(users.first_name)) <= 1 THEN EXCLUDED.first_name\n                   ELSE users.first_name\n                 END,\n  last_name    = COALESCE(EXCLUDED.last_name, users.last_name),\n  username     = COALESCE(EXCLUDED.username, users.username),\n  updated_at   = NOW()\nRETURNING id, telegram_id, first_name",
         "options": {
           "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), String($('Set Text from Message').item.json.firstName || ''), ($('Telegram Trigger').item.json.message?.from?.last_name || null), ($('Telegram Trigger').item.json.message?.from?.username || null), ($('Telegram Trigger').item.json.message?.from?.language_code || 'es')] }}"
         }

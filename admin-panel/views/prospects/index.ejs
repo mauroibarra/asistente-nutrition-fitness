@@ -41,7 +41,7 @@
   <tbody>
     <% prospects.forEach(function(p) { %>
     <tr>
-      <td><a href="/prospects/<%= p.id %>"><%= (p.first_name && p.first_name.trim().length > 1) ? (p.first_name + ' ' + (p.last_name || '')).trim() : ('ID ' + p.telegram_id) %></a></td>
+      <td><a href="/prospects/<%= p.id %>"><%= p.first_name %> <%= p.last_name || '' %></a></td>
       <td><code><%= p.telegram_id %></code></td>
       <td><% if (p.username) { %><span class="text-muted">@<%= p.username %></span><% } else { %><span class="text-muted">—</span><% } %></td>
       <td><%= p.language_code || '—' %></td>
