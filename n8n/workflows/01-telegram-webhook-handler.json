@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-30T15:39:22.273Z",
+  "updatedAt": "2026-03-30T15:56:58.019Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -975,6 +975,113 @@
           "name": "Telegram account fitia"
         }
       }
+    },
+    {
+      "id": "migration-check-001",
+      "name": "Check Migration Token",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        224
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, first_name FROM users WHERE migration_token = UPPER(TRIM($1))   AND migration_token_expires_at > NOW() LIMIT 1",
+        "options": {
+          "queryReplacement": "={{ [$('Set Text from Message').item.json['message.text']] }}",
+          "alwaysOutputData": true
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "id": "migration-if-001",
+      "name": "Is Migration Token?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        224
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "mt1",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.id }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      }
+    },
+    {
+      "id": "migration-apply-001",
+      "name": "Apply Migration",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1424,
+        96
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE users SET telegram_id = $1,     migration_token = NULL,     migration_token_expires_at = NULL,     updated_at = NOW() WHERE id = $2 RETURNING first_name",
+        "options": {
+          "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), $('Check Migration Token').item.json.id] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "id": "migration-ack-001",
+      "name": "Send Migration Success",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        96
+      ],
+      "parameters": {
+        "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+        "text": "=✅ *¡Migración completada!*\n\nTu cuenta de FitAI ha sido vinculada a este Telegram. Todo tu historial, perfil y membresía están disponibles. Escríbeme cuando quieras continuar.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      }
     }
   ],
   "connections": {
@@ -1058,7 +1165,7 @@
       "main": [
         [
           {
-            "node": "Upsert User",
+            "node": "Check Migration Token",
             "type": "main",
             "index": 0
           }
@@ -1348,6 +1455,51 @@
       "main": [
         []
       ]
+    },
+    "Check Migration Token": {
+      "main": [
+        [
+          {
+            "node": "Is Migration Token?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Migration Token?": {
+      "main": [
+        [
+          {
+            "node": "Apply Migration",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upsert User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Migration": {
+      "main": [
+        [
+          {
+            "node": "Send Migration Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Migration Success": {
+      "main": [
+        []
+      ]
     }
   },
   "settings": {
@@ -1358,9 +1510,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "dd77e538-8f45-49b0-ab00-b6c08880b7a6",
-  "activeVersionId": "dd77e538-8f45-49b0-ab00-b6c08880b7a6",
-  "versionCounter": 169,
+  "versionId": "726e3df6-eef5-4abc-a719-edecb56f2872",
+  "activeVersionId": "726e3df6-eef5-4abc-a719-edecb56f2872",
+  "versionCounter": 173,
   "triggerCount": 1,
   "shared": [
     {
@@ -1383,9 +1535,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-30T15:39:22.280Z",
-    "createdAt": "2026-03-30T15:39:22.280Z",
-    "versionId": "dd77e538-8f45-49b0-ab00-b6c08880b7a6",
+    "updatedAt": "2026-03-30T15:56:58.024Z",
+    "createdAt": "2026-03-30T15:56:58.024Z",
+    "versionId": "726e3df6-eef5-4abc-a719-edecb56f2872",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -2356,6 +2508,113 @@
             "name": "Telegram account fitia"
           }
         }
+      },
+      {
+        "id": "migration-check-001",
+        "name": "Check Migration Token",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          960,
+          224
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id, first_name FROM users WHERE migration_token = UPPER(TRIM($1))   AND migration_token_expires_at > NOW() LIMIT 1",
+          "options": {
+            "queryReplacement": "={{ [$('Set Text from Message').item.json['message.text']] }}",
+            "alwaysOutputData": true
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "id": "migration-if-001",
+        "name": "Is Migration Token?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1184,
+          224
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": false,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "mt1",
+                "operator": {
+                  "type": "number",
+                  "operation": "exists",
+                  "singleValue": true
+                },
+                "leftValue": "={{ $json.id }}",
+                "rightValue": ""
+              }
+            ]
+          },
+          "options": {
+            "looseTypeValidation": true
+          }
+        }
+      },
+      {
+        "id": "migration-apply-001",
+        "name": "Apply Migration",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1424,
+          96
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE users SET telegram_id = $1,     migration_token = NULL,     migration_token_expires_at = NULL,     updated_at = NOW() WHERE id = $2 RETURNING first_name",
+          "options": {
+            "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), $('Check Migration Token').item.json.id] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "id": "migration-ack-001",
+        "name": "Send Migration Success",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1664,
+          96
+        ],
+        "parameters": {
+          "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+          "text": "=✅ *¡Migración completada!*\n\nTu cuenta de FitAI ha sido vinculada a este Telegram. Todo tu historial, perfil y membresía están disponibles. Escríbeme cuando quieras continuar.",
+          "additionalFields": {
+            "appendAttribution": false,
+            "parse_mode": "Markdown"
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        }
       }
     ],
     "connections": {
@@ -2439,7 +2698,7 @@
         "main": [
           [
             {
-              "node": "Upsert User",
+              "node": "Check Migration Token",
               "type": "main",
               "index": 0
             }
@@ -2729,6 +2988,51 @@
         "main": [
           []
         ]
+      },
+      "Check Migration Token": {
+        "main": [
+          [
+            {
+              "node": "Is Migration Token?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Migration Token?": {
+        "main": [
+          [
+            {
+              "node": "Apply Migration",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Upsert User",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Apply Migration": {
+        "main": [
+          [
+            {
+              "node": "Send Migration Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Migration Success": {
+        "main": [
+          []
+        ]
       }
     },
     "authors": "Mauro Ibarra ",
@@ -2737,10 +3041,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-30T15:39:24.719Z",
-        "id": 160,
+        "createdAt": "2026-03-30T15:57:00.183Z",
+        "id": 162,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "dd77e538-8f45-49b0-ab00-b6c08880b7a6",
+        "versionId": "726e3df6-eef5-4abc-a719-edecb56f2872",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

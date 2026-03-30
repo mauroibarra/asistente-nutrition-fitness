@@ -116,6 +116,72 @@
 </section>
 <% } %>
 
+<!-- ── Cambio de cuenta Telegram ───────────────────────── -->
+<section class="card migration-card">
+  <div class="section-header">
+    <h2>Cambio de Cuenta de Telegram</h2>
+  </div>
+  <p class="text-muted" style="font-size:.875rem;margin-bottom:1rem">
+    Si el usuario cambió de número o creó una nueva cuenta de Telegram, genera un código para que pueda migrar sus datos de forma automática, o fusiona manualmente con un prospecto existente.
+  </p>
+
+  <% if (typeof query !== 'undefined' && query.token_generated) { %>
+    <div class="alert alert-success" style="margin-bottom:1rem">Código generado correctamente.</div>
+  <% } %>
+  <% if (typeof query !== 'undefined' && query.merged) { %>
+    <div class="alert alert-success" style="margin-bottom:1rem">Cuentas fusionadas correctamente.</div>
+  <% } %>
+
+  <div class="migration-grid">
+    <!-- Token self-service -->
+    <div class="migration-option">
+      <h3>Opción A — Código de migración (recomendada)</h3>
+      <% if (user.migration_token && user.migration_token_expires_at && new Date(user.migration_token_expires_at) > new Date()) { %>
+        <div class="token-display">
+          <span class="token-code"><%= user.migration_token %></span>
+          <span class="token-expiry">Expira: <%= new Date(user.migration_token_expires_at).toLocaleString('es-MX') %></span>
+        </div>
+        <p class="token-instructions">
+          1. Copia el código<br>
+          2. Envíaselo al usuario (WhatsApp, llamada, etc.)<br>
+          3. El usuario lo escribe en su <strong>nuevo</strong> Telegram<br>
+          4. El sistema lo migra automáticamente
+        </p>
+        <form method="POST" action="/users/<%= user.id %>/revoke-migration-token" style="display:inline">
+          <button type="submit" class="btn btn-sm btn-secondary">Revocar código</button>
+        </form>
+      <% } else { %>
+        <p style="font-size:.85rem;color:#6b7280;margin-bottom:.75rem">
+          Genera un código de 24 horas. El usuario lo escribe en su nuevo Telegram y el sistema actualiza su cuenta automáticamente.
+        </p>
+        <form method="POST" action="/users/<%= user.id %>/generate-migration-token">
+          <button type="submit" class="btn btn-primary">Generar código</button>
+        </form>
+      <% } %>
+    </div>
+
+    <!-- Manual merge -->
+    <div class="migration-option">
+      <h3>Opción B — Fusión manual con prospecto</h3>
+      <p style="font-size:.85rem;color:#6b7280;margin-bottom:.75rem">
+        Si el usuario ya escribió al bot con su nuevo Telegram y aparece como prospecto, puedes fusionar las cuentas aquí directamente.
+      </p>
+      <form method="POST" action="/users/<%= user.id %>/merge">
+        <div class="form-group">
+          <label for="prospect_user_id">ID del prospecto (nuevo Telegram)</label>
+          <input type="number" id="prospect_user_id" name="prospect_user_id" required
+                 placeholder="ID interno del usuario prospecto">
+          <small>Encuéntralo en <a href="/prospects" target="_blank">Prospectos</a> y copia su ID de la URL.</small>
+        </div>
+        <button type="submit" class="btn btn-secondary"
+                onclick="return confirm('¿Fusionar? Esto actualizará el Telegram ID de este usuario y eliminará el prospecto.')">
+          Fusionar cuentas
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
 <section class="card">
   <div class="section-header">
     <h2>Historial de Pagos</h2>

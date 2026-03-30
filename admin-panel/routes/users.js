@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const { pool } = require('../config/database');
 
 const router = express.Router();
@@ -134,7 +135,8 @@ router.get('/:id', async (req, res) => {
       membership: membershipResult.rows[0] || null,
       profile: profileResult.rows[0] || null,
       payments: paymentsResult.rows,
-      weights: weightsResult.rows
+      weights: weightsResult.rows,
+      query: req.query
     });
   } catch (err) {
     console.error('User detail error:', err.message);
@@ -354,6 +356,92 @@ router.post('/:id/delete', async (req, res) => {
   } catch (err) {
     console.error('Delete user error:', err.message);
     res.status(500).render('error', { message: 'Error eliminando el usuario' });
+  }
+});
+
+// POST /users/:id/generate-migration-token
+router.post('/:id/generate-migration-token', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const token = 'FIT-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await pool.query(
+      `UPDATE users
+       SET migration_token = $1, migration_token_expires_at = $2, updated_at = NOW()
+       WHERE id = $3`,
+      [token, expiresAt.toISOString(), id]
+    );
+
+    res.redirect(`/users/${id}?token_generated=1`);
+  } catch (err) {
+    console.error('Generate migration token error:', err.message);
+    res.status(500).render('error', { message: 'Error generando el codigo de migracion' });
+  }
+});
+
+// POST /users/:id/revoke-migration-token
+router.post('/:id/revoke-migration-token', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      `UPDATE users
+       SET migration_token = NULL, migration_token_expires_at = NULL, updated_at = NOW()
+       WHERE id = $1`,
+      [id]
+    );
+    res.redirect(`/users/${id}`);
+  } catch (err) {
+    console.error('Revoke migration token error:', err.message);
+    res.status(500).render('error', { message: 'Error revocando el codigo' });
+  }
+});
+
+// POST /users/:id/merge — Merge a prospect (new telegram_id) into this user
+router.post('/:id/merge', async (req, res) => {
+  const { id } = req.params;
+  const { prospect_user_id } = req.body;
+
+  if (!prospect_user_id) {
+    return res.status(400).render('error', { message: 'prospect_user_id es requerido' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Get the prospect's telegram_id
+    const prospectResult = await client.query(
+      'SELECT telegram_id, first_name FROM users WHERE id = $1', [prospect_user_id]
+    );
+    if (prospectResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).render('error', { message: 'Prospecto no encontrado' });
+    }
+
+    const newTelegramId = prospectResult.rows[0].telegram_id;
+
+    // Update main user with new telegram_id + clear migration token
+    await client.query(
+      `UPDATE users
+       SET telegram_id = $1, migration_token = NULL, migration_token_expires_at = NULL, updated_at = NOW()
+       WHERE id = $2`,
+      [newTelegramId, id]
+    );
+
+    // Delete the prospect (empty) user record
+    await client.query('DELETE FROM users WHERE id = $1', [prospect_user_id]);
+
+    await client.query('COMMIT');
+    res.redirect(`/users/${id}?merged=1`);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Merge error:', err.message);
+    res.status(500).render('error', { message: 'Error fusionando cuentas' });
+  } finally {
+    client.release();
   }
 });
 

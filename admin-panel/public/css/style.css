@@ -168,6 +168,17 @@ code { background: #f3f4f6; padding: .1rem .3rem; border-radius: 3px; font-size:
 .btn-danger-solid { background: var(--danger); color: white; border: none; }
 .btn-danger-solid:hover { background: #b91c1c; }
 
+/* ===== Migration ===== */
+.migration-card { border-left: 3px solid #7c3aed; }
+.migration-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.migration-option { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; }
+.migration-option h3 { font-size: .85rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .75rem; }
+.token-display { background: #1e1e2e; border-radius: 8px; padding: .75rem 1rem; margin-bottom: .75rem; display: flex; flex-direction: column; gap: .25rem; }
+.token-code { font-family: monospace; font-size: 1.6rem; font-weight: 700; color: #a5f3fc; letter-spacing: .1em; }
+.token-expiry { font-size: .75rem; color: #94a3b8; }
+.token-instructions { font-size: .82rem; color: #374151; line-height: 1.7; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: .6rem .85rem; margin-bottom: .75rem; }
+@media (max-width: 768px) { .migration-grid { grid-template-columns: 1fr; } }
+
 /* ===== Prospects ===== */
 .badge-count { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; border-radius: 99px; padding: .2rem .75rem; font-size: .8rem; font-weight: 600; }
 .badge-readonly { background: #e0f2fe; color: #0369a1; border-radius: 4px; padding: .1rem .4rem; font-size: .7rem; font-weight: 500; vertical-align: middle; margin-left: .5rem; }
