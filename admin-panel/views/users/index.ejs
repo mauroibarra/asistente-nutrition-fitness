@@ -48,7 +48,7 @@
   <tbody>
     <% users.forEach(function(u) { %>
     <tr>
-      <td><a href="/users/<%= u.id %>"><%= u.first_name %> <%= u.last_name || '' %></a></td>
+      <td><a href="/users/<%= u.id %>"><%= (u.first_name && u.first_name.trim().length > 1) ? (u.first_name + ' ' + (u.last_name || '')).trim() : ('ID ' + u.telegram_id) %></a></td>
       <td><code><%= u.telegram_id %></code></td>
       <td>
         <% if (u.plan_type) { %>

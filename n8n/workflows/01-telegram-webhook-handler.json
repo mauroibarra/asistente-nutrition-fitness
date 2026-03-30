@@ -378,15 +378,14 @@
             "caseSensitive": true,
             "leftValue": "",
             "typeValidation": "loose",
-            "version": 1
+            "version": 2
           },
           "conditions": [
             {
               "id": "o1",
               "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
+                "type": "string",
+                "operation": "equals"
               },
               "leftValue": "={{ $json.onboarding_completed }}",
               "rightValue": "true"
