@@ -70,17 +70,22 @@ Cuándo usarlo: queries "get previous X" donde el primer run no tiene historial,
 
 **⚠️ Excepción crítica — `executeQuery` con typeVersion 2.5:** `alwaysOutputData: true` **no funciona** con la operación `executeQuery` del nodo Postgres en typeVersion 2.5. Devuelve `[]` (array vacío real) en lugar de `[{json:{}}]`, y el flujo se detiene igual.
 
-**Fix para `executeQuery`:** Agregar un Code node inmediatamente después que garantice siempre un ítem:
-```javascript
-// Normalize Token Result — siempre produce output
-const rows = $input.all();
-const match = rows.length > 0 && rows[0].json && rows[0].json.id;
-if (match) {
-  return [{ json: { ...rows[0].json, result_found: true } }];
-}
-return [{ json: { id: null, result_found: false } }];
+**Fix para `executeQuery` — SQL UNION ALL fallback (solución definitiva):**
+Hacer que el SQL siempre devuelva exactamente 1 fila usando un fallback:
+```sql
+SELECT id, first_name, true::boolean AS found
+FROM users
+WHERE migration_token = UPPER(TRIM($1))
+  AND migration_token_expires_at > NOW()
+UNION ALL
+SELECT NULL::integer, NULL::text, false::boolean
+LIMIT 1
 ```
-Luego el IF node verifica `$json.result_found` en lugar de `$json.id exists`.
+- Si hay match: devuelve la fila real con `found = true`
+- Si no hay match: devuelve `(NULL, NULL, false)` — 1 fila garantizada
+- El IF node verifica `$json.found` (boolean) en lugar de `$json.id exists`
+
+Un Code node normalizador NO resuelve el problema — n8n no lo ejecuta si el upstream entrega `[]`.
 
 ---
 
