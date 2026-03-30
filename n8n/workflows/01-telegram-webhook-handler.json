@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-28T18:20:06.700Z",
+  "updatedAt": "2026-03-30T15:39:22.273Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -103,6 +103,29 @@
               },
               "renameOutput": true,
               "outputKey": "callback"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "caseSensitive": true,
+                  "typeValidation": "loose"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.message.contact.phone_number }}",
+                    "rightValue": ""
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "contact"
             }
           ]
         },
@@ -449,7 +472,7 @@
         "promptType": "define",
         "text": "={{ $('Set Text from Message').item.json['message.text'] }}",
         "options": {
-          "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n\nCuando tengas TODOS los datos, responde con este JSON exacto al final:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- Confirma cada dato antes de avanzar al siguiente\n- Al final presenta un resumen del perfil para confirmacion"
+          "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n18. Pais de residencia (ej: Colombia, Mexico, Espana)\n19. Ciudad de residencia\n20. Numero de documento de identidad (cedula, DNI, pasaporte) — opcional, puedes indicar 'prefiero no dar'\n\nCuando tengas TODOS los datos, responde con este JSON exacto al final:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\", \"pais\": \"...\", \"ciudad\": \"...\", \"documento\": \"...\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- Confirma cada dato antes de avanzar al siguiente\n- Al final presenta un resumen del perfil para confirmacion\n- NO incluyas el bloque [PERFIL_COMPLETO] en el texto que muestras al usuario; usalo solo como senial interna"
         }
       },
       "id": "11111111-0015-4000-8000-000000000015",
@@ -709,6 +732,249 @@
           "name": "OpenAi account"
         }
       }
+    },
+    {
+      "id": "contact-set-001",
+      "name": "Set Phone Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        880
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cp1",
+              "name": "phone_number",
+              "type": "string",
+              "value": "={{ $json.message.contact.phone_number }}"
+            },
+            {
+              "id": "cp2",
+              "name": "telegram_id",
+              "type": "string",
+              "value": "={{ $json.message.contact.user_id }}"
+            },
+            {
+              "id": "cp3",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "contact-pg-001",
+      "name": "Save Phone Number",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        752,
+        880
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE users SET phone_number = $1, updated_at = NOW() WHERE telegram_id = $2",
+        "options": {
+          "queryReplacement": "={{ [$json.phone_number, String($json.telegram_id)] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "id": "contact-ack-001",
+      "name": "Phone ACK",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        992,
+        880
+      ],
+      "parameters": {
+        "chatId": "={{ $('Set Phone Data').item.json.chatId }}",
+        "text": "✅ ¡Perfecto! Tu número ha sido guardado. Ya tienes todo configurado.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "replyMarkup": "removeKeyboard"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      }
+    },
+    {
+      "id": "profile-parse-001",
+      "name": "Parse Profile",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        592
+      ],
+      "parameters": {
+        "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set Text from Message').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
+      }
+    },
+    {
+      "id": "profile-if-001",
+      "name": "Has PERFIL_COMPLETO?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3050,
+        592
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "pc1",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.hasProfile }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      }
+    },
+    {
+      "id": "profile-save-001",
+      "name": "Save User Profile",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3300,
+        480
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO user_profiles (user_id, gender, age, height_cm, weight_kg, activity_level, fitness_level, goal, dietary_restrictions, food_allergies, disliked_foods, injuries, available_equipment, training_days_per_week, meal_count, local_culture, budget_level, onboarding_completed, onboarding_completed_at) VALUES ($1, $2::gender_type, $3, $4, $5, $6::activity_level, $7::fitness_level, $8::goal_type, ARRAY(SELECT jsonb_array_elements_text($9::jsonb)), ARRAY(SELECT jsonb_array_elements_text($10::jsonb)), ARRAY(SELECT jsonb_array_elements_text($11::jsonb)), ARRAY(SELECT jsonb_array_elements_text($12::jsonb)), ARRAY(SELECT jsonb_array_elements_text($13::jsonb)), $14, $15, $16, $17::budget_level, true, NOW()) ON CONFLICT (user_id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg, activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level, goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions, food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods, injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment, training_days_per_week = EXCLUDED.training_days_per_week, meal_count = EXCLUDED.meal_count, local_culture = EXCLUDED.local_culture, budget_level = EXCLUDED.budget_level, onboarding_completed = true, onboarding_completed_at = COALESCE(user_profiles.onboarding_completed_at, NOW()), updated_at = NOW()",
+        "options": {
+          "queryReplacement": "={{ [$json.userId, $json.profile.gender, $json.profile.age, $json.profile.height_cm, $json.profile.weight_kg, $json.profile.activity_level, $json.profile.fitness_level, $json.profile.goal, $json.profile.dietary_restrictions, $json.profile.food_allergies, $json.profile.disliked_foods, $json.profile.injuries, $json.profile.available_equipment, $json.profile.training_days_per_week, $json.profile.meal_count, $json.profile.local_culture, $json.profile.budget_level] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "id": "profile-user-001",
+      "name": "Update User Contact Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3550,
+        480
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE users SET country = $1, city = $2, document_number = $3, updated_at = NOW() WHERE id = $4",
+        "options": {
+          "queryReplacement": "={{ [$json.profile.country, $json.profile.city, $json.profile.document_number, $json.userId] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "id": "profile-msg-001",
+      "name": "Send Profile Done",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3800,
+        480
+      ],
+      "parameters": {
+        "chatId": "={{ $('Parse Profile').item.json.chatId }}",
+        "text": "={{ $('Parse Profile').item.json.cleanText }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      }
+    },
+    {
+      "id": "phone-req-001",
+      "name": "Request Phone Number",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4050,
+        480
+      ],
+      "parameters": {
+        "chatId": "={{ $('Parse Profile').item.json.chatId }}",
+        "text": "📱 Un último paso: comparte tu número de celular para que podamos contactarte si es necesario. Puedes tocar el botón o escribirlo manualmente.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "replyMarkup": "replyKeyboard",
+          "replyKeyboardButtons": {
+            "rows": [
+              {
+                "row": {
+                  "buttons": [
+                    {
+                      "text": "📱 Compartir mi número",
+                      "requestContact": true
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "replyKeyboardOptions": {
+            "oneTimeKeyboard": true,
+            "resizeKeyboard": true
+          }
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      }
     }
   ],
   "connections": {
@@ -742,6 +1008,13 @@
         [
           {
             "node": "Set Text from Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Phone Data",
             "type": "main",
             "index": 0
           }
@@ -865,7 +1138,7 @@
       "main": [
         [
           {
-            "node": "Send Response",
+            "node": "Parse Profile",
             "type": "main",
             "index": 0
           }
@@ -981,6 +1254,100 @@
           }
         ]
       ]
+    },
+    "Set Phone Data": {
+      "main": [
+        [
+          {
+            "node": "Save Phone Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Phone Number": {
+      "main": [
+        [
+          {
+            "node": "Phone ACK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Phone ACK": {
+      "main": [
+        []
+      ]
+    },
+    "Parse Profile": {
+      "main": [
+        [
+          {
+            "node": "Has PERFIL_COMPLETO?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has PERFIL_COMPLETO?": {
+      "main": [
+        [
+          {
+            "node": "Save User Profile",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save User Profile": {
+      "main": [
+        [
+          {
+            "node": "Update User Contact Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update User Contact Data": {
+      "main": [
+        [
+          {
+            "node": "Send Profile Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Profile Done": {
+      "main": [
+        [
+          {
+            "node": "Request Phone Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Phone Number": {
+      "main": [
+        []
+      ]
     }
   },
   "settings": {
@@ -991,9 +1358,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "496f8f74-aa29-48fb-884d-24d79dccb1dd",
-  "activeVersionId": "496f8f74-aa29-48fb-884d-24d79dccb1dd",
-  "versionCounter": 164,
+  "versionId": "dd77e538-8f45-49b0-ab00-b6c08880b7a6",
+  "activeVersionId": "dd77e538-8f45-49b0-ab00-b6c08880b7a6",
+  "versionCounter": 169,
   "triggerCount": 1,
   "shared": [
     {
@@ -1016,9 +1383,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-28T18:20:06.708Z",
-    "createdAt": "2026-03-28T18:20:06.708Z",
-    "versionId": "496f8f74-aa29-48fb-884d-24d79dccb1dd",
+    "updatedAt": "2026-03-30T15:39:22.280Z",
+    "createdAt": "2026-03-30T15:39:22.280Z",
+    "versionId": "dd77e538-8f45-49b0-ab00-b6c08880b7a6",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -1117,6 +1484,29 @@
                 },
                 "renameOutput": true,
                 "outputKey": "callback"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "version": 2,
+                    "caseSensitive": true,
+                    "typeValidation": "loose"
+                  },
+                  "combinator": "and",
+                  "conditions": [
+                    {
+                      "operator": {
+                        "type": "boolean",
+                        "operation": "exists",
+                        "singleValue": true
+                      },
+                      "leftValue": "={{ $json.message.contact.phone_number }}",
+                      "rightValue": ""
+                    }
+                  ]
+                },
+                "renameOutput": true,
+                "outputKey": "contact"
               }
             ]
           },
@@ -1463,7 +1853,7 @@
           "promptType": "define",
           "text": "={{ $('Set Text from Message').item.json['message.text'] }}",
           "options": {
-            "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n\nCuando tengas TODOS los datos, responde con este JSON exacto al final:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- Confirma cada dato antes de avanzar al siguiente\n- Al final presenta un resumen del perfil para confirmacion"
+            "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n18. Pais de residencia (ej: Colombia, Mexico, Espana)\n19. Ciudad de residencia\n20. Numero de documento de identidad (cedula, DNI, pasaporte) — opcional, puedes indicar 'prefiero no dar'\n\nCuando tengas TODOS los datos, responde con este JSON exacto al final:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\", \"pais\": \"...\", \"ciudad\": \"...\", \"documento\": \"...\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- Confirma cada dato antes de avanzar al siguiente\n- Al final presenta un resumen del perfil para confirmacion\n- NO incluyas el bloque [PERFIL_COMPLETO] en el texto que muestras al usuario; usalo solo como senial interna"
           }
         },
         "id": "11111111-0015-4000-8000-000000000015",
@@ -1723,6 +2113,249 @@
             "name": "OpenAi account"
           }
         }
+      },
+      {
+        "id": "contact-set-001",
+        "name": "Set Phone Data",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          512,
+          880
+        ],
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "cp1",
+                "name": "phone_number",
+                "type": "string",
+                "value": "={{ $json.message.contact.phone_number }}"
+              },
+              {
+                "id": "cp2",
+                "name": "telegram_id",
+                "type": "string",
+                "value": "={{ $json.message.contact.user_id }}"
+              },
+              {
+                "id": "cp3",
+                "name": "chatId",
+                "type": "string",
+                "value": "={{ $json.message.chat.id }}"
+              }
+            ]
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "contact-pg-001",
+        "name": "Save Phone Number",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          752,
+          880
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE users SET phone_number = $1, updated_at = NOW() WHERE telegram_id = $2",
+          "options": {
+            "queryReplacement": "={{ [$json.phone_number, String($json.telegram_id)] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "id": "contact-ack-001",
+        "name": "Phone ACK",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          992,
+          880
+        ],
+        "parameters": {
+          "chatId": "={{ $('Set Phone Data').item.json.chatId }}",
+          "text": "✅ ¡Perfecto! Tu número ha sido guardado. Ya tienes todo configurado.",
+          "additionalFields": {
+            "appendAttribution": false,
+            "replyMarkup": "removeKeyboard"
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        }
+      },
+      {
+        "id": "profile-parse-001",
+        "name": "Parse Profile",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2800,
+          592
+        ],
+        "parameters": {
+          "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set Text from Message').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
+        }
+      },
+      {
+        "id": "profile-if-001",
+        "name": "Has PERFIL_COMPLETO?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          3050,
+          592
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "pc1",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                },
+                "leftValue": "={{ $json.hasProfile }}",
+                "rightValue": ""
+              }
+            ]
+          },
+          "options": {
+            "looseTypeValidation": true
+          }
+        }
+      },
+      {
+        "id": "profile-save-001",
+        "name": "Save User Profile",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          3300,
+          480
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO user_profiles (user_id, gender, age, height_cm, weight_kg, activity_level, fitness_level, goal, dietary_restrictions, food_allergies, disliked_foods, injuries, available_equipment, training_days_per_week, meal_count, local_culture, budget_level, onboarding_completed, onboarding_completed_at) VALUES ($1, $2::gender_type, $3, $4, $5, $6::activity_level, $7::fitness_level, $8::goal_type, ARRAY(SELECT jsonb_array_elements_text($9::jsonb)), ARRAY(SELECT jsonb_array_elements_text($10::jsonb)), ARRAY(SELECT jsonb_array_elements_text($11::jsonb)), ARRAY(SELECT jsonb_array_elements_text($12::jsonb)), ARRAY(SELECT jsonb_array_elements_text($13::jsonb)), $14, $15, $16, $17::budget_level, true, NOW()) ON CONFLICT (user_id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg, activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level, goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions, food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods, injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment, training_days_per_week = EXCLUDED.training_days_per_week, meal_count = EXCLUDED.meal_count, local_culture = EXCLUDED.local_culture, budget_level = EXCLUDED.budget_level, onboarding_completed = true, onboarding_completed_at = COALESCE(user_profiles.onboarding_completed_at, NOW()), updated_at = NOW()",
+          "options": {
+            "queryReplacement": "={{ [$json.userId, $json.profile.gender, $json.profile.age, $json.profile.height_cm, $json.profile.weight_kg, $json.profile.activity_level, $json.profile.fitness_level, $json.profile.goal, $json.profile.dietary_restrictions, $json.profile.food_allergies, $json.profile.disliked_foods, $json.profile.injuries, $json.profile.available_equipment, $json.profile.training_days_per_week, $json.profile.meal_count, $json.profile.local_culture, $json.profile.budget_level] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "id": "profile-user-001",
+        "name": "Update User Contact Data",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          3550,
+          480
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE users SET country = $1, city = $2, document_number = $3, updated_at = NOW() WHERE id = $4",
+          "options": {
+            "queryReplacement": "={{ [$json.profile.country, $json.profile.city, $json.profile.document_number, $json.userId] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "id": "profile-msg-001",
+        "name": "Send Profile Done",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          3800,
+          480
+        ],
+        "parameters": {
+          "chatId": "={{ $('Parse Profile').item.json.chatId }}",
+          "text": "={{ $('Parse Profile').item.json.cleanText }}",
+          "additionalFields": {
+            "appendAttribution": false,
+            "parse_mode": "Markdown"
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        }
+      },
+      {
+        "id": "phone-req-001",
+        "name": "Request Phone Number",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          4050,
+          480
+        ],
+        "parameters": {
+          "chatId": "={{ $('Parse Profile').item.json.chatId }}",
+          "text": "📱 Un último paso: comparte tu número de celular para que podamos contactarte si es necesario. Puedes tocar el botón o escribirlo manualmente.",
+          "additionalFields": {
+            "appendAttribution": false,
+            "replyMarkup": "replyKeyboard",
+            "replyKeyboardButtons": {
+              "rows": [
+                {
+                  "row": {
+                    "buttons": [
+                      {
+                        "text": "📱 Compartir mi número",
+                        "requestContact": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "replyKeyboardOptions": {
+              "oneTimeKeyboard": true,
+              "resizeKeyboard": true
+            }
+          }
+        },
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        }
       }
     ],
     "connections": {
@@ -1756,6 +2389,13 @@
           [
             {
               "node": "Set Text from Message",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Set Phone Data",
               "type": "main",
               "index": 0
             }
@@ -1879,7 +2519,7 @@
         "main": [
           [
             {
-              "node": "Send Response",
+              "node": "Parse Profile",
               "type": "main",
               "index": 0
             }
@@ -1995,6 +2635,100 @@
             }
           ]
         ]
+      },
+      "Set Phone Data": {
+        "main": [
+          [
+            {
+              "node": "Save Phone Number",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Phone Number": {
+        "main": [
+          [
+            {
+              "node": "Phone ACK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Phone ACK": {
+        "main": [
+          []
+        ]
+      },
+      "Parse Profile": {
+        "main": [
+          [
+            {
+              "node": "Has PERFIL_COMPLETO?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has PERFIL_COMPLETO?": {
+        "main": [
+          [
+            {
+              "node": "Save User Profile",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Send Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save User Profile": {
+        "main": [
+          [
+            {
+              "node": "Update User Contact Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update User Contact Data": {
+        "main": [
+          [
+            {
+              "node": "Send Profile Done",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Profile Done": {
+        "main": [
+          [
+            {
+              "node": "Request Phone Number",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Request Phone Number": {
+        "main": [
+          []
+        ]
       }
     },
     "authors": "Mauro Ibarra ",
@@ -2003,10 +2737,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-28T18:20:08.900Z",
-        "id": 158,
+        "createdAt": "2026-03-30T15:39:24.719Z",
+        "id": 160,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "496f8f74-aa29-48fb-884d-24d79dccb1dd",
+        "versionId": "dd77e538-8f45-49b0-ab00-b6c08880b7a6",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
