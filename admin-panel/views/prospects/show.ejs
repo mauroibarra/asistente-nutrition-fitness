@@ -1,0 +1,140 @@
+<%- include('../_header', { pageTitle: 'Prospecto: ' + prospect.first_name }) %>
+
+<div class="page-header">
+  <a href="/prospects" class="btn btn-link">&larr; Volver a prospectos</a>
+</div>
+
+<% if (error) { %>
+  <div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<div class="detail-grid">
+  <!-- Datos capturados por Telegram (solo lectura) -->
+  <section class="card">
+    <h2>Datos de Telegram <span class="badge-readonly">Capturado automáticamente</span></h2>
+    <dl class="dl-grid">
+      <dt>Telegram ID</dt>
+      <dd><code class="id-highlight"><%= prospect.telegram_id %></code></dd>
+      <dt>Nombre</dt>
+      <dd><%= prospect.first_name %> <%= prospect.last_name || '' %></dd>
+      <% if (prospect.username) { %>
+      <dt>Username</dt>
+      <dd><a href="https://t.me/<%= prospect.username %>" target="_blank" rel="noopener">@<%= prospect.username %></a></dd>
+      <% } %>
+      <dt>Idioma</dt>
+      <dd><%= prospect.language_code || '—' %></dd>
+      <dt>Primer contacto</dt>
+      <dd><%= new Date(prospect.created_at).toLocaleString('es-MX') %></dd>
+      <dt>Última actividad</dt>
+      <dd><%= new Date(prospect.updated_at).toLocaleString('es-MX') %></dd>
+    </dl>
+
+    <% if (membershipHistory.length > 0) { %>
+    <div style="margin-top:1rem">
+      <h3 style="font-size:.9rem;font-weight:600;margin-bottom:.5rem">Historial de membresías</h3>
+      <table class="table" style="font-size:.8rem">
+        <thead><tr><th>Plan</th><th>Status</th><th>Inicio</th><th>Expiró</th></tr></thead>
+        <tbody>
+          <% membershipHistory.forEach(function(m) { %>
+          <tr>
+            <td><span class="badge badge-<%= m.plan_type %>"><%= m.plan_type %></span></td>
+            <td><span class="status-<%= m.status %>"><%= m.status %></span></td>
+            <td><%= new Date(m.starts_at).toLocaleDateString('es-MX') %></td>
+            <td><%= new Date(m.expires_at).toLocaleDateString('es-MX') %></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </section>
+
+  <!-- Formulario de conversión a miembro -->
+  <section class="card card-convert">
+    <h2>Convertir a Miembro</h2>
+    <p class="text-muted" style="font-size:.85rem;margin-bottom:1rem">
+      Completa los datos faltantes y asigna una membresía. El Telegram ID ya quedará vinculado.
+    </p>
+
+    <form method="POST" action="/prospects/<%= prospect.id %>/convert">
+
+      <fieldset class="fieldset">
+        <legend>Datos del usuario</legend>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="first_name">Nombre *</label>
+            <input type="text" id="first_name" name="first_name" required
+                   value="<%= prospect.first_name %>">
+          </div>
+          <div class="form-group">
+            <label for="last_name">Apellido</label>
+            <input type="text" id="last_name" name="last_name"
+                   value="<%= prospect.last_name || '' %>">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="document_number">Nro. de Documento</label>
+            <input type="text" id="document_number" name="document_number"
+                   placeholder="CC, DNI, Pasaporte..."
+                   value="<%= prospect.document_number || '' %>">
+          </div>
+          <div class="form-group">
+            <label for="phone_number">Celular</label>
+            <input type="tel" id="phone_number" name="phone_number"
+                   placeholder="+57 300 123 4567"
+                   value="<%= prospect.phone_number || '' %>">
+            <small>Telegram no lo comparte — completar manualmente o durante onboarding</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="country">País</label>
+            <input type="text" id="country" name="country"
+                   placeholder="Colombia"
+                   value="<%= prospect.country || '' %>">
+          </div>
+          <div class="form-group">
+            <label for="city">Ciudad</label>
+            <input type="text" id="city" name="city"
+                   placeholder="Bogotá"
+                   value="<%= prospect.city || '' %>">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="fieldset">
+        <legend>Membresía</legend>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="plan_type">Plan *</label>
+            <select id="plan_type" name="plan_type" required>
+              <option value="basic">Basic</option>
+              <option value="pro" selected>Pro</option>
+              <option value="premium">Premium</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="duration_months">Duración *</label>
+            <select id="duration_months" name="duration_months" required>
+              <option value="1" selected>1 mes</option>
+              <option value="3">3 meses</option>
+              <option value="6">6 meses</option>
+              <option value="12">12 meses</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="form-actions">
+        <a href="/prospects" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-success">Registrar como Miembro</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<%- include('../_footer') %>

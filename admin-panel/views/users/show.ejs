@@ -9,10 +9,18 @@
     <h2>Informacion del Usuario</h2>
     <dl class="dl-grid">
       <dt>Nombre</dt><dd><%= user.first_name %> <%= user.last_name || '' %></dd>
-      <dt>Telegram ID</dt><dd><code><%= user.telegram_id %></code></dd>
+      <dt>Telegram ID</dt><dd><code class="id-highlight"><%= user.telegram_id %></code></dd>
       <% if (user.username) { %><dt>Username</dt><dd>@<%= user.username %></dd><% } %>
       <dt>Registrado</dt><dd><%= new Date(user.created_at).toLocaleDateString('es-MX') %></dd>
       <dt>Onboarding</dt><dd><%= user.onboarding_completed ? 'Completado' : 'Pendiente' %></dd>
+    </dl>
+
+    <h3 style="font-size:.9rem;font-weight:600;margin:1rem 0 .5rem">Datos de contacto</h3>
+    <dl class="dl-grid">
+      <dt>Documento</dt><dd><%= user.document_number || '<span class="text-muted">—</span>' %></dd>
+      <dt>Celular</dt><dd><%= user.phone_number || '<span class="text-muted">—</span>' %></dd>
+      <dt>País</dt><dd><%= user.country || '<span class="text-muted">—</span>' %></dd>
+      <dt>Ciudad</dt><dd><%= user.city || '<span class="text-muted">—</span>' %></dd>
     </dl>
   </section>
 

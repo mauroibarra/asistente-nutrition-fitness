@@ -1,0 +1,75 @@
+<%- include('../_header', { pageTitle: 'Prospectos' }) %>
+
+<div class="page-header">
+  <h1 class="page-title">Prospectos</h1>
+  <span class="badge-count"><%= pagination.totalProspects %> sin membresía</span>
+</div>
+
+<p class="text-muted" style="margin-bottom:1rem;font-size:.875rem;">
+  Personas que escribieron al bot pero no tienen membresía activa. Telegram captura automáticamente su ID y nombre.
+</p>
+
+<form method="GET" action="/prospects" class="filter-bar">
+  <input type="text" name="search" placeholder="Buscar por nombre, username o Telegram ID" value="<%= filters.search %>">
+  <button type="submit" class="btn btn-secondary">Buscar</button>
+  <% if (filters.search) { %>
+    <a href="/prospects" class="btn btn-link">Limpiar</a>
+  <% } %>
+</form>
+
+<% if (prospects.length === 0) { %>
+  <div class="empty-state">
+    <% if (filters.search) { %>
+      No se encontraron prospectos con ese criterio.
+    <% } else { %>
+      No hay prospectos. Todos los usuarios que escriben al bot aparecerán aquí si no tienen membresía.
+    <% } %>
+  </div>
+<% } else { %>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Telegram ID</th>
+      <th>@Username</th>
+      <th>Idioma</th>
+      <th>Primer contacto</th>
+      <th>Último estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% prospects.forEach(function(p) { %>
+    <tr>
+      <td><a href="/prospects/<%= p.id %>"><%= p.first_name %> <%= p.last_name || '' %></a></td>
+      <td><code><%= p.telegram_id %></code></td>
+      <td><% if (p.username) { %><span class="text-muted">@<%= p.username %></span><% } else { %><span class="text-muted">—</span><% } %></td>
+      <td><%= p.language_code || '—' %></td>
+      <td><%= new Date(p.created_at).toLocaleDateString('es-MX') %></td>
+      <td>
+        <% if (p.last_membership_status) { %>
+          <span class="status-<%= p.last_membership_status %>"><%= p.last_membership_status %></span>
+        <% } else { %>
+          <span class="text-muted">Nunca registrado</span>
+        <% } %>
+      </td>
+      <td>
+        <a href="/prospects/<%= p.id %>" class="btn btn-sm btn-primary">Ver / Registrar</a>
+      </td>
+    </tr>
+    <% }); %>
+  </tbody>
+</table>
+
+<div class="pagination">
+  <span>Mostrando <%= (pagination.page - 1) * 20 + 1 %>–<%= Math.min(pagination.page * 20, pagination.totalProspects) %> de <%= pagination.totalProspects %></span>
+  <% if (pagination.page > 1) { %>
+    <a href="?page=<%= pagination.page - 1 %>&search=<%= filters.search %>" class="btn btn-sm btn-secondary">&laquo; Anterior</a>
+  <% } %>
+  <% if (pagination.page < pagination.totalPages) { %>
+    <a href="?page=<%= pagination.page + 1 %>&search=<%= filters.search %>" class="btn btn-sm btn-secondary">Siguiente &raquo;</a>
+  <% } %>
+</div>
+<% } %>
+
+<%- include('../_footer') %>

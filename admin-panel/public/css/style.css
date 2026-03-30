@@ -156,6 +156,16 @@ code { background: #f3f4f6; padding: .1rem .3rem; border-radius: 3px; font-size:
 .action-buttons { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
 .pagination { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; font-size: .85rem; color: var(--muted); }
 
+/* ===== Prospects ===== */
+.badge-count { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; border-radius: 99px; padding: .2rem .75rem; font-size: .8rem; font-weight: 600; }
+.badge-readonly { background: #e0f2fe; color: #0369a1; border-radius: 4px; padding: .1rem .4rem; font-size: .7rem; font-weight: 500; vertical-align: middle; margin-left: .5rem; }
+.id-highlight { background: #fef3c7; color: #92400e; padding: .2rem .5rem; border-radius: 4px; font-size: .9em; border: 1px solid #fbbf24; }
+.card-convert { border-left: 3px solid var(--primary); }
+.btn-success { background: #16a34a; color: white; }
+.btn-success:hover { background: #15803d; }
+fieldset.fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
+fieldset.fieldset legend { font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 0 .5rem; }
+
 /* ===== Filter Bar ===== */
 .filter-bar { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
 .filter-bar select, .filter-bar input { width: auto; padding: .4rem .65rem; border: 1px solid var(--border); border-radius: 6px; font-size: .85rem; }

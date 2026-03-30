@@ -142,7 +142,8 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { telegram_id, first_name, last_name, plan_type, duration_months } = req.body;
+  const { telegram_id, first_name, last_name, plan_type, duration_months,
+          document_number, country, city, phone_number } = req.body;
 
   if (!telegram_id || !first_name || !plan_type || !duration_months) {
     return res.render('users/new', {
@@ -155,10 +156,18 @@ router.post('/', async (req, res) => {
     await client.query('BEGIN');
 
     const userResult = await client.query(
-      `INSERT INTO users (telegram_id, first_name, last_name)
-       VALUES ($1, $2, $3)
+      `INSERT INTO users (telegram_id, first_name, last_name, document_number, country, city, phone_number)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
-      [parseInt(telegram_id), first_name.trim(), last_name ? last_name.trim() : null]
+      [
+        parseInt(telegram_id),
+        first_name.trim(),
+        last_name ? last_name.trim() : null,
+        document_number ? document_number.trim() : null,
+        country ? country.trim() : null,
+        city ? city.trim() : null,
+        phone_number ? phone_number.trim() : null
+      ]
     );
     const userId = userResult.rows[0].id;
 
