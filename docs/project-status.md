@@ -1,12 +1,12 @@
 # Estado del Proyecto — FitAI Assistant
 
-**Última actualización:** 2026-03-28
+**Última actualización:** 2026-03-30
 
 ---
 
-## Estado Actual: En Producción Local — RAG Completo ✅
+## Estado Actual: En Producción Local — Sistema Completo ✅
 
-El sistema está corriendo localmente con Docker. **Todos los 9 workflows activos.** RAG pipeline completo: `user_rag` indexa eventos personales vía AI Agent tool; `knowledge_rag` tiene 106 puntos (25 secciones de 4 skills). AI Agent puede buscar contexto personal vía `Tool: Contexto Personal`.
+El sistema está corriendo localmente con Docker. **Todos los 9 workflows activos.** RAG pipeline completo. Panel de administración web construido y operativo en `localhost:3000`. Soporta gestión completa de usuarios, membresías, prospectos, pagos y migración de cuenta Telegram.
 
 ---
 
@@ -14,7 +14,7 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 
 | ID | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | ✅ E2E OK | Handler unificado (24 nodos): onboarding, AI Agent + 5 tools + Vector Store RAG |
+| `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | ✅ E2E OK | Handler unificado (37 nodos): onboarding, AI Agent + 5 tools + Vector Store RAG + flujo contacto/teléfono + flujo migración token |
 | `3uXT5ld76uIUCENn` | FitAI - Knowledge Base Indexer | ✅ E2E OK | Webhook POST; indexó 25 secciones → 106 puntos en knowledge_rag |
 | `bhJ8qqZXr68Id3pH` | FitAI - Progress Calculator | ✅ E2E OK | Recibe userId+chatId vía toolWorkflow, calcula métricas, responde |
 | `KQhP9lQNxCKeOsbJ` | FitAI - Meal Plan Generator | ✅ E2E OK | Genera plan semanal con GPT-4o, guarda en DB, envía por Telegram |
@@ -90,6 +90,39 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 - Validado exec 354: AI dice "Hoy, 28/03/2026..." con datos correctos del RAG ✅
 
 
+### Panel de Administración — Admin Panel (Express + EJS)
+- Construido completo: login, dashboard, CRUD usuarios, prospectos, pagos
+- `admin-panel/app.js` carga `.env` (hostnames Docker para producción) y luego `.env.local` si existe (overrides `localhost` para desarrollo). En VPS no hay `.env.local` → cero fricción de deploy
+- Campos adicionales en usuarios: `document_number`, `country`, `city`, `phone_number` (migración `002`)
+- Migración de cuenta Telegram: código `FIT-XXXXXX` 24h + fusión manual con prospecto (migración `003`)
+- Zona de peligro: eliminar usuario requiere escribir el nombre completo; DELETE CASCADE elimina toda la data asociada
+
+### Handler — Flujo de Contacto / Teléfono
+- `Route Message Type` (Switch) ampliado a 4 ramas: text, voice, callback, **contact**
+- Rama contact: `Set Phone Data` → `Save Phone Number` (UPDATE `users.phone_number`) → `Phone ACK` (envía confirmación y elimina el teclado de contacto)
+- Al terminar onboarding, se envía automáticamente un `ReplyKeyboardMarkup` con botón `request_contact: true` para capturar el celular sin pedírselo manualmente
+
+### Handler — Auto-guardado de Perfil al Finalizar Onboarding
+- `Onboarding Agent` genera bloque `[PERFIL_COMPLETO]{json}[/PERFIL_COMPLETO]` cuando recopila los 20 datos
+- `Parse Profile` (Code node): extrae el JSON del bloque
+- `Has PERFIL_COMPLETO?` (IF): bifurca si el bloque está presente
+- `Save User Profile`: UPSERT en `user_profiles` + `onboarding_completed = true` en `users`
+- `Update User Contact Data`: guarda `country`, `city`, `document_number`, `phone_number` en `users`
+- `Send Profile Done`: envía mensaje de confirmación
+- `Request Phone Number`: envía `ReplyKeyboardMarkup` con botón de contacto
+
+### Handler — Migración de Cuenta Telegram
+- `Check Migration Token` (Postgres SELECT con `alwaysOutputData: true`): busca token en `users` antes de `Upsert User`
+- `Is Migration Token?` (IF): si el texto coincide con un token válido y no expirado
+- rama true → `Apply Migration`: UPDATE `telegram_id`, limpia token
+- rama true → `Send Migration Success`: confirma al usuario
+- rama false → flujo normal (`Upsert User`)
+
+### Telegram — Attribution Footer
+- `appendAttribution: false` aplicado a todos los nodos Telegram de tipo send en todos los workflows
+- Affected: Meal Reminder Scheduler, Weight Update Requester, Progress Calculator, Membership Alert (aplicado vía API), plus todos los nodos del Handler
+- El mensaje "This message was sent automatically with n8n" no aparece en ningún flujo
+
 ### Timezone Colombia
 - `GENERIC_TIMEZONE=America/Bogota` ya estaba en n8n → cron triggers correctos
 - `Prepare Document` (RAG Indexer) y `Format Results` (RAG Search) actualizados a `toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })` en lugar de `toISOString().split('T')[0]`
@@ -105,6 +138,23 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 
 ---
 
+## Panel de Administración — Estado
+
+| Módulo | Estado | Descripción |
+|--------|--------|-------------|
+| Login / Auth | ✅ Operativo | express-session + bcrypt; `scripts/create-admin.js` para primer admin |
+| Dashboard | ✅ Operativo | 4 métricas (usuarios, activos, por vencer, ingresos mes), lista de vencimientos y últimos pagos |
+| Usuarios — Lista | ✅ Operativo | Filtros por status/plan/búsqueda, paginación de 20 por página |
+| Usuarios — Alta | ✅ Operativo | Campos: Telegram ID, nombre, apellido, documento, celular, país, ciudad, plan, duración |
+| Usuarios — Detalle | ✅ Operativo | Datos personales, membresía (pausar/cancelar/renovar), perfil de salud, historial de peso (gráfico de barras), historial de pagos |
+| Usuarios — Editar | ✅ Operativo | Edición de todos los campos (nombre, apellido, Telegram ID, documento, celular, país, ciudad) |
+| Usuarios — Eliminar | ✅ Operativo | Confirmación por nombre completo (zona de peligro); DELETE CASCADE en toda la data del usuario |
+| Migración de cuenta | ✅ Operativo | Opción A: código `FIT-XXXXXX` 24h (generar/revocar); Opción B: fusión manual con prospecto |
+| Prospectos | ✅ Operativo | Lista usuarios sin membresía activa; detalle con datos de Telegram (read-only); formulario de conversión a miembro |
+| Pagos | ✅ Operativo | Lista paginada + formulario de registro inline (usuario, monto, método, referencia, fecha) |
+
+---
+
 ## Inventario de Archivos del Proyecto
 
 | # | Archivo | Estado | Contenido |
@@ -113,41 +163,50 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 | 2 | `README.md` | ✅ Completo | Documentación pública del proyecto |
 | 3 | `.mcp.json` | ✅ Completo | Configuración de MCPs (n8n, filesystem, postgres) |
 | 4 | `.env.example` | ✅ Completo | 20+ variables de entorno con descripciones |
-| 5 | `docker-compose.yml` | ✅ Completo | 6 servicios con healthchecks, volumes, networks |
-| 6 | `infra/nginx.conf` | ✅ Completo | Reverse proxy, rate limiting, security headers |
-| 7 | `docs/architecture.md` | ✅ Completo | Diagramas Mermaid, flujo request-response, ADRs |
-| 8 | `docs/data-models.md` | ✅ Completo | SQL completo, ER diagram, JSON de ejemplo |
-| 9 | `docs/n8n-flows.md` | ✅ Completo | 8 workflows documentados con nodos y lógica |
-| 10 | `docs/api-integrations.md` | ✅ Completo | Telegram, OpenAI, Qdrant, PostgreSQL, Redis |
-| 11 | `docs/admin-panel.md` | ✅ Completo | Wireframes, endpoints, auth, integración |
-| 12 | `docs/deployment.md` | ✅ Completo | Guía VPS, Docker, SSL, backups, monitoreo |
-| 13 | `skills/business/nutrition.md` | ✅ Completo | Fórmulas, macros, alimentos |
-| 14 | `skills/business/fitness.md` | ✅ Completo | Principios, rutinas completas |
-| 15 | `skills/business/habit-psychology.md` | ✅ Completo | Modelo de hábito, coaching |
-| 16 | `skills/business/metrics-calculation.md` | ✅ Completo | 9 funciones JS de cálculo |
-| 17 | `skills/dev/n8n-workflow-debugging.md` | ✅ Nuevo | Guía de debugging de workflows n8n |
-| 18 | `skills/dev/n8n-ai-agent-tools.md` | ✅ Nuevo | Patrones correctos de AI Agent + toolWorkflow |
-| 19 | `prompts/system-prompt.md` | ✅ Completo | System prompt con personalidad y reglas |
-| 20 | `prompts/onboarding.md` | ✅ Completo | 17 preguntas de onboarding |
-| 21 | `prompts/meal-plan-generation.md` | ✅ Completo | Templates de planes de comidas |
-| 22 | `prompts/workout-plan-generation.md` | ✅ Completo | Templates de rutinas |
-| 23 | `n8n/workflows/README.md` | ✅ Completo | Guía de workflows |
-| 26 | `n8n/workflows/11-knowledge-base-indexer.json` | ✅ Completo | Workflow webhook POST; indexa skills/business/ en knowledge_rag |
-| 24 | `admin-panel/README.md` | ✅ Completo | Setup del panel admin |
-| 25 | `src/bot/handlers/README.md` | ✅ Completo | Descripción de handlers |
+| 5 | `.env.local` | ✅ Completo | Overrides para desarrollo local (gitignored); hostnames `localhost` en lugar de Docker |
+| 6 | `docker-compose.yml` | ✅ Completo | 6 servicios con healthchecks, volumes, networks |
+| 7 | `infra/nginx.conf` | ✅ Completo | Reverse proxy, rate limiting, security headers |
+| 8 | `docs/architecture.md` | ✅ Completo | Diagramas Mermaid, flujo request-response, ADRs |
+| 9 | `docs/data-models.md` | ✅ Completo | SQL completo, ER diagram, JSON de ejemplo |
+| 10 | `docs/n8n-flows.md` | ✅ Completo | 8 workflows documentados con nodos y lógica |
+| 11 | `docs/api-integrations.md` | ✅ Completo | Telegram, OpenAI, Qdrant, PostgreSQL, Redis |
+| 12 | `docs/admin-panel.md` | ✅ Completo | Wireframes, endpoints, auth, integración |
+| 13 | `docs/deployment.md` | ✅ Completo | Guía VPS, Docker, SSL, backups, monitoreo |
+| 14 | `migrations/001_initial_schema.sql` | ✅ Completo | Schema inicial completo |
+| 15 | `migrations/002_contact_fields.sql` | ✅ Completo | Columnas: document_number, country, city, phone_number en users |
+| 16 | `migrations/003_migration_token.sql` | ✅ Completo | Columnas: migration_token, migration_token_expires_at en users |
+| 17 | `skills/business/nutrition.md` | ✅ Completo | Fórmulas, macros, alimentos |
+| 18 | `skills/business/fitness.md` | ✅ Completo | Principios, rutinas completas |
+| 19 | `skills/business/habit-psychology.md` | ✅ Completo | Modelo de hábito, coaching |
+| 20 | `skills/business/metrics-calculation.md` | ✅ Completo | 9 funciones JS de cálculo |
+| 21 | `skills/dev/n8n-workflow-debugging.md` | ✅ Completo | Guía de debugging de workflows n8n |
+| 22 | `skills/dev/n8n-ai-agent-tools.md` | ✅ Completo | Patrones correctos de AI Agent + toolWorkflow |
+| 23 | `prompts/system-prompt.md` | ✅ Completo | System prompt con personalidad y reglas |
+| 24 | `prompts/onboarding.md` | ✅ Completo | 20 preguntas de onboarding (incluye país, ciudad, documento) |
+| 25 | `prompts/meal-plan-generation.md` | ✅ Completo | Templates de planes de comidas |
+| 26 | `prompts/workout-plan-generation.md` | ✅ Completo | Templates de rutinas |
+| 27 | `n8n/workflows/README.md` | ✅ Completo | Guía de workflows |
+| 28 | `n8n/workflows/01-telegram-webhook-handler.json` | ✅ Sincronizado | 37 nodos; incluye flujo contacto, migración y auto-guardado de perfil |
+| 29 | `n8n/workflows/11-knowledge-base-indexer.json` | ✅ Sincronizado | Webhook POST; indexa skills/business/ en knowledge_rag |
+| 30 | `admin-panel/app.js` | ✅ Completo | Express server con carga de .env + .env.local |
+| 31 | `admin-panel/routes/users.js` | ✅ Completo | CRUD completo + migración token + merge |
+| 32 | `admin-panel/routes/prospects.js` | ✅ Completo | Lista + detalle + conversión a miembro |
+| 33 | `admin-panel/scripts/create-admin.js` | ✅ Completo | CLI para crear primer admin |
+| 34 | `admin-panel/README.md` | ✅ Completo | Setup del panel admin |
+| 35 | `src/bot/handlers/README.md` | ✅ Completo | Descripción de handlers |
 
 ---
 
 ## Próximos Pasos
 
 ### Corto Plazo
-1. **Construir panel de administración** (Express + EJS) — gestión de usuarios, membresías, pagos
-5. **Prueba E2E completa** — onboarding nuevo usuario → planes → progreso → recordatorios
+1. **Prueba E2E completa** — onboarding nuevo usuario → planes → progreso → recordatorios
+2. **Flujo de onboarding en n8n** — verificar que las 20 preguntas actualizadas (país, ciudad, documento) funcionan correctamente en el Onboarding Agent y que `[PERFIL_COMPLETO]` incluye esos campos
 
 ### Producción
-6. **Migrar a VPS** — según `docs/deployment.md`
-7. **Configurar HTTPS** con Certbot / Nginx
-8. **Activar pagos** — integrar pasarela en el panel admin
+3. **Migrar a VPS** — según `docs/deployment.md`
+4. **Configurar HTTPS** con Certbot / Nginx
+5. **Activar pagos** — integrar pasarela en el panel admin
 
 ---
 

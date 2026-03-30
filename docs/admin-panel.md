@@ -101,9 +101,9 @@ Se evaluo usar un framework SPA (React, Vue) o una plataforma low-code (Retool, 
 ### 2.3 Lista de Usuarios
 
 ```
-+----------------------------------------------------------+
-| FitAI Admin          Dashboard | Usuarios | Pagos | Salir|
-+----------------------------------------------------------+
++------------------------------------------------------------------+
+| FitAI Admin   Dashboard | Usuarios | Prospectos | Pagos | Salir  |
++------------------------------------------------------------------+
 |                                                          |
 |  Usuarios                          [+ Nuevo Usuario]     |
 |                                                          |
@@ -312,6 +312,92 @@ Se evaluo usar un framework SPA (React, Vue) o una plataforma low-code (Retool, 
 +----------------------------------------------------------+
 ```
 
+### 2.7 Prospectos — Lista y Detalle
+
+Usuarios que escribieron al bot pero no tienen membresía activa ni trial.
+
+```
++-------------------------------------------------------------------+
+| FitAI Admin   Dashboard | Usuarios | Prospectos | Pagos | Salir   |
++-------------------------------------------------------------------+
+|                                                                   |
+|  Prospectos                        [3 prospectos sin membresia]   |
+|                                                                   |
+|  +-----------------------------------------------------------------+
+|  | Nombre        | Telegram ID  | Username      | Primer contacto ||
+|  |---------------|--------------|---------------|----------------||
+|  | Carlos Nuevo  | 998877665    | @carlosnuevo  | 2026-03-28     ||
+|  |               |              |               |       [Ver]    ||
+|  | Sin Nombre    | 112233445    | —             | 2026-03-29     ||
+|  |               |              |               |       [Ver]    ||
+|  +-----------------------------------------------------------------+
+|                                                                   |
++-------------------------------------------------------------------+
+```
+
+Pantalla de detalle del prospecto:
+- Columna izquierda (solo lectura): Telegram ID resaltado, username, nombre, fecha de registro
+- Columna derecha: formulario para completar datos y crear membresía (nombre *, apellido, documento, celular, país, ciudad, plan *, duración *)
+- Al convertir: INSERT en `memberships` con status `active` + UPDATE de campos en `users`
+
+### 2.8 Editar Usuario
+
+```
++-------------------------------------------------------------------+
+| FitAI Admin   Dashboard | Usuarios | Prospectos | Pagos | Salir   |
++-------------------------------------------------------------------+
+|                                                                   |
+|  [< Volver]     Editar Usuario                                    |
+|                                                                   |
+|  Datos del Usuario                                                |
+|  +-----------------------------------------------------------------+
+|  | Telegram ID *  [123456789 ]    (cambiar solo si creo nueva cta)||
+|  | Nombre *       [Maria    ]     Apellido  [Lopez      ]         ||
+|  | Documento      [12345678 ]     Celular   [+57 300... ]         ||
+|  | País           [Colombia ]     Ciudad    [Bogota     ]         ||
+|  |                                                                ||
+|  |                        [Cancelar]  [Guardar Cambios]           ||
+|  +-----------------------------------------------------------------+
+|                                                                   |
+|  Zona de Peligro                                                  |
+|  +-----------------------------------------------------------------+
+|  | Eliminar este usuario borra PERMANENTEMENTE su perfil, peso,  ||
+|  | planes, membresías y pagos. Esta acción no se puede deshacer. ||
+|  |                                                                ||
+|  | [Eliminar este usuario]  ← despliega confirmación             ||
+|  |                                                                ||
+|  | Para confirmar, escribe: Maria Lopez                          ||
+|  | [___________________________]  [Cancelar] [Eliminar perm.]    ||
+|  +-----------------------------------------------------------------+
+```
+
+### 2.9 Migración de Cuenta Telegram
+
+Sección en el detalle del usuario (`/users/:id`):
+
+```
++-------------------------------------------------------------------+
+|  Cambio de Cuenta de Telegram                                     |
+|  +-----------------------------------------------------------------+
+|  | Opción A — Código de migración (recomendada)                  ||
+|  |                                                                ||
+|  |  +---------------------------+                                 ||
+|  |  |  FIT-A3F9C2               |  ← fondo oscuro, fuente cyan   ||
+|  |  |  Expira: 30/03/2026 18:00 |                                 ||
+|  |  +---------------------------+                                 ||
+|  |  1. Copia el código                                            ||
+|  |  2. Envíaselo al usuario (WhatsApp, llamada, etc.)             ||
+|  |  3. El usuario lo escribe en su nuevo Telegram                 ||
+|  |  4. El sistema lo migra automáticamente                        ||
+|  |  [Revocar código]                                              ||
+|  |                                                                ||
+|  | Opción B — Fusión manual con prospecto                        ||
+|  |  ID del prospecto: [________]                                  ||
+|  |  (Encuéntralo en Prospectos y copia su ID de la URL)           ||
+|  |  [Fusionar cuentas]                                            ||
+|  +-----------------------------------------------------------------+
+```
+
 ---
 
 ## 3. Rutas y Endpoints del Panel
@@ -324,15 +410,23 @@ Se evaluo usar un framework SPA (React, Vue) o una plataforma low-code (Retool, 
 | POST | `/login` | No | Autenticar admin |
 | GET | `/logout` | Si | Destruir sesion y redirigir a /login |
 | GET | `/` | Si | Dashboard con metricas globales |
-| GET | `/users` | Si | Lista de usuarios con filtros |
+| GET | `/users` | Si | Lista de usuarios con filtros y paginacion |
 | GET | `/users/new` | Si | Formulario de alta de usuario |
 | GET | `/users/:id` | Si | Detalle de un usuario |
-| POST | `/users` | Si | Crear usuario + membresia |
-| PUT | `/users/:id` | Si | Actualizar datos de usuario |
-| POST | `/users/:id/activate` | Si | Activar membresia |
-| POST | `/users/:id/pause` | Si | Pausar membresia |
-| POST | `/users/:id/cancel` | Si | Cancelar membresia |
-| GET | `/payments` | Si | Lista de pagos |
+| POST | `/users` | Si | Crear usuario + membresia inicial |
+| GET | `/users/:id/edit` | Si | Formulario de edicion del usuario |
+| POST | `/users/:id/update` | Si | Guardar cambios del usuario |
+| POST | `/users/:id/delete` | Si | Eliminar usuario (requiere confirm_name en body) |
+| POST | `/users/:id/activate` | Si | Crear o renovar membresia |
+| POST | `/users/:id/pause` | Si | Pausar membresia activa |
+| POST | `/users/:id/cancel` | Si | Cancelar membresia activa o pausada |
+| POST | `/users/:id/generate-migration-token` | Si | Genera codigo FIT-XXXXXX valido 24h |
+| POST | `/users/:id/revoke-migration-token` | Si | Revoca el token de migracion activo |
+| POST | `/users/:id/merge` | Si | Fusiona prospect_user_id en este usuario |
+| GET | `/prospects` | Si | Lista de usuarios sin membresia activa |
+| GET | `/prospects/:id` | Si | Detalle de prospecto (datos Telegram + form conversion) |
+| POST | `/prospects/:id/convert` | Si | Convierte prospecto en miembro con membresia |
+| GET | `/payments` | Si | Lista de pagos con formulario de registro |
 | POST | `/payments` | Si | Registrar nuevo pago |
 | GET | `/health` | No | Health check (para Docker/nginx) |
 
@@ -1419,7 +1513,21 @@ Admin creado exitosamente:
   Nombre: Mauro Ibarra
 ```
 
-### Paso 4: Iniciar el servidor
+### Paso 4: Configurar variables locales (solo desarrollo)
+
+El `.env` del proyecto usa hostnames Docker (`postgres`, `redis`, `qdrant`) que funcionan dentro de la red de contenedores. Para correr el panel en el host durante el desarrollo, crea `.env.local` en la raíz del proyecto (ya está en `.gitignore`):
+
+```bash
+# .env.local — solo en tu máquina local, nunca en producción
+DATABASE_URL=postgresql://fitai:TU_PASSWORD@localhost:5432/fitai_db
+REDIS_URL=redis://localhost:6379
+QDRANT_URL=http://localhost:6333
+N8N_BASE_URL=http://localhost:5678
+```
+
+`app.js` carga `.env` primero y luego sobreescribe con `.env.local` si existe. En la VPS el archivo no existe y los hostnames de `.env` funcionan directamente.
+
+### Paso 5: Iniciar el servidor
 
 ```bash
 # Desarrollo (con hot reload)

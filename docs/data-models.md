@@ -43,6 +43,15 @@ CREATE TABLE users (
     last_name       VARCHAR(255),
     language_code   VARCHAR(10) DEFAULT 'es',
     is_active       BOOLEAN DEFAULT true,
+    onboarding_completed BOOLEAN DEFAULT false,
+    -- Contact fields (collected during onboarding or via admin panel)
+    document_number VARCHAR(50),
+    country         VARCHAR(100),
+    city            VARCHAR(100),
+    phone_number    VARCHAR(50),
+    -- Telegram account migration support
+    migration_token             VARCHAR(12),
+    migration_token_expires_at  TIMESTAMPTZ,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -55,6 +64,10 @@ CREATE UNIQUE INDEX idx_users_telegram_id ON users(telegram_id);
 - `telegram_id`: ID numérico único de Telegram (no es el @username). Es la clave de búsqueda principal.
 - `is_active`: Flag global de activación. Si es `false`, el bot no responde independientemente de la membresía.
 - `language_code`: Código de idioma del cliente de Telegram del usuario.
+- `onboarding_completed`: Se establece en `true` cuando el Onboarding Agent genera el bloque `[PERFIL_COMPLETO]` y el perfil se guarda en `user_profiles`.
+- `document_number`, `country`, `city`, `phone_number`: Recopilados durante el onboarding (preguntas 18-20) o mediante el botón nativo de contacto de Telegram. Editables desde el panel admin. Añadidos en migración `002_contact_fields.sql`.
+- `migration_token`: Código `FIT-XXXXXX` generado por el admin cuando el usuario cambia de cuenta Telegram. El bot lo detecta antes del Upsert y actualiza el `telegram_id`. Añadido en migración `003_migration_token.sql`.
+- `migration_token_expires_at`: Expiración del token (24 horas desde la generación). El bot verifica que no esté expirado antes de aplicar la migración.
 
 ### Tabla: `memberships`
 
