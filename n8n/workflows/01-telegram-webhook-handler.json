@@ -279,7 +279,7 @@
       "typeVersion": 2.5,
       "name": "Check User & Membership",
       "position": [
-        1264,
+        1464,
         304
       ],
       "credentials": {
@@ -302,7 +302,7 @@
       "typeVersion": 2.5,
       "name": "Upsert User",
       "position": [
-        1504,
+        1704,
         304
       ],
       "credentials": {
@@ -343,7 +343,7 @@
       "typeVersion": 2,
       "name": "Has Active Membership?",
       "position": [
-        1760,
+        1960,
         304
       ]
     },
@@ -360,7 +360,7 @@
       "typeVersion": 1.2,
       "name": "No Membership Message",
       "position": [
-        2000,
+        2200,
         512
       ],
       "webhookId": "20379d01-666f-4ea3-834a-e62dc6c5ff5a",
@@ -403,7 +403,7 @@
       "typeVersion": 2,
       "name": "Onboarding Complete?",
       "position": [
-        2000,
+        2200,
         208
       ]
     },
@@ -420,7 +420,7 @@
       "typeVersion": 2,
       "name": "FitAI Main AI Agent",
       "position": [
-        2448,
+        2648,
         0
       ]
     },
@@ -442,7 +442,7 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model",
       "position": [
-        2304,
+        2504,
         144
       ],
       "credentials": {
@@ -463,7 +463,7 @@
       "typeVersion": 1.3,
       "name": "FitAI Memory",
       "position": [
-        2448,
+        2648,
         144
       ]
     },
@@ -480,7 +480,7 @@
       "typeVersion": 2,
       "name": "Onboarding Agent",
       "position": [
-        2528,
+        2728,
         592
       ]
     },
@@ -501,7 +501,7 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model Onboarding",
       "position": [
-        2448,
+        2648,
         800
       ],
       "credentials": {
@@ -522,7 +522,7 @@
       "typeVersion": 1.3,
       "name": "Onboarding Memory",
       "position": [
-        2624,
+        2824,
         800
       ]
     },
@@ -540,7 +540,7 @@
       "typeVersion": 1.2,
       "name": "Send Response",
       "position": [
-        3424,
+        3624,
         288
       ],
       "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
@@ -580,7 +580,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2992,
+        3192,
         288
       ]
     },
@@ -613,7 +613,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2672,
+        2872,
         288
       ]
     },
@@ -646,7 +646,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2832,
+        3032,
         288
       ]
     },
@@ -682,7 +682,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2512,
+        2712,
         288
       ]
     },
@@ -692,7 +692,7 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1.3,
       "position": [
-        3120,
+        3320,
         288
       ],
       "parameters": {
@@ -719,7 +719,7 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1,
       "position": [
-        3120,
+        3320,
         460
       ],
       "parameters": {
@@ -821,7 +821,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2800,
+        3000,
         592
       ],
       "parameters": {
@@ -834,7 +834,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3050,
+        3250,
         592
       ],
       "parameters": {
@@ -870,7 +870,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3300,
+        3500,
         480
       ],
       "parameters": {
@@ -893,7 +893,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3550,
+        3750,
         480
       ],
       "parameters": {
@@ -916,7 +916,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3800,
+        4000,
         480
       ],
       "parameters": {
@@ -940,7 +940,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        4050,
+        4250,
         480
       ],
       "parameters": {
@@ -1006,7 +1006,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1184,
+        1384,
         224
       ],
       "parameters": {
@@ -1022,11 +1022,11 @@
             {
               "id": "mt1",
               "operator": {
-                "type": "number",
-                "operation": "exists",
+                "type": "boolean",
+                "operation": "true",
                 "singleValue": true
               },
-              "leftValue": "={{ $json.id }}",
+              "leftValue": "={{ $json.migration_match }}",
               "rightValue": ""
             }
           ]
@@ -1042,7 +1042,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1424,
+        1624,
         96
       ],
       "parameters": {
@@ -1065,7 +1065,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1664,
+        1864,
         96
       ],
       "parameters": {
@@ -1081,6 +1081,19 @@
           "id": "1duS64x2hsrz3moJ",
           "name": "Telegram account fitia"
         }
+      }
+    },
+    {
+      "id": "normalize-token-001",
+      "name": "Normalize Token Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        224
+      ],
+      "parameters": {
+        "jsCode": "// Always produce output regardless of whether the token matched.\n// Check Migration Token returns [] when no match — this would stop the flow.\nconst rows = $input.all();\nconst match = rows.length > 0 && rows[0].json && rows[0].json.id;\nif (match) {\n  return [{ json: { ...rows[0].json, migration_match: true } }];\n}\nreturn [{ json: { id: null, migration_match: false } }];"
       }
     }
   ],
@@ -1460,7 +1473,7 @@
       "main": [
         [
           {
-            "node": "Is Migration Token?",
+            "node": "Normalize Token Result",
             "type": "main",
             "index": 0
           }
@@ -1499,6 +1512,17 @@
     "Send Migration Success": {
       "main": [
         []
+      ]
+    },
+    "Normalize Token Result": {
+      "main": [
+        [
+          {
+            "node": "Is Migration Token?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
