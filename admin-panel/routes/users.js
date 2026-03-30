@@ -19,7 +19,10 @@ router.get('/', async (req, res) => {
         WHERE user_id = u.id
         ORDER BY created_at DESC LIMIT 1
       )
-    WHERE 1=1
+    WHERE EXISTS (
+      SELECT 1 FROM memberships m2
+      WHERE m2.user_id = u.id
+    )
   `;
   let countQuery = `
     SELECT COUNT(*) AS total
@@ -30,7 +33,10 @@ router.get('/', async (req, res) => {
         WHERE user_id = u.id
         ORDER BY created_at DESC LIMIT 1
       )
-    WHERE 1=1
+    WHERE EXISTS (
+      SELECT 1 FROM memberships m2
+      WHERE m2.user_id = u.id
+    )
   `;
 
   const params = [];
