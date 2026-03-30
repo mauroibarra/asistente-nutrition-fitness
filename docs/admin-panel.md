@@ -1136,7 +1136,20 @@ module.exports = router;
 
 ---
 
-## 4. Sistema de Autenticacion
+## 4. Separación Usuarios / Prospectos
+
+La distinción es mutuamente excluyente — un usuario aparece en una sola vista:
+
+| Vista | Condición SQL | Quién aparece |
+|-------|--------------|---------------|
+| **Usuarios** | `WHERE EXISTS (SELECT 1 FROM memberships WHERE user_id = u.id)` | Cualquiera con al menos un registro de membresía (activa, expirada, cancelada, pausada) |
+| **Prospectos** | `WHERE NOT EXISTS (SELECT 1 FROM memberships WHERE user_id = u.id AND status IN ('active','trial'))` | Usuarios capturados por el bot que nunca tuvieron membresía activa/trial |
+
+Un prospecto que se convierte en miembro (vía `/prospects/:id/convert`) pasa a aparecer en Usuarios y desaparece de Prospectos automáticamente al siguiente reload.
+
+---
+
+## 5. Sistema de Autenticacion
 
 ### Flujo de autenticacion
 
@@ -1223,7 +1236,7 @@ const match = await bcrypt.compare(inputPassword, storedHash);
 
 ---
 
-## 5. Integracion con PostgreSQL
+## 6. Integracion con PostgreSQL
 
 ### Conexion compartida
 
@@ -1285,7 +1298,7 @@ try {
 
 ---
 
-## 6. Como Activa/Desactiva el Acceso al Bot en Tiempo Real
+## 7. Como Activa/Desactiva el Acceso al Bot en Tiempo Real
 
 ### Mecanismo de sincronizacion
 
@@ -1361,7 +1374,7 @@ Tu membresia esta pausada. Contacta al administrador para reactivarla.
 
 ---
 
-## 7. Guia de Instalacion y Configuracion
+## 8. Guia de Instalacion y Configuracion
 
 ### Prerrequisitos
 
@@ -1575,7 +1588,7 @@ admin-panel/
 
 ---
 
-## 8. Proteccion en Produccion
+## 9. Proteccion en Produccion
 
 ### Nginx como reverse proxy
 

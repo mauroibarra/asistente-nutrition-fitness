@@ -14,7 +14,7 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 
 | ID | Nombre | Estado | Notas |
 |----|--------|--------|-------|
-| `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | ✅ E2E OK | Handler unificado (37 nodos): onboarding, AI Agent + 5 tools + Vector Store RAG + flujo contacto/teléfono + flujo migración token |
+| `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | ✅ E2E OK | Handler unificado (38 nodos): onboarding, AI Agent + 5 tools + Vector Store RAG + flujo contacto/teléfono + flujo migración token |
 | `3uXT5ld76uIUCENn` | FitAI - Knowledge Base Indexer | ✅ E2E OK | Webhook POST; indexó 25 secciones → 106 puntos en knowledge_rag |
 | `bhJ8qqZXr68Id3pH` | FitAI - Progress Calculator | ✅ E2E OK | Recibe userId+chatId vía toolWorkflow, calcula métricas, responde |
 | `KQhP9lQNxCKeOsbJ` | FitAI - Meal Plan Generator | ✅ E2E OK | Genera plan semanal con GPT-4o, guarda en DB, envía por Telegram |
@@ -96,6 +96,9 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 - Campos adicionales en usuarios: `document_number`, `country`, `city`, `phone_number` (migración `002`)
 - Migración de cuenta Telegram: código `FIT-XXXXXX` 24h + fusión manual con prospecto (migración `003`)
 - Zona de peligro: eliminar usuario requiere escribir el nombre completo; DELETE CASCADE elimina toda la data asociada
+- **Separación Usuarios / Prospectos**: lista de Usuarios filtra con `WHERE EXISTS (SELECT 1 FROM memberships WHERE user_id = u.id)` — solo muestra quienes tienen al menos una membresía. Prospectos = usuarios sin ninguna membresía. Sin solapamiento entre ambas vistas.
+- **CSS**: rediseño completo — botones sólidos con texto blanco (contraste WCAG AA), navbar oscuro, tablas mejoradas, filtros en contenedor, login con gradiente. Fix de especificidad: `.table a:not(.btn)` evita que el color de links sobreescriba el color de botones dentro de tablas.
+- **Nota operativa**: el panel debe reiniciarse (`pkill -f "node app.js" && nohup node app.js`) para cargar cambios de rutas en desarrollo local.
 
 ### Handler — Flujo de Contacto / Teléfono
 - `Route Message Type` (Switch) ampliado a 4 ramas: text, voice, callback, **contact**
@@ -112,11 +115,13 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 - `Request Phone Number`: envía `ReplyKeyboardMarkup` con botón de contacto
 
 ### Handler — Migración de Cuenta Telegram
-- `Check Migration Token` (Postgres SELECT con `alwaysOutputData: true`): busca token en `users` antes de `Upsert User`
-- `Is Migration Token?` (IF): si el texto coincide con un token válido y no expirado
-- rama true → `Apply Migration`: UPDATE `telegram_id`, limpia token
-- rama true → `Send Migration Success`: confirma al usuario
-- rama false → flujo normal (`Upsert User`)
+- `Check Migration Token`: SQL con `UNION ALL` fallback que **siempre devuelve 1 fila** — si hay match devuelve la fila del usuario con `migration_match = true`; si no hay match devuelve `(NULL, NULL, false)`. Esto garantiza que el flujo nunca se detenga por 0 resultados.
+- `Normalize Token Result` (Code node): capa de seguridad adicional por si el SQL cambia
+- `Is Migration Token?` (IF): verifica `$json.migration_match === true`
+- rama true → `Apply Migration` (UPDATE `telegram_id`, limpia token) → `Send Migration Success`
+- rama false → `Upsert User` → flujo normal (respuesta a prospectos incluida)
+
+**Lección aprendida**: `alwaysOutputData: true` en nodo Postgres con operación `executeQuery` y typeVersion 2.5 devuelve `[]` real — n8n no ejecuta ningún nodo downstream sin importar el tipo. La solución es SQL que garantice al menos 1 fila (`UNION ALL` con fila fallback).
 
 ### Telegram — Attribution Footer
 - `appendAttribution: false` aplicado a todos los nodos Telegram de tipo send en todos los workflows
@@ -144,7 +149,7 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 |--------|--------|-------------|
 | Login / Auth | ✅ Operativo | express-session + bcrypt; `scripts/create-admin.js` para primer admin |
 | Dashboard | ✅ Operativo | 4 métricas (usuarios, activos, por vencer, ingresos mes), lista de vencimientos y últimos pagos |
-| Usuarios — Lista | ✅ Operativo | Filtros por status/plan/búsqueda, paginación de 20 por página |
+| Usuarios — Lista | ✅ Operativo | Filtros por status/plan/búsqueda, paginación. Solo muestra usuarios con al menos una membresía (excluye prospectos) |
 | Usuarios — Alta | ✅ Operativo | Campos: Telegram ID, nombre, apellido, documento, celular, país, ciudad, plan, duración |
 | Usuarios — Detalle | ✅ Operativo | Datos personales, membresía (pausar/cancelar/renovar), perfil de salud, historial de peso (gráfico de barras), historial de pagos |
 | Usuarios — Editar | ✅ Operativo | Edición de todos los campos (nombre, apellido, Telegram ID, documento, celular, país, ciudad) |
@@ -186,7 +191,7 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 | 25 | `prompts/meal-plan-generation.md` | ✅ Completo | Templates de planes de comidas |
 | 26 | `prompts/workout-plan-generation.md` | ✅ Completo | Templates de rutinas |
 | 27 | `n8n/workflows/README.md` | ✅ Completo | Guía de workflows |
-| 28 | `n8n/workflows/01-telegram-webhook-handler.json` | ✅ Sincronizado | 37 nodos; incluye flujo contacto, migración y auto-guardado de perfil |
+| 28 | `n8n/workflows/01-telegram-webhook-handler.json` | ✅ Sincronizado | 38 nodos; incluye flujo contacto, migración (UNION ALL), auto-guardado de perfil |
 | 29 | `n8n/workflows/11-knowledge-base-indexer.json` | ✅ Sincronizado | Webhook POST; indexa skills/business/ en knowledge_rag |
 | 30 | `admin-panel/app.js` | ✅ Completo | Express server con carga de .env + .env.local |
 | 31 | `admin-panel/routes/users.js` | ✅ Completo | CRUD completo + migración token + merge |
