@@ -449,7 +449,7 @@ Para tests que requieren mensajes reales de Telegram:
 | Campo | Valor |
 |-------|-------|
 | Nombre | Mauro |
-| `user_id` (DB) | `4` |
+| `user_id` (DB) | `69` |
 | `telegram_id` / `chat_id` | `1435522255` |
 
 Los usuarios `telegram_id=999999` ("Leandro") y `777001` ("TestFitAI") son ficticios — sin chat real activo.

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-31T02:49:36.415Z",
+  "updatedAt": "2026-03-31T14:13:43.313Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -799,7 +799,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set User Context').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
+        "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n\n    // Construir resumen legible del perfil para mostrar al usuario\n    const goalLabels = { lose_weight:'Bajar de peso', gain_muscle:'Ganar músculo', maintain:'Mantener peso', recomposition:'Recomposición' };\n    const actLabels  = { sedentary:'Sedentario', lightly_active:'Poco activo', moderately_active:'Moderadamente activo', very_active:'Muy activo', extra_active:'Extremadamente activo' };\n    const fitLabels  = { beginner:'Principiante', intermediate:'Intermedio', advanced:'Avanzado' };\n\n    const restrictions = JSON.parse(profile.dietary_restrictions);\n    const restrictStr  = restrictions.length > 0 ? restrictions.join(', ') : 'Ninguna';\n\n    const profileSummary = [\n      '',\n      `🎯 *Objetivo:* ${goalLabels[profile.goal] || profile.goal}`,\n      `⚖️ *Peso:* ${profile.weight_kg} kg | *Altura:* ${profile.height_cm} cm`,\n      `🏃 *Actividad:* ${actLabels[profile.activity_level] || profile.activity_level}`,\n      `💪 *Nivel fitness:* ${fitLabels[profile.fitness_level] || profile.fitness_level}`,\n      `🍽️ *Comidas/día:* ${profile.meal_count} | *Días entreno/sem:* ${profile.training_days_per_week}`,\n      `🚫 *Restricciones:* ${restrictStr}`,\n    ].join('\\n');\n\n    cleanText = (cleanText || '¡Perfil completado! Aquí tienes tu resumen:') + profileSummary;\n\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set User Context').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
       },
       "id": "profile-parse-001",
       "name": "Parse Profile",
@@ -925,11 +925,8 @@
         "method": "POST",
         "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chat_id: $('Parse Profile').item.json.chatId, text: '📱 Para finalizar tu registro, necesito tu número de teléfono.\\n\\nPresiona el botón para compartirlo de forma segura.', reply_markup: { keyboard: [[{ text: '📱 Compartir mi número', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true } }) }}",
         "options": {}
       },
       "id": "phone-req-001",
@@ -1787,9 +1784,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "d733f7ca-2857-41ab-9b92-9e4ca89b5276",
-  "activeVersionId": "d733f7ca-2857-41ab-9b92-9e4ca89b5276",
-  "versionCounter": 427,
+  "versionId": "fa662322-7c72-41e7-b07e-46131a5248b9",
+  "activeVersionId": "fa662322-7c72-41e7-b07e-46131a5248b9",
+  "versionCounter": 431,
   "triggerCount": 1,
   "shared": [
     {
@@ -1812,9 +1809,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-31T02:50:04.000Z",
-    "createdAt": "2026-03-31T02:49:36.418Z",
-    "versionId": "d733f7ca-2857-41ab-9b92-9e4ca89b5276",
+    "updatedAt": "2026-03-31T14:13:43.315Z",
+    "createdAt": "2026-03-31T14:13:43.315Z",
+    "versionId": "fa662322-7c72-41e7-b07e-46131a5248b9",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -2609,7 +2606,7 @@
       },
       {
         "parameters": {
-          "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set User Context').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
+          "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n\n    // Construir resumen legible del perfil para mostrar al usuario\n    const goalLabels = { lose_weight:'Bajar de peso', gain_muscle:'Ganar músculo', maintain:'Mantener peso', recomposition:'Recomposición' };\n    const actLabels  = { sedentary:'Sedentario', lightly_active:'Poco activo', moderately_active:'Moderadamente activo', very_active:'Muy activo', extra_active:'Extremadamente activo' };\n    const fitLabels  = { beginner:'Principiante', intermediate:'Intermedio', advanced:'Avanzado' };\n\n    const restrictions = JSON.parse(profile.dietary_restrictions);\n    const restrictStr  = restrictions.length > 0 ? restrictions.join(', ') : 'Ninguna';\n\n    const profileSummary = [\n      '',\n      `🎯 *Objetivo:* ${goalLabels[profile.goal] || profile.goal}`,\n      `⚖️ *Peso:* ${profile.weight_kg} kg | *Altura:* ${profile.height_cm} cm`,\n      `🏃 *Actividad:* ${actLabels[profile.activity_level] || profile.activity_level}`,\n      `💪 *Nivel fitness:* ${fitLabels[profile.fitness_level] || profile.fitness_level}`,\n      `🍽️ *Comidas/día:* ${profile.meal_count} | *Días entreno/sem:* ${profile.training_days_per_week}`,\n      `🚫 *Restricciones:* ${restrictStr}`,\n    ].join('\\n');\n\n    cleanText = (cleanText || '¡Perfil completado! Aquí tienes tu resumen:') + profileSummary;\n\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set User Context').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
         },
         "id": "profile-parse-001",
         "name": "Parse Profile",
@@ -2735,11 +2732,8 @@
           "method": "POST",
           "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
           "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {}
-            ]
-          },
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ chat_id: $('Parse Profile').item.json.chatId, text: '📱 Para finalizar tu registro, necesito tu número de teléfono.\\n\\nPresiona el botón para compartirlo de forma segura.', reply_markup: { keyboard: [[{ text: '📱 Compartir mi número', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true } }) }}",
           "options": {}
         },
         "id": "phone-req-001",
@@ -3588,15 +3582,15 @@
       }
     },
     "authors": "Mauro Ibarra ",
-    "name": "Version d733f7ca",
-    "description": "",
-    "autosaved": true,
+    "name": null,
+    "description": null,
+    "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-31T02:50:04.204Z",
-        "id": 235,
+        "createdAt": "2026-03-31T14:13:45.497Z",
+        "id": 237,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "d733f7ca-2857-41ab-9b92-9e4ca89b5276",
+        "versionId": "fa662322-7c72-41e7-b07e-46131a5248b9",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
