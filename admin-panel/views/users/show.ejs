@@ -2,9 +2,19 @@
 
 <div class="page-header">
   <a href="/users" class="btn btn-link">&larr; Volver a lista</a>
-  <h1 class="page-title"><%= user.first_name %> <%= user.last_name || '' %></h1>
+  <h1 class="page-title">
+    <%= user.first_name %> <%= user.last_name || '' %>
+    <% if (!user.is_active) { %><span class="badge-inactive">Desactivado</span><% } %>
+  </h1>
   <a href="/users/<%= user.id %>/edit" class="btn btn-secondary">Editar</a>
 </div>
+
+<% if (typeof query !== 'undefined' && query.deactivated) { %>
+  <div class="alert alert-warning">Usuario desactivado. Ya no puede usar el bot.</div>
+<% } %>
+<% if (typeof query !== 'undefined' && query.reactivated) { %>
+  <div class="alert alert-success">Usuario reactivado. Asigna una membresía para que pueda usar el bot.</div>
+<% } %>
 
 <div class="detail-grid">
   <section class="card">
@@ -14,15 +24,31 @@
       <dt>Telegram ID</dt><dd><code class="id-highlight"><%= user.telegram_id %></code></dd>
       <% if (user.username) { %><dt>Username</dt><dd>@<%= user.username %></dd><% } %>
       <dt>Registrado</dt><dd><%= new Date(user.created_at).toLocaleDateString('es-MX') %></dd>
-      <dt>Onboarding</dt><dd><%= user.onboarding_completed ? 'Completado' : 'Pendiente' %></dd>
+      <dt>Onboarding</dt><dd><%= (profile && profile.onboarding_completed) ? 'Completado' : 'Pendiente' %></dd>
+      <dt>Estado cuenta</dt><dd><% if (user.is_active) { %><span class="status-active">Activo</span><% } else { %><span class="status-cancelled">Desactivado</span><% } %></dd>
     </dl>
+
+    <div class="action-buttons" style="margin-top:1rem">
+      <% if (user.is_active) { %>
+        <form method="POST" action="/users/<%= user.id %>/deactivate" style="display:inline">
+          <button type="submit" class="btn btn-warning"
+                  onclick="return confirm('¿Desactivar este usuario? No podrá usar el bot pero sus datos se conservan.')">
+            Desactivar cuenta
+          </button>
+        </form>
+      <% } else { %>
+        <form method="POST" action="/users/<%= user.id %>/reactivate" style="display:inline">
+          <button type="submit" class="btn btn-primary">Reactivar cuenta</button>
+        </form>
+      <% } %>
+    </div>
 
     <h3 style="font-size:.9rem;font-weight:600;margin:1rem 0 .5rem">Datos de contacto</h3>
     <dl class="dl-grid">
-      <dt>Documento</dt><dd><%= user.document_number || '<span class="text-muted">—</span>' %></dd>
-      <dt>Celular</dt><dd><%= user.phone_number || '<span class="text-muted">—</span>' %></dd>
-      <dt>País</dt><dd><%= user.country || '<span class="text-muted">—</span>' %></dd>
-      <dt>Ciudad</dt><dd><%= user.city || '<span class="text-muted">—</span>' %></dd>
+      <dt>Documento</dt><dd><% if (user.document_number) { %><%= user.document_number %><% } else { %><span class="text-muted">—</span><% } %></dd>
+      <dt>Celular</dt><dd><% if (user.phone_number) { %><%= user.phone_number %><% } else { %><span class="text-muted">—</span><% } %></dd>
+      <dt>País</dt><dd><% if (user.country) { %><%= user.country %><% } else { %><span class="text-muted">—</span><% } %></dd>
+      <dt>Ciudad</dt><dd><% if (user.city) { %><%= user.city %><% } else { %><span class="text-muted">—</span><% } %></dd>
     </dl>
   </section>
 

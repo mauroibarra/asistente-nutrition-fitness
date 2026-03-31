@@ -9,8 +9,10 @@ router.get('/', async (req, res) => {
   const limit = 20;
   const offset = (parseInt(page) - 1) * limit;
 
+  const showingInactive = status === 'inactive';
+
   let query = `
-    SELECT u.id, u.first_name, u.last_name, u.telegram_id,
+    SELECT u.id, u.first_name, u.last_name, u.telegram_id, u.is_active,
            m.plan_type, m.status, m.expires_at
     FROM users u
     LEFT JOIN memberships m ON u.id = m.user_id
@@ -23,6 +25,7 @@ router.get('/', async (req, res) => {
       SELECT 1 FROM memberships m2
       WHERE m2.user_id = u.id
     )
+    AND u.is_active = ${showingInactive ? 'false' : 'true'}
   `;
   let countQuery = `
     SELECT COUNT(*) AS total
@@ -37,13 +40,14 @@ router.get('/', async (req, res) => {
       SELECT 1 FROM memberships m2
       WHERE m2.user_id = u.id
     )
+    AND u.is_active = ${showingInactive ? 'false' : 'true'}
   `;
 
   const params = [];
   const countParams = [];
   let paramIndex = 1;
 
-  if (status && status !== 'all') {
+  if (status && status !== 'all' && !showingInactive) {
     const clause = ` AND m.status = $${paramIndex}`;
     query += clause;
     countQuery += clause;
@@ -337,7 +341,48 @@ router.post('/:id/update', async (req, res) => {
   }
 });
 
-// POST /users/:id/delete — Delete user (cascades to all related data)
+// POST /users/:id/deactivate — Soft delete: disables bot access, preserves all data
+router.post('/:id/deactivate', async (req, res) => {
+  const { id } = req.params;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1`, [id]
+    );
+    await client.query(
+      `UPDATE memberships SET status = 'cancelled', cancelled_at = NOW(), updated_at = NOW()
+       WHERE user_id = $1 AND status IN ('active', 'paused')`,
+      [id]
+    );
+    await client.query('COMMIT');
+    res.redirect(`/users/${id}?deactivated=1`);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Deactivate error:', err.message);
+    res.status(500).render('error', { message: 'Error desactivando el usuario' });
+  } finally {
+    client.release();
+  }
+});
+
+// POST /users/:id/reactivate — Restore a deactivated user (no membership re-enabled automatically)
+router.post('/:id/reactivate', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      `UPDATE users SET is_active = true, updated_at = NOW() WHERE id = $1`, [id]
+    );
+    res.redirect(`/users/${id}?reactivated=1`);
+  } catch (err) {
+    console.error('Reactivate error:', err.message);
+    res.status(500).render('error', { message: 'Error reactivando el usuario' });
+  }
+});
+
+// POST /users/:id/delete — Hard delete: removes all data from DB and Qdrant
 router.post('/:id/delete', async (req, res) => {
   const { id } = req.params;
   const { confirm_name } = req.body;
@@ -358,6 +403,19 @@ router.post('/:id/delete', async (req, res) => {
     }
 
     await pool.query('DELETE FROM users WHERE id = $1', [id]);
+
+    // Best-effort Qdrant cleanup — does not block deletion if Qdrant is unreachable
+    try {
+      const qdrantUrl = process.env.QDRANT_URL || 'http://localhost:6333';
+      await fetch(`${qdrantUrl}/collections/user_rag/points/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filter: { must: [{ key: 'user_id', match: { value: parseInt(id) } }] } })
+      });
+    } catch (qdrantErr) {
+      console.warn(`Qdrant cleanup skipped for user ${id}:`, qdrantErr.message);
+    }
+
     res.redirect('/users?deleted=1');
   } catch (err) {
     console.error('Delete user error:', err.message);

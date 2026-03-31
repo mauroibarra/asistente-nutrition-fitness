@@ -110,11 +110,12 @@ graph TB
 
 **Responsabilidad**: Toda la lógica de negocio del bot. No existe un backend custom — n8n ES el backend.
 
-Los 10 workflows del sistema:
+Los 12 workflows del sistema:
 
 | Workflow | Trigger | Función |
 |----------|---------|---------|
 | `FitAI - Telegram Webhook Handler` | Webhook (Telegram) | Recibe mensajes, verifica membresía, enruta |
+| `FitAI - Process text message` | Sub-workflow (executeWorkflow) | Debounce multi-mensaje con PostgreSQL |
 | `FitAI - Main AI Agent` | Sub-workflow | Agente OpenAI con tools, genera respuestas |
 | `FitAI - Onboarding Flow` | Sub-workflow | Guía al nuevo usuario por el registro |
 | `FitAI - Meal Plan Generator` | Tool del agente | Genera plan de comidas personalizado |
@@ -123,13 +124,16 @@ Los 10 workflows del sistema:
 | `FitAI - Progress Calculator` | Tool del agente | Calcula y reporta progreso |
 | `FitAI - Workout Plan Generator` | Tool del agente | Genera rutina de ejercicio |
 | `FitAI - RAG Personal Indexer` | Post-conversación | Indexa información relevante en Qdrant |
+| `FitAI - Knowledge Base Indexer` | Webhook (manual) | Indexa skills de negocio en knowledge_rag |
 | `FitAI - Membership Alert` | Cron (diario) | Alerta de membresías por vencer |
 
 ### 3. PostgreSQL (Base de Datos)
 
 **Responsabilidad**: Almacenamiento persistente de todos los datos del sistema.
 
-Tablas principales: `users`, `memberships`, `payment_logs`, `user_profiles`, `goals`, `meal_plans`, `exercise_plans`, `weight_logs`, `conversation_logs`, `admin_users`.
+Tablas principales: `users`, `memberships`, `payment_logs`, `user_profiles`, `goals`, `meal_plans`, `exercise_plans`, `weight_logs`, `conversation_logs`, `admin_users`, `message_buffer`.
+
+La tabla `message_buffer` (migración 005) almacena el estado efímero del debounce multi-mensaje: `chat_id`, `text` acumulado, `last_ts` del último escritor.
 
 Compartida entre n8n (a través de nodos PostgreSQL) y el panel admin (a través de la librería `pg`).
 
@@ -419,6 +423,9 @@ flowchart LR
 - Filtrado por metadata (esencial para filtrar por `user_id` en RAG personal)
 - Bajo consumo de recursos para volúmenes pequeños-medianos
 - Docker image oficial y estable
+
+**Versión requerida: `qdrant/qdrant:v1.13.0` (mínimo 1.10.0)**
+El paquete `@langchain/qdrant@1.0.1` que usa n8n 2.11.3 llama a `POST /collections/{name}/points/query` (Universal Query API), que solo existe en Qdrant ≥ 1.10.0. Con versiones anteriores (ej: 1.7.4) el nodo `vectorStoreQdrant` en modo `retrieve-as-tool` falla con `NodeOperationError: Not Found`.
 
 **Alternativas consideradas**:
 - Pinecone: SaaS, costos mensuales innecesarios para volúmenes pequeños

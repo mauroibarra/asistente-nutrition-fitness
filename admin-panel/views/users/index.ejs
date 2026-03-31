@@ -17,6 +17,7 @@
     <option value="paused" <%= filters.status === 'paused' ? 'selected' : '' %>>Pausado</option>
     <option value="cancelled" <%= filters.status === 'cancelled' ? 'selected' : '' %>>Cancelado</option>
     <option value="trial" <%= filters.status === 'trial' ? 'selected' : '' %>>Trial</option>
+    <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Desactivados</option>
   </select>
   <select name="plan">
     <option value="all" <%= filters.plan === 'all' ? 'selected' : '' %>>Todos los planes</option>

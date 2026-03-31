@@ -489,6 +489,67 @@ code {
   text-transform: uppercase;
   letter-spacing: .03em;
 }
+/* ===== Danger zone options ===== */
+.danger-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  justify-content: space-between;
+}
+.danger-option-info { flex: 1; }
+.danger-option-info h3 {
+  font-size: .95rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: .35rem;
+}
+.danger-option-info p {
+  font-size: .85rem;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0;
+}
+.danger-option form, .danger-option button { flex-shrink: 0; }
+.badge-reversible {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+  border-radius: 4px;
+  padding: .1rem .4rem;
+  font-size: .65rem;
+  font-weight: 600;
+  vertical-align: middle;
+  margin-left: .4rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.badge-irreversible {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  padding: .1rem .4rem;
+  font-size: .65rem;
+  font-weight: 600;
+  vertical-align: middle;
+  margin-left: .4rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.badge-inactive {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: .15rem .5rem;
+  font-size: .7rem;
+  font-weight: 600;
+  vertical-align: middle;
+  margin-left: .5rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
 .id-highlight {
   background: var(--warning-light);
   color: #92400e;

@@ -1,0 +1,543 @@
+{
+  "updatedAt": "2026-03-31T02:44:18.907Z",
+  "createdAt": "2026-03-31T01:01:55.198Z",
+  "id": "CCkMv75zwDDoj513",
+  "name": "FitAI - Process text message",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "callback_query",
+              "type": "any"
+            },
+            {
+              "name": "message",
+              "type": "any"
+            }
+          ]
+        }
+      },
+      "id": "9421af40-fa7c-495e-bd62-3b976baf5510",
+      "typeVersion": 1.1,
+      "name": "Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -400,
+        48
+      ]
+    },
+    {
+      "id": "proc-extract-001",
+      "name": "Extract Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        48
+      ],
+      "parameters": {
+        "jsCode": "const trigger = $('Start').item.json;\nconst chatId = String(trigger.message?.chat?.id || trigger.callback_query?.message?.chat?.id || '');\nconst text = String(trigger.message?.text || trigger.callback_query?.data || '');\nconst ts = Date.now();\nreturn [{ json: { chatId, text, ts } }];"
+      }
+    },
+    {
+      "id": "proc-buf-write-001",
+      "name": "Buffer Write",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -16,
+        48
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO message_buffer (chat_id, text, last_ts)\nVALUES ($1, $2, $3)\nON CONFLICT (chat_id) DO UPDATE SET\n  text = CASE\n    WHEN NOW() - to_timestamp(message_buffer.last_ts / 1000.0) > INTERVAL '30 seconds'\n    THEN EXCLUDED.text\n    ELSE message_buffer.text || E'\\n' || EXCLUDED.text\n  END,\n  last_ts = GREATEST(message_buffer.last_ts, EXCLUDED.last_ts)\nRETURNING chat_id, last_ts",
+        "options": {
+          "queryReplacement": "={{ [$json.chatId, $json.text, $json.ts] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "11111111-0041-4000-8000-000000000041",
+      "name": "Debounce Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        48
+      ],
+      "webhookId": "debounce-wait-fitai"
+    },
+    {
+      "id": "proc-flush-check-001",
+      "name": "Flush Check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        368,
+        48
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH deleted AS (\n  DELETE FROM message_buffer\n  WHERE chat_id = $1 AND last_ts = $2\n  RETURNING text\n)\nSELECT text FROM deleted",
+        "options": {
+          "queryReplacement": "={{ [$json.chat_id, $json.last_ts] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "t1",
+              "name": "message.text",
+              "type": "string",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "id": "t2",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $('Start').item.json.message?.chat?.id || $('Start').item.json.callback_query?.message?.chat?.id }}"
+            },
+            {
+              "id": "t3",
+              "name": "telegramId",
+              "type": "string",
+              "value": "={{ $('Start').item.json.message?.from?.id || $('Start').item.json.callback_query?.from?.id }}"
+            },
+            {
+              "id": "t4",
+              "name": "firstName",
+              "type": "string",
+              "value": "={{ $('Start').item.json.message?.from?.first_name || $('Start').item.json.callback_query?.from?.first_name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "11111111-0006-4000-8000-000000000006",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "name": "Set Text from Message",
+      "position": [
+        780,
+        48
+      ]
+    },
+    {
+      "id": "proc-is-last-001",
+      "name": "Is Last Writer?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        560,
+        48
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-has-text",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Extract Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message": {
+      "main": [
+        [
+          {
+            "node": "Buffer Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buffer Write": {
+      "main": [
+        [
+          {
+            "node": "Debounce Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debounce Wait": {
+      "main": [
+        [
+          {
+            "node": "Flush Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flush Check": {
+      "main": [
+        [
+          {
+            "node": "Is Last Writer?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Last Writer?": {
+      "main": [
+        [
+          {
+            "node": "Set Text from Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": {
+    "global": {}
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "eb6f92b3-d12a-429d-836b-e0c5b722cbba",
+  "activeVersionId": "eb6f92b3-d12a-429d-836b-e0c5b722cbba",
+  "versionCounter": 37,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-31T01:01:55.207Z",
+      "createdAt": "2026-03-31T01:01:55.207Z",
+      "role": "workflow:owner",
+      "workflowId": "CCkMv75zwDDoj513",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-03-31T02:44:18.918Z",
+    "createdAt": "2026-03-31T02:44:18.918Z",
+    "versionId": "eb6f92b3-d12a-429d-836b-e0c5b722cbba",
+    "workflowId": "CCkMv75zwDDoj513",
+    "nodes": [
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "callback_query",
+                "type": "any"
+              },
+              {
+                "name": "message",
+                "type": "any"
+              }
+            ]
+          }
+        },
+        "id": "9421af40-fa7c-495e-bd62-3b976baf5510",
+        "typeVersion": 1.1,
+        "name": "Start",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "position": [
+          -400,
+          48
+        ]
+      },
+      {
+        "id": "proc-extract-001",
+        "name": "Extract Message",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -208,
+          48
+        ],
+        "parameters": {
+          "jsCode": "const trigger = $('Start').item.json;\nconst chatId = String(trigger.message?.chat?.id || trigger.callback_query?.message?.chat?.id || '');\nconst text = String(trigger.message?.text || trigger.callback_query?.data || '');\nconst ts = Date.now();\nreturn [{ json: { chatId, text, ts } }];"
+        }
+      },
+      {
+        "id": "proc-buf-write-001",
+        "name": "Buffer Write",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          -16,
+          48
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO message_buffer (chat_id, text, last_ts)\nVALUES ($1, $2, $3)\nON CONFLICT (chat_id) DO UPDATE SET\n  text = CASE\n    WHEN NOW() - to_timestamp(message_buffer.last_ts / 1000.0) > INTERVAL '30 seconds'\n    THEN EXCLUDED.text\n    ELSE message_buffer.text || E'\\n' || EXCLUDED.text\n  END,\n  last_ts = GREATEST(message_buffer.last_ts, EXCLUDED.last_ts)\nRETURNING chat_id, last_ts",
+          "options": {
+            "queryReplacement": "={{ [$json.chatId, $json.text, $json.ts] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "11111111-0041-4000-8000-000000000041",
+        "name": "Debounce Wait",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          176,
+          48
+        ],
+        "webhookId": "debounce-wait-fitai"
+      },
+      {
+        "id": "proc-flush-check-001",
+        "name": "Flush Check",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          368,
+          48
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "WITH deleted AS (\n  DELETE FROM message_buffer\n  WHERE chat_id = $1 AND last_ts = $2\n  RETURNING text\n)\nSELECT text FROM deleted",
+          "options": {
+            "queryReplacement": "={{ [$json.chat_id, $json.last_ts] }}"
+          }
+        },
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "t1",
+                "name": "message.text",
+                "type": "string",
+                "value": "={{ $json.text }}"
+              },
+              {
+                "id": "t2",
+                "name": "chatId",
+                "type": "string",
+                "value": "={{ $('Start').item.json.message?.chat?.id || $('Start').item.json.callback_query?.message?.chat?.id }}"
+              },
+              {
+                "id": "t3",
+                "name": "telegramId",
+                "type": "string",
+                "value": "={{ $('Start').item.json.message?.from?.id || $('Start').item.json.callback_query?.from?.id }}"
+              },
+              {
+                "id": "t4",
+                "name": "firstName",
+                "type": "string",
+                "value": "={{ $('Start').item.json.message?.from?.first_name || $('Start').item.json.callback_query?.from?.first_name }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "11111111-0006-4000-8000-000000000006",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "name": "Set Text from Message",
+        "position": [
+          780,
+          48
+        ]
+      },
+      {
+        "id": "proc-is-last-001",
+        "name": "Is Last Writer?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          560,
+          48
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "cond-has-text",
+                "leftValue": "={{ $json.text }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Start": {
+        "main": [
+          [
+            {
+              "node": "Extract Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Message": {
+        "main": [
+          [
+            {
+              "node": "Buffer Write",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buffer Write": {
+        "main": [
+          [
+            {
+              "node": "Debounce Wait",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Debounce Wait": {
+        "main": [
+          [
+            {
+              "node": "Flush Check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Flush Check": {
+        "main": [
+          [
+            {
+              "node": "Is Last Writer?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Last Writer?": {
+        "main": [
+          [
+            {
+              "node": "Set Text from Message",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-31T02:44:19.976Z",
+        "id": 233,
+        "workflowId": "CCkMv75zwDDoj513",
+        "versionId": "eb6f92b3-d12a-429d-836b-e0c5b722cbba",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
+}

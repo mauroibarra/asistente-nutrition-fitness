@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-30T15:56:58.019Z",
+  "updatedAt": "2026-03-31T02:49:36.415Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -20,8 +20,8 @@
       "typeVersion": 1.2,
       "name": "Telegram Trigger",
       "position": [
-        0,
-        320
+        -560,
+        368
       ],
       "webhookId": "63001b72-4471-4896-b3b3-8ec56a0d9da6",
       "credentials": {
@@ -38,11 +38,11 @@
             {
               "conditions": {
                 "options": {
-                  "version": 2,
                   "caseSensitive": true,
-                  "typeValidation": "loose"
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
                 },
-                "combinator": "and",
                 "conditions": [
                   {
                     "operator": {
@@ -51,9 +51,11 @@
                       "singleValue": true
                     },
                     "leftValue": "={{ $json.message.text }}",
-                    "rightValue": ""
+                    "rightValue": "",
+                    "id": "64681b88-b0b0-4cc1-b341-9f85c715d1c6"
                   }
-                ]
+                ],
+                "combinator": "and"
               },
               "renameOutput": true,
               "outputKey": "text"
@@ -61,11 +63,11 @@
             {
               "conditions": {
                 "options": {
-                  "version": 2,
                   "caseSensitive": true,
-                  "typeValidation": "loose"
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
                 },
-                "combinator": "and",
                 "conditions": [
                   {
                     "operator": {
@@ -74,9 +76,11 @@
                       "singleValue": true
                     },
                     "leftValue": "={{ $json.message.voice.file_id }}",
-                    "rightValue": ""
+                    "rightValue": "",
+                    "id": "accc9229-5020-4c01-9b80-1c137bb6189b"
                   }
-                ]
+                ],
+                "combinator": "and"
               },
               "renameOutput": true,
               "outputKey": "voice"
@@ -84,11 +88,11 @@
             {
               "conditions": {
                 "options": {
-                  "version": 2,
                   "caseSensitive": true,
-                  "typeValidation": "loose"
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
                 },
-                "combinator": "and",
                 "conditions": [
                   {
                     "operator": {
@@ -97,9 +101,11 @@
                       "singleValue": true
                     },
                     "leftValue": "={{ $json.callback_query.data }}",
-                    "rightValue": ""
+                    "rightValue": "",
+                    "id": "8b3e071a-17fa-47fb-952d-211894958596"
                   }
-                ]
+                ],
+                "combinator": "and"
               },
               "renameOutput": true,
               "outputKey": "callback"
@@ -107,11 +113,11 @@
             {
               "conditions": {
                 "options": {
-                  "version": 2,
                   "caseSensitive": true,
-                  "typeValidation": "loose"
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
                 },
-                "combinator": "and",
                 "conditions": [
                   {
                     "operator": {
@@ -120,9 +126,11 @@
                       "singleValue": true
                     },
                     "leftValue": "={{ $json.message.contact.phone_number }}",
-                    "rightValue": ""
+                    "rightValue": "",
+                    "id": "e2d15420-ab30-44b7-891b-633a7e4dad62"
                   }
-                ]
+                ],
+                "combinator": "and"
               },
               "renameOutput": true,
               "outputKey": "contact"
@@ -137,8 +145,8 @@
       "typeVersion": 3.2,
       "name": "Route Message Type",
       "position": [
-        256,
-        304
+        -112,
+        336
       ]
     },
     {
@@ -152,8 +160,8 @@
       "typeVersion": 1.2,
       "name": "Get Voice File",
       "position": [
-        512,
-        512
+        192,
+        496
       ],
       "webhookId": "5debfbcc-0498-4e8f-a50a-4b70b1694912",
       "credentials": {
@@ -174,8 +182,8 @@
       "typeVersion": 1.8,
       "name": "Transcribe Voice",
       "position": [
-        752,
-        512
+        496,
+        496
       ],
       "credentials": {
         "openAiApi": {
@@ -221,49 +229,8 @@
       "typeVersion": 3.4,
       "name": "Set Text from Voice",
       "position": [
-        1008,
-        512
-      ]
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "t1",
-              "name": "message.text",
-              "type": "string",
-              "value": "={{ $json.message.text || $json.callback_query.data }}"
-            },
-            {
-              "id": "t2",
-              "name": "chatId",
-              "type": "string",
-              "value": "={{ $json.message.chat.id || $json.callback_query.message.chat.id }}"
-            },
-            {
-              "id": "t3",
-              "name": "telegramId",
-              "type": "string",
-              "value": "={{ $json.message.from.id || $json.callback_query.from.id }}"
-            },
-            {
-              "id": "t4",
-              "name": "firstName",
-              "type": "string",
-              "value": "={{ $json.message.from.first_name || $json.callback_query.from.first_name }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "11111111-0006-4000-8000-000000000006",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "name": "Set Text from Message",
-      "position": [
-        752,
-        224
+        800,
+        496
       ]
     },
     {
@@ -271,7 +238,7 @@
         "operation": "executeQuery",
         "query": "SELECT u.id as user_id, u.first_name, u.is_active, COALESCE(m.status::text, 'none') as membership_status, CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed FROM users u LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW() LEFT JOIN user_profiles up ON up.user_id = u.id WHERE u.telegram_id = $1 LIMIT 1",
         "options": {
-          "queryReplacement": "={{ $('Set Text from Message').item.json.telegramId }}"
+          "queryReplacement": "={{ $('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id }}"
         }
       },
       "id": "11111111-0007-4000-8000-000000000007",
@@ -279,8 +246,8 @@
       "typeVersion": 2.5,
       "name": "Check User & Membership",
       "position": [
-        1464,
-        304
+        1568,
+        512
       ],
       "credentials": {
         "postgres": {
@@ -294,7 +261,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO users (telegram_id, first_name, last_name, username, language_code)\nVALUES ($1, $2, $3, $4, $5)\nON CONFLICT (telegram_id) DO UPDATE SET\n  first_name   = CASE\n                   WHEN LENGTH(TRIM(users.first_name)) <= 1 THEN EXCLUDED.first_name\n                   ELSE users.first_name\n                 END,\n  last_name    = COALESCE(EXCLUDED.last_name, users.last_name),\n  username     = COALESCE(EXCLUDED.username, users.username),\n  updated_at   = NOW()\nRETURNING id, telegram_id, first_name",
         "options": {
-          "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), String($('Set Text from Message').item.json.firstName || ''), ($('Telegram Trigger').item.json.message?.from?.last_name || null), ($('Telegram Trigger').item.json.message?.from?.username || null), ($('Telegram Trigger').item.json.message?.from?.language_code || 'es')] }}"
+          "queryReplacement": "={{ [String($('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id), String($('Telegram Trigger').item.json.message?.from?.first_name || $('Telegram Trigger').item.json.callback_query?.from?.first_name || ''), ($('Telegram Trigger').item.json.message?.from?.last_name || null), ($('Telegram Trigger').item.json.message?.from?.username || null), ($('Telegram Trigger').item.json.message?.from?.language_code || 'es')] }}"
         }
       },
       "id": "11111111-0008-4000-8000-000000000008",
@@ -302,8 +269,8 @@
       "typeVersion": 2.5,
       "name": "Upsert User",
       "position": [
-        1704,
-        304
+        1280,
+        512
       ],
       "credentials": {
         "postgres": {
@@ -343,14 +310,14 @@
       "typeVersion": 2,
       "name": "Has Active Membership?",
       "position": [
-        1960,
-        304
+        1936,
+        400
       ]
     },
     {
       "parameters": {
-        "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
-        "text": "=Hola {{ $('Set Text from Message').item.json.firstName }}! No tienes una membresia activa. Para acceder al asistente FitAI contacta al administrador.",
+        "chatId": "={{ $('Set User Context').item.json.chatId }}",
+        "text": "=Hola {{ $('Set User Context').item.json.firstName }}! No tienes una membresia activa. Para acceder al asistente FitAI contacta al administrador.",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -360,10 +327,13 @@
       "typeVersion": 1.2,
       "name": "No Membership Message",
       "position": [
-        2200,
-        512
+        2192,
+        560
       ],
       "webhookId": "20379d01-666f-4ea3-834a-e62dc6c5ff5a",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
       "credentials": {
         "telegramApi": {
           "id": "1duS64x2hsrz3moJ",
@@ -402,14 +372,14 @@
       "typeVersion": 2,
       "name": "Onboarding Complete?",
       "position": [
-        2200,
+        2208,
         208
       ]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $('Set Text from Message').item.json.message.text }}",
+        "text": "={{ $('Set User Context').item.json.message.text }}",
         "options": {
           "systemMessage": "=Eres FitAI, un asistente personal de nutricion y fitness que opera por Telegram.\n\nUSUARIO:\n- Nombre: {{ $('Check User & Membership').item.json.first_name }}\n- ID: {{ $('Check User & Membership').item.json.user_id }}\n- Chat ID: {{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}\n- userId para herramientas: {{ $('Check User & Membership').item.json.user_id }}\n- Fecha actual: {{ $now.format('dd/MM/yyyy') }}\n\nROL:\nAyudas al usuario a mejorar su alimentacion, ejercicio y habitos de salud. Eres empatico, motivador y practico.\n\nHERRAMIENTAS DISPONIBLES:\n- Progreso: calcula metricas y progreso del usuario\n- PlanComidas: genera un nuevo plan de alimentacion semanal\n- Rutina: genera una nueva rutina de ejercicio\n- RegistrarEvento: guarda eventos del usuario en memoria personal (peso, comidas, perfil, metas)\n\nCUANDO USAR RegistrarEvento:\n- El usuario reporta su peso actual (ej: \"hoy peso 80 kg\") → eventType: weight_log\n- El usuario dice lo que comio (ej: \"desayune avena\") → eventType: meal_reported\n- El usuario actualiza un dato de perfil (ej: \"cambie mi objetivo a 75 kg\") → eventType: profile_update\n- El usuario establece una meta nueva → eventType: goal_set\nSiempre registra ANTES de responder al usuario.\n\nREGLAS:\n- Responde SIEMPRE en espanol\n- Mantén respuestas cortas (Telegram: max 3 parrafos)\n- Usa emojis con moderacion\n- Si el usuario reporta una comida, ayudalo a registrarla y compararla con su plan\n- Si pide su plan de comidas o ejercicio, consulta la base de datos\n- Si necesita un nuevo plan, ofrece generarlo\n- Tono: amigable, como un coach personal cercano\n- NUNCA hagas diagnosticos medicos\n- Si hay una crisis de salud, deriva a profesionales\n\nFORMATO DE SALIDA:\nSolo el mensaje para el usuario, sin metadatos ni explicaciones."
         }
@@ -419,7 +389,7 @@
       "typeVersion": 2,
       "name": "FitAI Main AI Agent",
       "position": [
-        2648,
+        2656,
         0
       ]
     },
@@ -441,7 +411,7 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model",
       "position": [
-        2504,
+        2512,
         144
       ],
       "credentials": {
@@ -462,16 +432,16 @@
       "typeVersion": 1.3,
       "name": "FitAI Memory",
       "position": [
-        2648,
+        2656,
         144
       ]
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $('Set Text from Message').item.json['message.text'] }}",
+        "text": "={{ $('Set User Context').item.json.message.text }}",
         "options": {
-          "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n18. Pais de residencia (ej: Colombia, Mexico, Espana)\n19. Ciudad de residencia\n20. Numero de documento de identidad (cedula, DNI, pasaporte) — opcional, puedes indicar 'prefiero no dar'\n\nCuando tengas TODOS los datos, responde con este JSON exacto al final:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\", \"pais\": \"...\", \"ciudad\": \"...\", \"documento\": \"...\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- Confirma cada dato antes de avanzar al siguiente\n- Al final presenta un resumen del perfil para confirmacion\n- NO incluyas el bloque [PERFIL_COMPLETO] en el texto que muestras al usuario; usalo solo como senial interna"
+          "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\n{{ $('Load Onboarding Progress').item.json.last_step > 0 ? '⚠️ RETOMANDO SESION PREVIA: El usuario ya respondio ' + $('Load Onboarding Progress').item.json.last_step + ' de 20 preguntas. Revisa el historial de esta conversacion y continua desde la siguiente pregunta pendiente. NO repitas preguntas ya respondidas.' : 'Empieza desde la pregunta 1.' }}\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n18. Pais de residencia (ej: Colombia, Mexico, Espana)\n19. Ciudad de residencia\n20. Numero de documento de identidad (cedula, DNI, pasaporte) — opcional, puedes indicar 'prefiero no dar'\n\nFLUJO DE CIERRE (MUY IMPORTANTE — sigue este orden exacto):\nPASO 1: Cuando tengas los 20 datos, presenta un resumen y pregunta \"¿Todo correcto o deseas cambiar algo?\"\nPASO 2: Si el usuario confirma que esta correcto (dice si, correcto, listo, ok, etc.):\n  - Escribe tu mensaje de bienvenida al asistente\n  - INMEDIATAMENTE despues, en el MISMO mensaje, agrega el bloque [PERFIL_COMPLETO] con todos los datos\n  - Este es el unico momento en que debes incluir el bloque\n\nEl bloque debe tener este formato exacto:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\", \"pais\": \"...\", \"ciudad\": \"...\", \"documento\": \"...\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- NO incluyas el bloque [PERFIL_COMPLETO] en el resumen ni en ningun mensaje previo a la confirmacion\n- El bloque [PERFIL_COMPLETO] nunca es visible para el usuario — es una senal interna del sistema"
         }
       },
       "id": "11111111-0015-4000-8000-000000000015",
@@ -479,8 +449,8 @@
       "typeVersion": 2,
       "name": "Onboarding Agent",
       "position": [
-        2728,
-        592
+        2720,
+        720
       ]
     },
     {
@@ -500,8 +470,8 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model Onboarding",
       "position": [
-        2648,
-        800
+        2576,
+        928
       ],
       "credentials": {
         "openAiApi": {
@@ -514,20 +484,27 @@
       "parameters": {
         "sessionIdType": "customKey",
         "sessionKey": "=onboarding_{{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "contextWindowLength": 20
+        "tableName": "n8n_onboarding_memory",
+        "contextWindowLength": 30
       },
       "id": "11111111-0017-4000-8000-000000000017",
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.1,
       "name": "Onboarding Memory",
       "position": [
-        2824,
-        800
-      ]
+        2816,
+        928
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
     },
     {
       "parameters": {
-        "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+        "chatId": "={{ $('Set User Context').item.json.chatId }}",
         "text": "={{ $json.output }}",
         "additionalFields": {
           "appendAttribution": false,
@@ -539,10 +516,13 @@
       "typeVersion": 1.2,
       "name": "Send Response",
       "position": [
-        3624,
-        288
+        3696,
+        16
       ],
       "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
       "credentials": {
         "telegramApi": {
           "id": "1duS64x2hsrz3moJ",
@@ -579,7 +559,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3192,
+        3200,
         288
       ]
     },
@@ -612,7 +592,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2872,
+        2880,
         288
       ]
     },
@@ -645,7 +625,7 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3032,
+        3040,
         288
       ]
     },
@@ -681,19 +661,11 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2712,
+        2720,
         288
       ]
     },
     {
-      "id": "vs-user-rag-tool-v2",
-      "name": "Tool: Contexto Personal",
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
-      "typeVersion": 1.3,
-      "position": [
-        3320,
-        288
-      ],
       "parameters": {
         "mode": "retrieve-as-tool",
         "toolDescription": "Busca en la memoria personal del usuario: historial de peso, comidas reportadas, metas y eventos registrados. Úsala cuando el usuario mencione comidas, peso, o pregunte qué ha registrado.",
@@ -705,6 +677,14 @@
         "topK": 5,
         "options": {}
       },
+      "id": "vs-user-rag-tool-v2",
+      "name": "Tool: Contexto Personal",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        3328,
+        288
+      ],
       "credentials": {
         "qdrantApi": {
           "id": "ZgvYkNPmxRynoz3F",
@@ -713,18 +693,18 @@
       }
     },
     {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
       "id": "embeddings-user-rag-v2",
       "name": "OpenAI Embeddings (RAG)",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1,
       "position": [
-        3320,
-        460
+        3328,
+        464
       ],
-      "parameters": {
-        "model": "text-embedding-3-small",
-        "options": {}
-      },
       "credentials": {
         "openAiApi": {
           "id": "NOJoPVNWDXiywRgw",
@@ -733,14 +713,6 @@
       }
     },
     {
-      "id": "contact-set-001",
-      "name": "Set Phone Data",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        512,
-        880
-      ],
       "parameters": {
         "assignments": {
           "assignments": [
@@ -765,17 +737,17 @@
           ]
         },
         "options": {}
-      }
+      },
+      "id": "contact-set-001",
+      "name": "Set Phone Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        864
+      ]
     },
     {
-      "id": "contact-pg-001",
-      "name": "Save Phone Number",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        752,
-        880
-      ],
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE users SET phone_number = $1, updated_at = NOW() WHERE telegram_id = $2",
@@ -783,6 +755,14 @@
           "queryReplacement": "={{ [$json.phone_number, String($json.telegram_id)] }}"
         }
       },
+      "id": "contact-pg-001",
+      "name": "Save Phone Number",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        480,
+        864
+      ],
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
@@ -791,22 +771,25 @@
       }
     },
     {
+      "parameters": {
+        "chatId": "={{ $('Set Phone Data').item.json.chatId }}",
+        "text": "✅ ¡Perfecto! Tu número ha sido guardado. Ya tienes todo configurado.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
       "id": "contact-ack-001",
       "name": "Phone ACK",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        992,
-        880
+        800,
+        864
       ],
-      "parameters": {
-        "chatId": "={{ $('Set Phone Data').item.json.chatId }}",
-        "text": "✅ ¡Perfecto! Tu número ha sido guardado. Ya tienes todo configurado.",
-        "additionalFields": {
-          "appendAttribution": false,
-          "replyMarkup": "removeKeyboard"
-        }
-      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "7cdd84ef-4e51-42fe-94f1-9681163a8a62",
       "credentials": {
         "telegramApi": {
           "id": "1duS64x2hsrz3moJ",
@@ -815,27 +798,19 @@
       }
     },
     {
+      "parameters": {
+        "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set User Context').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
+      },
       "id": "profile-parse-001",
       "name": "Parse Profile",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3000,
-        592
-      ],
-      "parameters": {
-        "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set Text from Message').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
-      }
+        3040,
+        720
+      ]
     },
     {
-      "id": "profile-if-001",
-      "name": "Has PERFIL_COMPLETO?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        3250,
-        592
-      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -861,24 +836,32 @@
         "options": {
           "looseTypeValidation": true
         }
-      }
+      },
+      "id": "profile-if-001",
+      "name": "Has PERFIL_COMPLETO?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3248,
+        720
+      ]
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO user_profiles (user_id, gender, age, height_cm, weight_kg, activity_level, fitness_level, goal, dietary_restrictions, food_allergies, disliked_foods, injuries, available_equipment, training_days_per_week, meal_count, local_culture, budget_level, onboarding_completed) VALUES ($1, $2::gender_type, $3, $4, $5, $6::activity_level, $7::fitness_level, $8::goal_type, ARRAY(SELECT jsonb_array_elements_text($9::jsonb)), ARRAY(SELECT jsonb_array_elements_text($10::jsonb)), ARRAY(SELECT jsonb_array_elements_text($11::jsonb)), ARRAY(SELECT jsonb_array_elements_text($12::jsonb)), ARRAY(SELECT jsonb_array_elements_text($13::jsonb)), $14, $15, $16, $17::budget_level, false) ON CONFLICT (user_id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg, activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level, goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions, food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods, injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment, training_days_per_week = EXCLUDED.training_days_per_week, meal_count = EXCLUDED.meal_count, local_culture = EXCLUDED.local_culture, budget_level = EXCLUDED.budget_level, updated_at = NOW()",
+        "options": {
+          "queryReplacement": "={{ [$('Parse Profile').item.json.userId, $('Parse Profile').item.json.profile.gender, $('Parse Profile').item.json.profile.age, $('Parse Profile').item.json.profile.height_cm, $('Parse Profile').item.json.profile.weight_kg, $('Parse Profile').item.json.profile.activity_level, $('Parse Profile').item.json.profile.fitness_level, $('Parse Profile').item.json.profile.goal, $('Parse Profile').item.json.profile.dietary_restrictions, $('Parse Profile').item.json.profile.food_allergies, $('Parse Profile').item.json.profile.disliked_foods, $('Parse Profile').item.json.profile.injuries, $('Parse Profile').item.json.profile.available_equipment, $('Parse Profile').item.json.profile.training_days_per_week, $('Parse Profile').item.json.profile.meal_count, $('Parse Profile').item.json.profile.local_culture, $('Parse Profile').item.json.profile.budget_level] }}"
+        }
+      },
       "id": "profile-save-001",
       "name": "Save User Profile",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3500,
-        480
+        3856,
+        704
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO user_profiles (user_id, gender, age, height_cm, weight_kg, activity_level, fitness_level, goal, dietary_restrictions, food_allergies, disliked_foods, injuries, available_equipment, training_days_per_week, meal_count, local_culture, budget_level, onboarding_completed, onboarding_completed_at) VALUES ($1, $2::gender_type, $3, $4, $5, $6::activity_level, $7::fitness_level, $8::goal_type, ARRAY(SELECT jsonb_array_elements_text($9::jsonb)), ARRAY(SELECT jsonb_array_elements_text($10::jsonb)), ARRAY(SELECT jsonb_array_elements_text($11::jsonb)), ARRAY(SELECT jsonb_array_elements_text($12::jsonb)), ARRAY(SELECT jsonb_array_elements_text($13::jsonb)), $14, $15, $16, $17::budget_level, true, NOW()) ON CONFLICT (user_id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg, activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level, goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions, food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods, injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment, training_days_per_week = EXCLUDED.training_days_per_week, meal_count = EXCLUDED.meal_count, local_culture = EXCLUDED.local_culture, budget_level = EXCLUDED.budget_level, onboarding_completed = true, onboarding_completed_at = COALESCE(user_profiles.onboarding_completed_at, NOW()), updated_at = NOW()",
-        "options": {
-          "queryReplacement": "={{ [$json.userId, $json.profile.gender, $json.profile.age, $json.profile.height_cm, $json.profile.weight_kg, $json.profile.activity_level, $json.profile.fitness_level, $json.profile.goal, $json.profile.dietary_restrictions, $json.profile.food_allergies, $json.profile.disliked_foods, $json.profile.injuries, $json.profile.available_equipment, $json.profile.training_days_per_week, $json.profile.meal_count, $json.profile.local_culture, $json.profile.budget_level] }}"
-        }
-      },
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
@@ -887,21 +870,21 @@
       }
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE users SET country = $1, city = $2, document_number = $3, updated_at = NOW() WHERE id = $4",
+        "options": {
+          "queryReplacement": "={{ [$('Parse Profile').item.json.profile.country, $('Parse Profile').item.json.profile.city, $('Parse Profile').item.json.profile.document_number, $('Parse Profile').item.json.userId] }}"
+        }
+      },
       "id": "profile-user-001",
       "name": "Update User Contact Data",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3750,
-        480
+        4080,
+        704
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE users SET country = $1, city = $2, document_number = $3, updated_at = NOW() WHERE id = $4",
-        "options": {
-          "queryReplacement": "={{ [$json.profile.country, $json.profile.city, $json.profile.document_number, $json.userId] }}"
-        }
-      },
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
@@ -910,14 +893,6 @@
       }
     },
     {
-      "id": "profile-msg-001",
-      "name": "Send Profile Done",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        4000,
-        480
-      ],
       "parameters": {
         "chatId": "={{ $('Parse Profile').item.json.chatId }}",
         "text": "={{ $('Parse Profile').item.json.cleanText }}",
@@ -926,48 +901,18 @@
           "parse_mode": "Markdown"
         }
       },
-      "credentials": {
-        "telegramApi": {
-          "id": "1duS64x2hsrz3moJ",
-          "name": "Telegram account fitia"
-        }
-      }
-    },
-    {
-      "id": "phone-req-001",
-      "name": "Request Phone Number",
+      "id": "profile-msg-001",
+      "name": "Send Profile Done",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        4250,
-        480
+        4512,
+        704
       ],
-      "parameters": {
-        "chatId": "={{ $('Parse Profile').item.json.chatId }}",
-        "text": "📱 Un último paso: comparte tu número de celular para que podamos contactarte si es necesario. Puedes tocar el botón o escribirlo manualmente.",
-        "additionalFields": {
-          "appendAttribution": false,
-          "replyMarkup": "replyKeyboard",
-          "replyKeyboardButtons": {
-            "rows": [
-              {
-                "row": {
-                  "buttons": [
-                    {
-                      "text": "📱 Compartir mi número",
-                      "requestContact": true
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          "replyKeyboardOptions": {
-            "oneTimeKeyboard": true,
-            "resizeKeyboard": true
-          }
-        }
-      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "474cd4c6-78e0-4c8f-9cf8-4b08b99ea277",
       "credentials": {
         "telegramApi": {
           "id": "1duS64x2hsrz3moJ",
@@ -976,21 +921,45 @@
       }
     },
     {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "phone-req-001",
+      "name": "Request Phone Number",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4736,
+        704
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, first_name, true::boolean AS migration_match\nFROM users\nWHERE migration_token = UPPER(TRIM($1))\n  AND migration_token_expires_at > NOW()\nUNION ALL\nSELECT NULL::integer, NULL::text, false::boolean\nLIMIT 1",
+        "options": {
+          "queryReplacement": "={{ $json.message.text }}"
+        }
+      },
       "id": "migration-check-001",
       "name": "Check Migration Token",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        960,
-        224
+        624,
+        112
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT id, first_name, true::boolean AS migration_match\nFROM users\nWHERE migration_token = UPPER(TRIM($1))\n  AND migration_token_expires_at > NOW()\nUNION ALL\nSELECT NULL::integer, NULL::text, false::boolean\nLIMIT 1",
-        "options": {
-          "queryReplacement": "={{ [$('Set Text from Message').item.json['message.text']] }}"
-        }
-      },
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
@@ -999,14 +968,6 @@
       }
     },
     {
-      "id": "migration-if-001",
-      "name": "Is Migration Token?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1384,
-        224
-      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -1032,24 +993,32 @@
         "options": {
           "looseTypeValidation": true
         }
-      }
+      },
+      "id": "migration-if-001",
+      "name": "Is Migration Token?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        112
+      ]
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE users SET telegram_id = $1,     migration_token = NULL,     migration_token_expires_at = NULL,     updated_at = NOW() WHERE id = $2 RETURNING first_name",
+        "options": {
+          "queryReplacement": "={{ [String($('Set User Context').item.json.telegramId), $('Check Migration Token').item.json.id] }}"
+        }
+      },
       "id": "migration-apply-001",
       "name": "Apply Migration",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1624,
+        1280,
         96
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE users SET telegram_id = $1,     migration_token = NULL,     migration_token_expires_at = NULL,     updated_at = NOW() WHERE id = $2 RETURNING first_name",
-        "options": {
-          "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), $('Check Migration Token').item.json.id] }}"
-        }
-      },
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
@@ -1058,22 +1027,26 @@
       }
     },
     {
-      "id": "migration-ack-001",
-      "name": "Send Migration Success",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1864,
-        96
-      ],
       "parameters": {
-        "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+        "chatId": "={{ $('Set User Context').item.json.chatId }}",
         "text": "=✅ *¡Migración completada!*\n\nTu cuenta de FitAI ha sido vinculada a este Telegram. Todo tu historial, perfil y membresía están disponibles. Escríbeme cuando quieras continuar.",
         "additionalFields": {
           "appendAttribution": false,
           "parse_mode": "Markdown"
         }
       },
+      "id": "migration-ack-001",
+      "name": "Send Migration Success",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        96
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "45051bd1-897d-4013-add3-b39931d7cc6e",
       "credentials": {
         "telegramApi": {
           "id": "1duS64x2hsrz3moJ",
@@ -1082,17 +1055,242 @@
       }
     },
     {
+      "parameters": {
+        "jsCode": "// Always produce output regardless of whether the token matched.\n// Check Migration Token returns [] when no match — this would stop the flow.\nconst rows = $input.all();\nconst match = rows.length > 0 && rows[0].json && rows[0].json.id;\nif (match) {\n  return [{ json: { ...rows[0].json, migration_match: true } }];\n}\nreturn [{ json: { id: null, migration_match: false } }];"
+      },
       "id": "normalize-token-001",
       "name": "Normalize Token Result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1120,
-        224
-      ],
+        800,
+        112
+      ]
+    },
+    {
       "parameters": {
-        "jsCode": "// Always produce output regardless of whether the token matched.\n// Check Migration Token returns [] when no match — this would stop the flow.\nconst rows = $input.all();\nconst match = rows.length > 0 && rows[0].json && rows[0].json.id;\nif (match) {\n  return [{ json: { ...rows[0].json, migration_match: true } }];\n}\nreturn [{ json: { id: null, migration_match: false } }];"
+        "operation": "executeQuery",
+        "query": "SELECT answers, last_step FROM onboarding_progress WHERE user_id = $1\nUNION ALL\nSELECT '{}'::jsonb, 0\nLIMIT 1",
+        "options": {
+          "queryReplacement": "={{ $('Check User & Membership').item.json.user_id }}"
+        }
+      },
+      "id": "11111111-0030-4000-8000-000000000030",
+      "name": "Load Onboarding Progress",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2512,
+        576
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO onboarding_progress (user_id, answers, last_step, updated_at)\nVALUES ($1, $2::jsonb, $3, NOW())\nON CONFLICT (user_id) DO UPDATE SET\n  answers    = EXCLUDED.answers,\n  last_step  = EXCLUDED.last_step,\n  updated_at = NOW()",
+        "options": {
+          "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id, JSON.stringify($('Parse Profile').item.json.profile || {}), $('Parse Profile').item.json.hasProfile ? 20 : 10] }}"
+        }
+      },
+      "id": "11111111-0031-4000-8000-000000000031",
+      "name": "Save Onboarding Progress",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3600,
+        976
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM onboarding_progress WHERE user_id = $1",
+        "options": {
+          "queryReplacement": "={{ $('Check User & Membership').item.json.user_id }}"
+        }
+      },
+      "id": "11111111-0032-4000-8000-000000000032",
+      "name": "Clear Onboarding Progress",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        3600,
+        704
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Set User Context').item.json.chatId }}",
+        "text": "={{ $('Parse Profile').item.json.cleanText }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "11111111-0050-4000-8000-000000000050",
+      "name": "Send Onboarding Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3856,
+        976
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "019329a3-2079-4fe5-a9cc-06ae057a7f48",
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = $1",
+        "options": {
+          "queryReplacement": "={{ [$('Parse Profile').item.json.userId] }}"
+        }
+      },
+      "id": "11111111-0060-4000-8000-000000000060",
+      "name": "Mark Onboarding Complete",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4304,
+        704
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "CCkMv75zwDDoj513",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/CCkMv75zwDDoj513",
+          "cachedResultName": "FitAI - Process text message"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "callback_query": "={{ $('Telegram Trigger').item.json.callback_query }}",
+            "message": "={{ $('Telegram Trigger').item.json.message }}",
+            "": "={{ $('Telegram Trigger').item.json }}"
+          },
+          "matchingColumns": [
+            "callback_query",
+            "message",
+            ""
+          ],
+          "schema": [
+            {
+              "id": "callback_query",
+              "displayName": "callback_query",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "",
+              "displayName": "",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        192,
+        112
+      ],
+      "name": "Call process text message",
+      "id": "bb616577-3076-40d8-8cd0-f6bdee27e9a9"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "uc1",
+              "name": "message.text",
+              "type": "string",
+              "value": "={{ $json.message?.text }}"
+            },
+            {
+              "id": "uc2",
+              "name": "chatId",
+              "type": "string",
+              "value": "={{ $json.chatId }}"
+            },
+            {
+              "id": "uc3",
+              "name": "telegramId",
+              "type": "string",
+              "value": "={{ $json.telegramId }}"
+            },
+            {
+              "id": "uc4",
+              "name": "firstName",
+              "type": "string",
+              "value": "={{ $json.firstName }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-user-ctx-001",
+      "name": "Set User Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        112
+      ]
     }
   ],
   "connections": {
@@ -1111,7 +1309,7 @@
       "main": [
         [
           {
-            "node": "Set Text from Message",
+            "node": "Call process text message",
             "type": "main",
             "index": 0
           }
@@ -1125,7 +1323,7 @@
         ],
         [
           {
-            "node": "Set Text from Message",
+            "node": "Call process text message",
             "type": "main",
             "index": 0
           }
@@ -1165,18 +1363,7 @@
       "main": [
         [
           {
-            "node": "Upsert User",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Text from Message": {
-      "main": [
-        [
-          {
-            "node": "Check Migration Token",
+            "node": "Set User Context",
             "type": "main",
             "index": 0
           }
@@ -1234,7 +1421,7 @@
         ],
         [
           {
-            "node": "Onboarding Agent",
+            "node": "Load Onboarding Progress",
             "type": "main",
             "index": 0
           }
@@ -1415,14 +1602,14 @@
       "main": [
         [
           {
-            "node": "Save User Profile",
+            "node": "Clear Onboarding Progress",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Send Response",
+            "node": "Save Onboarding Progress",
             "type": "main",
             "index": 0
           }
@@ -1444,7 +1631,7 @@
       "main": [
         [
           {
-            "node": "Send Profile Done",
+            "node": "Mark Onboarding Complete",
             "type": "main",
             "index": 0
           }
@@ -1522,6 +1709,72 @@
           }
         ]
       ]
+    },
+    "Clear Onboarding Progress": {
+      "main": [
+        [
+          {
+            "node": "Save User Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Onboarding Progress": {
+      "main": [
+        [
+          {
+            "node": "Send Onboarding Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Onboarding Progress": {
+      "main": [
+        [
+          {
+            "node": "Onboarding Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Onboarding Complete": {
+      "main": [
+        [
+          {
+            "node": "Send Profile Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call process text message": {
+      "main": [
+        [
+          {
+            "node": "Set User Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set User Context": {
+      "main": [
+        [
+          {
+            "node": "Check Migration Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1529,12 +1782,14 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "staticData": null,
+  "staticData": {
+    "global": {}
+  },
   "meta": null,
   "pinData": {},
-  "versionId": "726e3df6-eef5-4abc-a719-edecb56f2872",
-  "activeVersionId": "726e3df6-eef5-4abc-a719-edecb56f2872",
-  "versionCounter": 173,
+  "versionId": "d733f7ca-2857-41ab-9b92-9e4ca89b5276",
+  "activeVersionId": "d733f7ca-2857-41ab-9b92-9e4ca89b5276",
+  "versionCounter": 427,
   "triggerCount": 1,
   "shared": [
     {
@@ -1557,9 +1812,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-30T15:56:58.024Z",
-    "createdAt": "2026-03-30T15:56:58.024Z",
-    "versionId": "726e3df6-eef5-4abc-a719-edecb56f2872",
+    "updatedAt": "2026-03-31T02:50:04.000Z",
+    "createdAt": "2026-03-31T02:49:36.418Z",
+    "versionId": "d733f7ca-2857-41ab-9b92-9e4ca89b5276",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -1575,8 +1830,8 @@
         "typeVersion": 1.2,
         "name": "Telegram Trigger",
         "position": [
-          0,
-          320
+          -560,
+          368
         ],
         "webhookId": "63001b72-4471-4896-b3b3-8ec56a0d9da6",
         "credentials": {
@@ -1593,11 +1848,11 @@
               {
                 "conditions": {
                   "options": {
-                    "version": 2,
                     "caseSensitive": true,
-                    "typeValidation": "loose"
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
                   },
-                  "combinator": "and",
                   "conditions": [
                     {
                       "operator": {
@@ -1606,9 +1861,11 @@
                         "singleValue": true
                       },
                       "leftValue": "={{ $json.message.text }}",
-                      "rightValue": ""
+                      "rightValue": "",
+                      "id": "64681b88-b0b0-4cc1-b341-9f85c715d1c6"
                     }
-                  ]
+                  ],
+                  "combinator": "and"
                 },
                 "renameOutput": true,
                 "outputKey": "text"
@@ -1616,11 +1873,11 @@
               {
                 "conditions": {
                   "options": {
-                    "version": 2,
                     "caseSensitive": true,
-                    "typeValidation": "loose"
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
                   },
-                  "combinator": "and",
                   "conditions": [
                     {
                       "operator": {
@@ -1629,9 +1886,11 @@
                         "singleValue": true
                       },
                       "leftValue": "={{ $json.message.voice.file_id }}",
-                      "rightValue": ""
+                      "rightValue": "",
+                      "id": "accc9229-5020-4c01-9b80-1c137bb6189b"
                     }
-                  ]
+                  ],
+                  "combinator": "and"
                 },
                 "renameOutput": true,
                 "outputKey": "voice"
@@ -1639,11 +1898,11 @@
               {
                 "conditions": {
                   "options": {
-                    "version": 2,
                     "caseSensitive": true,
-                    "typeValidation": "loose"
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
                   },
-                  "combinator": "and",
                   "conditions": [
                     {
                       "operator": {
@@ -1652,9 +1911,11 @@
                         "singleValue": true
                       },
                       "leftValue": "={{ $json.callback_query.data }}",
-                      "rightValue": ""
+                      "rightValue": "",
+                      "id": "8b3e071a-17fa-47fb-952d-211894958596"
                     }
-                  ]
+                  ],
+                  "combinator": "and"
                 },
                 "renameOutput": true,
                 "outputKey": "callback"
@@ -1662,11 +1923,11 @@
               {
                 "conditions": {
                   "options": {
-                    "version": 2,
                     "caseSensitive": true,
-                    "typeValidation": "loose"
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 2
                   },
-                  "combinator": "and",
                   "conditions": [
                     {
                       "operator": {
@@ -1675,9 +1936,11 @@
                         "singleValue": true
                       },
                       "leftValue": "={{ $json.message.contact.phone_number }}",
-                      "rightValue": ""
+                      "rightValue": "",
+                      "id": "e2d15420-ab30-44b7-891b-633a7e4dad62"
                     }
-                  ]
+                  ],
+                  "combinator": "and"
                 },
                 "renameOutput": true,
                 "outputKey": "contact"
@@ -1692,8 +1955,8 @@
         "typeVersion": 3.2,
         "name": "Route Message Type",
         "position": [
-          256,
-          304
+          -112,
+          336
         ]
       },
       {
@@ -1707,8 +1970,8 @@
         "typeVersion": 1.2,
         "name": "Get Voice File",
         "position": [
-          512,
-          512
+          192,
+          496
         ],
         "webhookId": "5debfbcc-0498-4e8f-a50a-4b70b1694912",
         "credentials": {
@@ -1729,8 +1992,8 @@
         "typeVersion": 1.8,
         "name": "Transcribe Voice",
         "position": [
-          752,
-          512
+          496,
+          496
         ],
         "credentials": {
           "openAiApi": {
@@ -1776,49 +2039,8 @@
         "typeVersion": 3.4,
         "name": "Set Text from Voice",
         "position": [
-          1008,
-          512
-        ]
-      },
-      {
-        "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "id": "t1",
-                "name": "message.text",
-                "type": "string",
-                "value": "={{ $json.message.text || $json.callback_query.data }}"
-              },
-              {
-                "id": "t2",
-                "name": "chatId",
-                "type": "string",
-                "value": "={{ $json.message.chat.id || $json.callback_query.message.chat.id }}"
-              },
-              {
-                "id": "t3",
-                "name": "telegramId",
-                "type": "string",
-                "value": "={{ $json.message.from.id || $json.callback_query.from.id }}"
-              },
-              {
-                "id": "t4",
-                "name": "firstName",
-                "type": "string",
-                "value": "={{ $json.message.from.first_name || $json.callback_query.from.first_name }}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "11111111-0006-4000-8000-000000000006",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "name": "Set Text from Message",
-        "position": [
-          752,
-          224
+          800,
+          496
         ]
       },
       {
@@ -1826,7 +2048,7 @@
           "operation": "executeQuery",
           "query": "SELECT u.id as user_id, u.first_name, u.is_active, COALESCE(m.status::text, 'none') as membership_status, CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed FROM users u LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW() LEFT JOIN user_profiles up ON up.user_id = u.id WHERE u.telegram_id = $1 LIMIT 1",
           "options": {
-            "queryReplacement": "={{ $('Set Text from Message').item.json.telegramId }}"
+            "queryReplacement": "={{ $('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id }}"
           }
         },
         "id": "11111111-0007-4000-8000-000000000007",
@@ -1834,8 +2056,8 @@
         "typeVersion": 2.5,
         "name": "Check User & Membership",
         "position": [
-          1264,
-          304
+          1568,
+          512
         ],
         "credentials": {
           "postgres": {
@@ -1847,9 +2069,9 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO users (telegram_id, first_name, last_name, username, language_code) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (telegram_id) DO UPDATE SET first_name = EXCLUDED.first_name, last_name = COALESCE(EXCLUDED.last_name, users.last_name), username = COALESCE(EXCLUDED.username, users.username), updated_at = NOW() RETURNING id, telegram_id, first_name",
+          "query": "INSERT INTO users (telegram_id, first_name, last_name, username, language_code)\nVALUES ($1, $2, $3, $4, $5)\nON CONFLICT (telegram_id) DO UPDATE SET\n  first_name   = CASE\n                   WHEN LENGTH(TRIM(users.first_name)) <= 1 THEN EXCLUDED.first_name\n                   ELSE users.first_name\n                 END,\n  last_name    = COALESCE(EXCLUDED.last_name, users.last_name),\n  username     = COALESCE(EXCLUDED.username, users.username),\n  updated_at   = NOW()\nRETURNING id, telegram_id, first_name",
           "options": {
-            "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), String($('Set Text from Message').item.json.firstName || ''), ($('Telegram Trigger').item.json.message?.from?.last_name || null), ($('Telegram Trigger').item.json.message?.from?.username || null), ($('Telegram Trigger').item.json.message?.from?.language_code || 'es')] }}"
+            "queryReplacement": "={{ [String($('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id), String($('Telegram Trigger').item.json.message?.from?.first_name || $('Telegram Trigger').item.json.callback_query?.from?.first_name || ''), ($('Telegram Trigger').item.json.message?.from?.last_name || null), ($('Telegram Trigger').item.json.message?.from?.username || null), ($('Telegram Trigger').item.json.message?.from?.language_code || 'es')] }}"
           }
         },
         "id": "11111111-0008-4000-8000-000000000008",
@@ -1857,8 +2079,8 @@
         "typeVersion": 2.5,
         "name": "Upsert User",
         "position": [
-          1504,
-          304
+          1280,
+          512
         ],
         "credentials": {
           "postgres": {
@@ -1898,14 +2120,14 @@
         "typeVersion": 2,
         "name": "Has Active Membership?",
         "position": [
-          1760,
-          304
+          1936,
+          400
         ]
       },
       {
         "parameters": {
-          "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
-          "text": "=Hola {{ $('Set Text from Message').item.json.firstName }}! No tienes una membresia activa. Para acceder al asistente FitAI contacta al administrador.",
+          "chatId": "={{ $('Set User Context').item.json.chatId }}",
+          "text": "=Hola {{ $('Set User Context').item.json.firstName }}! No tienes una membresia activa. Para acceder al asistente FitAI contacta al administrador.",
           "additionalFields": {
             "appendAttribution": false
           }
@@ -1915,10 +2137,13 @@
         "typeVersion": 1.2,
         "name": "No Membership Message",
         "position": [
-          2000,
-          512
+          2192,
+          560
         ],
         "webhookId": "20379d01-666f-4ea3-834a-e62dc6c5ff5a",
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
         "credentials": {
           "telegramApi": {
             "id": "1duS64x2hsrz3moJ",
@@ -1933,15 +2158,14 @@
               "caseSensitive": true,
               "leftValue": "",
               "typeValidation": "loose",
-              "version": 1
+              "version": 2
             },
             "conditions": [
               {
                 "id": "o1",
                 "operator": {
-                  "type": "boolean",
-                  "operation": "true",
-                  "singleValue": true
+                  "type": "string",
+                  "operation": "equals"
                 },
                 "leftValue": "={{ $json.onboarding_completed }}",
                 "rightValue": "true"
@@ -1958,14 +2182,14 @@
         "typeVersion": 2,
         "name": "Onboarding Complete?",
         "position": [
-          2000,
+          2208,
           208
         ]
       },
       {
         "parameters": {
           "promptType": "define",
-          "text": "={{ $('Set Text from Message').item.json.message.text }}",
+          "text": "={{ $('Set User Context').item.json.message.text }}",
           "options": {
             "systemMessage": "=Eres FitAI, un asistente personal de nutricion y fitness que opera por Telegram.\n\nUSUARIO:\n- Nombre: {{ $('Check User & Membership').item.json.first_name }}\n- ID: {{ $('Check User & Membership').item.json.user_id }}\n- Chat ID: {{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}\n- userId para herramientas: {{ $('Check User & Membership').item.json.user_id }}\n- Fecha actual: {{ $now.format('dd/MM/yyyy') }}\n\nROL:\nAyudas al usuario a mejorar su alimentacion, ejercicio y habitos de salud. Eres empatico, motivador y practico.\n\nHERRAMIENTAS DISPONIBLES:\n- Progreso: calcula metricas y progreso del usuario\n- PlanComidas: genera un nuevo plan de alimentacion semanal\n- Rutina: genera una nueva rutina de ejercicio\n- RegistrarEvento: guarda eventos del usuario en memoria personal (peso, comidas, perfil, metas)\n\nCUANDO USAR RegistrarEvento:\n- El usuario reporta su peso actual (ej: \"hoy peso 80 kg\") → eventType: weight_log\n- El usuario dice lo que comio (ej: \"desayune avena\") → eventType: meal_reported\n- El usuario actualiza un dato de perfil (ej: \"cambie mi objetivo a 75 kg\") → eventType: profile_update\n- El usuario establece una meta nueva → eventType: goal_set\nSiempre registra ANTES de responder al usuario.\n\nREGLAS:\n- Responde SIEMPRE en espanol\n- Mantén respuestas cortas (Telegram: max 3 parrafos)\n- Usa emojis con moderacion\n- Si el usuario reporta una comida, ayudalo a registrarla y compararla con su plan\n- Si pide su plan de comidas o ejercicio, consulta la base de datos\n- Si necesita un nuevo plan, ofrece generarlo\n- Tono: amigable, como un coach personal cercano\n- NUNCA hagas diagnosticos medicos\n- Si hay una crisis de salud, deriva a profesionales\n\nFORMATO DE SALIDA:\nSolo el mensaje para el usuario, sin metadatos ni explicaciones."
           }
@@ -1975,7 +2199,7 @@
         "typeVersion": 2,
         "name": "FitAI Main AI Agent",
         "position": [
-          2448,
+          2656,
           0
         ]
       },
@@ -1997,7 +2221,7 @@
         "typeVersion": 1.2,
         "name": "OpenAI Chat Model",
         "position": [
-          2304,
+          2512,
           144
         ],
         "credentials": {
@@ -2018,16 +2242,16 @@
         "typeVersion": 1.3,
         "name": "FitAI Memory",
         "position": [
-          2448,
+          2656,
           144
         ]
       },
       {
         "parameters": {
           "promptType": "define",
-          "text": "={{ $('Set Text from Message').item.json['message.text'] }}",
+          "text": "={{ $('Set User Context').item.json.message.text }}",
           "options": {
-            "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n18. Pais de residencia (ej: Colombia, Mexico, Espana)\n19. Ciudad de residencia\n20. Numero de documento de identidad (cedula, DNI, pasaporte) — opcional, puedes indicar 'prefiero no dar'\n\nCuando tengas TODOS los datos, responde con este JSON exacto al final:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\", \"pais\": \"...\", \"ciudad\": \"...\", \"documento\": \"...\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- Confirma cada dato antes de avanzar al siguiente\n- Al final presenta un resumen del perfil para confirmacion\n- NO incluyas el bloque [PERFIL_COMPLETO] en el texto que muestras al usuario; usalo solo como senial interna"
+            "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\n{{ $('Load Onboarding Progress').item.json.last_step > 0 ? '⚠️ RETOMANDO SESION PREVIA: El usuario ya respondio ' + $('Load Onboarding Progress').item.json.last_step + ' de 20 preguntas. Revisa el historial de esta conversacion y continua desde la siguiente pregunta pendiente. NO repitas preguntas ya respondidas.' : 'Empieza desde la pregunta 1.' }}\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n18. Pais de residencia (ej: Colombia, Mexico, Espana)\n19. Ciudad de residencia\n20. Numero de documento de identidad (cedula, DNI, pasaporte) — opcional, puedes indicar 'prefiero no dar'\n\nFLUJO DE CIERRE (MUY IMPORTANTE — sigue este orden exacto):\nPASO 1: Cuando tengas los 20 datos, presenta un resumen y pregunta \"¿Todo correcto o deseas cambiar algo?\"\nPASO 2: Si el usuario confirma que esta correcto (dice si, correcto, listo, ok, etc.):\n  - Escribe tu mensaje de bienvenida al asistente\n  - INMEDIATAMENTE despues, en el MISMO mensaje, agrega el bloque [PERFIL_COMPLETO] con todos los datos\n  - Este es el unico momento en que debes incluir el bloque\n\nEl bloque debe tener este formato exacto:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\", \"pais\": \"...\", \"ciudad\": \"...\", \"documento\": \"...\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- NO incluyas el bloque [PERFIL_COMPLETO] en el resumen ni en ningun mensaje previo a la confirmacion\n- El bloque [PERFIL_COMPLETO] nunca es visible para el usuario — es una senal interna del sistema"
           }
         },
         "id": "11111111-0015-4000-8000-000000000015",
@@ -2035,8 +2259,8 @@
         "typeVersion": 2,
         "name": "Onboarding Agent",
         "position": [
-          2528,
-          592
+          2720,
+          720
         ]
       },
       {
@@ -2056,8 +2280,8 @@
         "typeVersion": 1.2,
         "name": "OpenAI Chat Model Onboarding",
         "position": [
-          2448,
-          800
+          2576,
+          928
         ],
         "credentials": {
           "openAiApi": {
@@ -2070,20 +2294,27 @@
         "parameters": {
           "sessionIdType": "customKey",
           "sessionKey": "=onboarding_{{ $('Telegram Trigger').item.json.message.chat.id }}",
-          "contextWindowLength": 20
+          "tableName": "n8n_onboarding_memory",
+          "contextWindowLength": 30
         },
         "id": "11111111-0017-4000-8000-000000000017",
-        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-        "typeVersion": 1.3,
+        "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+        "typeVersion": 1.1,
         "name": "Onboarding Memory",
         "position": [
-          2624,
-          800
-        ]
+          2816,
+          928
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
       },
       {
         "parameters": {
-          "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+          "chatId": "={{ $('Set User Context').item.json.chatId }}",
           "text": "={{ $json.output }}",
           "additionalFields": {
             "appendAttribution": false,
@@ -2095,10 +2326,13 @@
         "typeVersion": 1.2,
         "name": "Send Response",
         "position": [
-          3424,
-          288
+          3696,
+          16
         ],
         "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
         "credentials": {
           "telegramApi": {
             "id": "1duS64x2hsrz3moJ",
@@ -2135,7 +2369,7 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2992,
+          3200,
           288
         ]
       },
@@ -2168,7 +2402,7 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2672,
+          2880,
           288
         ]
       },
@@ -2201,7 +2435,7 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2832,
+          3040,
           288
         ]
       },
@@ -2237,19 +2471,11 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2512,
+          2720,
           288
         ]
       },
       {
-        "id": "vs-user-rag-tool-v2",
-        "name": "Tool: Contexto Personal",
-        "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
-        "typeVersion": 1.3,
-        "position": [
-          3120,
-          288
-        ],
         "parameters": {
           "mode": "retrieve-as-tool",
           "toolDescription": "Busca en la memoria personal del usuario: historial de peso, comidas reportadas, metas y eventos registrados. Úsala cuando el usuario mencione comidas, peso, o pregunte qué ha registrado.",
@@ -2261,6 +2487,14 @@
           "topK": 5,
           "options": {}
         },
+        "id": "vs-user-rag-tool-v2",
+        "name": "Tool: Contexto Personal",
+        "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+        "typeVersion": 1.3,
+        "position": [
+          3328,
+          288
+        ],
         "credentials": {
           "qdrantApi": {
             "id": "ZgvYkNPmxRynoz3F",
@@ -2269,18 +2503,18 @@
         }
       },
       {
+        "parameters": {
+          "model": "text-embedding-3-small",
+          "options": {}
+        },
         "id": "embeddings-user-rag-v2",
         "name": "OpenAI Embeddings (RAG)",
         "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
         "typeVersion": 1,
         "position": [
-          3120,
-          460
+          3328,
+          464
         ],
-        "parameters": {
-          "model": "text-embedding-3-small",
-          "options": {}
-        },
         "credentials": {
           "openAiApi": {
             "id": "NOJoPVNWDXiywRgw",
@@ -2289,14 +2523,6 @@
         }
       },
       {
-        "id": "contact-set-001",
-        "name": "Set Phone Data",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-          512,
-          880
-        ],
         "parameters": {
           "assignments": {
             "assignments": [
@@ -2321,17 +2547,17 @@
             ]
           },
           "options": {}
-        }
+        },
+        "id": "contact-set-001",
+        "name": "Set Phone Data",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          192,
+          864
+        ]
       },
       {
-        "id": "contact-pg-001",
-        "name": "Save Phone Number",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          752,
-          880
-        ],
         "parameters": {
           "operation": "executeQuery",
           "query": "UPDATE users SET phone_number = $1, updated_at = NOW() WHERE telegram_id = $2",
@@ -2339,6 +2565,14 @@
             "queryReplacement": "={{ [$json.phone_number, String($json.telegram_id)] }}"
           }
         },
+        "id": "contact-pg-001",
+        "name": "Save Phone Number",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          480,
+          864
+        ],
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
@@ -2347,22 +2581,25 @@
         }
       },
       {
+        "parameters": {
+          "chatId": "={{ $('Set Phone Data').item.json.chatId }}",
+          "text": "✅ ¡Perfecto! Tu número ha sido guardado. Ya tienes todo configurado.",
+          "additionalFields": {
+            "appendAttribution": false
+          }
+        },
         "id": "contact-ack-001",
         "name": "Phone ACK",
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          992,
-          880
+          800,
+          864
         ],
-        "parameters": {
-          "chatId": "={{ $('Set Phone Data').item.json.chatId }}",
-          "text": "✅ ¡Perfecto! Tu número ha sido guardado. Ya tienes todo configurado.",
-          "additionalFields": {
-            "appendAttribution": false,
-            "replyMarkup": "removeKeyboard"
-          }
-        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "webhookId": "7cdd84ef-4e51-42fe-94f1-9681163a8a62",
         "credentials": {
           "telegramApi": {
             "id": "1duS64x2hsrz3moJ",
@@ -2371,27 +2608,19 @@
         }
       },
       {
+        "parameters": {
+          "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set User Context').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
+        },
         "id": "profile-parse-001",
         "name": "Parse Profile",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2800,
-          592
-        ],
-        "parameters": {
-          "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set Text from Message').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
-        }
+          3040,
+          720
+        ]
       },
       {
-        "id": "profile-if-001",
-        "name": "Has PERFIL_COMPLETO?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          3050,
-          592
-        ],
         "parameters": {
           "conditions": {
             "options": {
@@ -2417,24 +2646,32 @@
           "options": {
             "looseTypeValidation": true
           }
-        }
+        },
+        "id": "profile-if-001",
+        "name": "Has PERFIL_COMPLETO?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          3248,
+          720
+        ]
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO user_profiles (user_id, gender, age, height_cm, weight_kg, activity_level, fitness_level, goal, dietary_restrictions, food_allergies, disliked_foods, injuries, available_equipment, training_days_per_week, meal_count, local_culture, budget_level, onboarding_completed) VALUES ($1, $2::gender_type, $3, $4, $5, $6::activity_level, $7::fitness_level, $8::goal_type, ARRAY(SELECT jsonb_array_elements_text($9::jsonb)), ARRAY(SELECT jsonb_array_elements_text($10::jsonb)), ARRAY(SELECT jsonb_array_elements_text($11::jsonb)), ARRAY(SELECT jsonb_array_elements_text($12::jsonb)), ARRAY(SELECT jsonb_array_elements_text($13::jsonb)), $14, $15, $16, $17::budget_level, false) ON CONFLICT (user_id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg, activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level, goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions, food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods, injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment, training_days_per_week = EXCLUDED.training_days_per_week, meal_count = EXCLUDED.meal_count, local_culture = EXCLUDED.local_culture, budget_level = EXCLUDED.budget_level, updated_at = NOW()",
+          "options": {
+            "queryReplacement": "={{ [$('Parse Profile').item.json.userId, $('Parse Profile').item.json.profile.gender, $('Parse Profile').item.json.profile.age, $('Parse Profile').item.json.profile.height_cm, $('Parse Profile').item.json.profile.weight_kg, $('Parse Profile').item.json.profile.activity_level, $('Parse Profile').item.json.profile.fitness_level, $('Parse Profile').item.json.profile.goal, $('Parse Profile').item.json.profile.dietary_restrictions, $('Parse Profile').item.json.profile.food_allergies, $('Parse Profile').item.json.profile.disliked_foods, $('Parse Profile').item.json.profile.injuries, $('Parse Profile').item.json.profile.available_equipment, $('Parse Profile').item.json.profile.training_days_per_week, $('Parse Profile').item.json.profile.meal_count, $('Parse Profile').item.json.profile.local_culture, $('Parse Profile').item.json.profile.budget_level] }}"
+          }
+        },
         "id": "profile-save-001",
         "name": "Save User Profile",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          3300,
-          480
+          3856,
+          704
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "INSERT INTO user_profiles (user_id, gender, age, height_cm, weight_kg, activity_level, fitness_level, goal, dietary_restrictions, food_allergies, disliked_foods, injuries, available_equipment, training_days_per_week, meal_count, local_culture, budget_level, onboarding_completed, onboarding_completed_at) VALUES ($1, $2::gender_type, $3, $4, $5, $6::activity_level, $7::fitness_level, $8::goal_type, ARRAY(SELECT jsonb_array_elements_text($9::jsonb)), ARRAY(SELECT jsonb_array_elements_text($10::jsonb)), ARRAY(SELECT jsonb_array_elements_text($11::jsonb)), ARRAY(SELECT jsonb_array_elements_text($12::jsonb)), ARRAY(SELECT jsonb_array_elements_text($13::jsonb)), $14, $15, $16, $17::budget_level, true, NOW()) ON CONFLICT (user_id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg, activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level, goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions, food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods, injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment, training_days_per_week = EXCLUDED.training_days_per_week, meal_count = EXCLUDED.meal_count, local_culture = EXCLUDED.local_culture, budget_level = EXCLUDED.budget_level, onboarding_completed = true, onboarding_completed_at = COALESCE(user_profiles.onboarding_completed_at, NOW()), updated_at = NOW()",
-          "options": {
-            "queryReplacement": "={{ [$json.userId, $json.profile.gender, $json.profile.age, $json.profile.height_cm, $json.profile.weight_kg, $json.profile.activity_level, $json.profile.fitness_level, $json.profile.goal, $json.profile.dietary_restrictions, $json.profile.food_allergies, $json.profile.disliked_foods, $json.profile.injuries, $json.profile.available_equipment, $json.profile.training_days_per_week, $json.profile.meal_count, $json.profile.local_culture, $json.profile.budget_level] }}"
-          }
-        },
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
@@ -2443,21 +2680,21 @@
         }
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE users SET country = $1, city = $2, document_number = $3, updated_at = NOW() WHERE id = $4",
+          "options": {
+            "queryReplacement": "={{ [$('Parse Profile').item.json.profile.country, $('Parse Profile').item.json.profile.city, $('Parse Profile').item.json.profile.document_number, $('Parse Profile').item.json.userId] }}"
+          }
+        },
         "id": "profile-user-001",
         "name": "Update User Contact Data",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          3550,
-          480
+          4080,
+          704
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "UPDATE users SET country = $1, city = $2, document_number = $3, updated_at = NOW() WHERE id = $4",
-          "options": {
-            "queryReplacement": "={{ [$json.profile.country, $json.profile.city, $json.profile.document_number, $json.userId] }}"
-          }
-        },
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
@@ -2466,14 +2703,6 @@
         }
       },
       {
-        "id": "profile-msg-001",
-        "name": "Send Profile Done",
-        "type": "n8n-nodes-base.telegram",
-        "typeVersion": 1.2,
-        "position": [
-          3800,
-          480
-        ],
         "parameters": {
           "chatId": "={{ $('Parse Profile').item.json.chatId }}",
           "text": "={{ $('Parse Profile').item.json.cleanText }}",
@@ -2482,48 +2711,18 @@
             "parse_mode": "Markdown"
           }
         },
-        "credentials": {
-          "telegramApi": {
-            "id": "1duS64x2hsrz3moJ",
-            "name": "Telegram account fitia"
-          }
-        }
-      },
-      {
-        "id": "phone-req-001",
-        "name": "Request Phone Number",
+        "id": "profile-msg-001",
+        "name": "Send Profile Done",
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          4050,
-          480
+          4512,
+          704
         ],
-        "parameters": {
-          "chatId": "={{ $('Parse Profile').item.json.chatId }}",
-          "text": "📱 Un último paso: comparte tu número de celular para que podamos contactarte si es necesario. Puedes tocar el botón o escribirlo manualmente.",
-          "additionalFields": {
-            "appendAttribution": false,
-            "replyMarkup": "replyKeyboard",
-            "replyKeyboardButtons": {
-              "rows": [
-                {
-                  "row": {
-                    "buttons": [
-                      {
-                        "text": "📱 Compartir mi número",
-                        "requestContact": true
-                      }
-                    ]
-                  }
-                }
-              ]
-            },
-            "replyKeyboardOptions": {
-              "oneTimeKeyboard": true,
-              "resizeKeyboard": true
-            }
-          }
-        },
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "webhookId": "474cd4c6-78e0-4c8f-9cf8-4b08b99ea277",
         "credentials": {
           "telegramApi": {
             "id": "1duS64x2hsrz3moJ",
@@ -2532,22 +2731,45 @@
         }
       },
       {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "phone-req-001",
+        "name": "Request Phone Number",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4736,
+          704
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id, first_name, true::boolean AS migration_match\nFROM users\nWHERE migration_token = UPPER(TRIM($1))\n  AND migration_token_expires_at > NOW()\nUNION ALL\nSELECT NULL::integer, NULL::text, false::boolean\nLIMIT 1",
+          "options": {
+            "queryReplacement": "={{ $json.message.text }}"
+          }
+        },
         "id": "migration-check-001",
         "name": "Check Migration Token",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          960,
-          224
+          624,
+          112
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT id, first_name FROM users WHERE migration_token = UPPER(TRIM($1))   AND migration_token_expires_at > NOW() LIMIT 1",
-          "options": {
-            "queryReplacement": "={{ [$('Set Text from Message').item.json['message.text']] }}",
-            "alwaysOutputData": true
-          }
-        },
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
@@ -2556,14 +2778,6 @@
         }
       },
       {
-        "id": "migration-if-001",
-        "name": "Is Migration Token?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          1184,
-          224
-        ],
         "parameters": {
           "conditions": {
             "options": {
@@ -2577,11 +2791,11 @@
               {
                 "id": "mt1",
                 "operator": {
-                  "type": "number",
-                  "operation": "exists",
+                  "type": "boolean",
+                  "operation": "true",
                   "singleValue": true
                 },
-                "leftValue": "={{ $json.id }}",
+                "leftValue": "={{ $json.migration_match }}",
                 "rightValue": ""
               }
             ]
@@ -2589,24 +2803,32 @@
           "options": {
             "looseTypeValidation": true
           }
-        }
+        },
+        "id": "migration-if-001",
+        "name": "Is Migration Token?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1056,
+          112
+        ]
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE users SET telegram_id = $1,     migration_token = NULL,     migration_token_expires_at = NULL,     updated_at = NOW() WHERE id = $2 RETURNING first_name",
+          "options": {
+            "queryReplacement": "={{ [String($('Set User Context').item.json.telegramId), $('Check Migration Token').item.json.id] }}"
+          }
+        },
         "id": "migration-apply-001",
         "name": "Apply Migration",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1424,
+          1280,
           96
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "UPDATE users SET telegram_id = $1,     migration_token = NULL,     migration_token_expires_at = NULL,     updated_at = NOW() WHERE id = $2 RETURNING first_name",
-          "options": {
-            "queryReplacement": "={{ [String($('Set Text from Message').item.json.telegramId), $('Check Migration Token').item.json.id] }}"
-          }
-        },
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
@@ -2615,28 +2837,270 @@
         }
       },
       {
-        "id": "migration-ack-001",
-        "name": "Send Migration Success",
-        "type": "n8n-nodes-base.telegram",
-        "typeVersion": 1.2,
-        "position": [
-          1664,
-          96
-        ],
         "parameters": {
-          "chatId": "={{ $('Set Text from Message').item.json.chatId }}",
+          "chatId": "={{ $('Set User Context').item.json.chatId }}",
           "text": "=✅ *¡Migración completada!*\n\nTu cuenta de FitAI ha sido vinculada a este Telegram. Todo tu historial, perfil y membresía están disponibles. Escríbeme cuando quieras continuar.",
           "additionalFields": {
             "appendAttribution": false,
             "parse_mode": "Markdown"
           }
         },
+        "id": "migration-ack-001",
+        "name": "Send Migration Success",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1552,
+          96
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "webhookId": "45051bd1-897d-4013-add3-b39931d7cc6e",
         "credentials": {
           "telegramApi": {
             "id": "1duS64x2hsrz3moJ",
             "name": "Telegram account fitia"
           }
         }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Always produce output regardless of whether the token matched.\n// Check Migration Token returns [] when no match — this would stop the flow.\nconst rows = $input.all();\nconst match = rows.length > 0 && rows[0].json && rows[0].json.id;\nif (match) {\n  return [{ json: { ...rows[0].json, migration_match: true } }];\n}\nreturn [{ json: { id: null, migration_match: false } }];"
+        },
+        "id": "normalize-token-001",
+        "name": "Normalize Token Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT answers, last_step FROM onboarding_progress WHERE user_id = $1\nUNION ALL\nSELECT '{}'::jsonb, 0\nLIMIT 1",
+          "options": {
+            "queryReplacement": "={{ $('Check User & Membership').item.json.user_id }}"
+          }
+        },
+        "id": "11111111-0030-4000-8000-000000000030",
+        "name": "Load Onboarding Progress",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2512,
+          576
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO onboarding_progress (user_id, answers, last_step, updated_at)\nVALUES ($1, $2::jsonb, $3, NOW())\nON CONFLICT (user_id) DO UPDATE SET\n  answers    = EXCLUDED.answers,\n  last_step  = EXCLUDED.last_step,\n  updated_at = NOW()",
+          "options": {
+            "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id, JSON.stringify($('Parse Profile').item.json.profile || {}), $('Parse Profile').item.json.hasProfile ? 20 : 10] }}"
+          }
+        },
+        "id": "11111111-0031-4000-8000-000000000031",
+        "name": "Save Onboarding Progress",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          3600,
+          976
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "DELETE FROM onboarding_progress WHERE user_id = $1",
+          "options": {
+            "queryReplacement": "={{ $('Check User & Membership').item.json.user_id }}"
+          }
+        },
+        "id": "11111111-0032-4000-8000-000000000032",
+        "name": "Clear Onboarding Progress",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          3600,
+          704
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "chatId": "={{ $('Set User Context').item.json.chatId }}",
+          "text": "={{ $('Parse Profile').item.json.cleanText }}",
+          "additionalFields": {
+            "appendAttribution": false,
+            "parse_mode": "Markdown"
+          }
+        },
+        "id": "11111111-0050-4000-8000-000000000050",
+        "name": "Send Onboarding Response",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          3856,
+          976
+        ],
+        "retryOnFail": true,
+        "maxTries": 3,
+        "waitBetweenTries": 2000,
+        "webhookId": "019329a3-2079-4fe5-a9cc-06ae057a7f48",
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = $1",
+          "options": {
+            "queryReplacement": "={{ [$('Parse Profile').item.json.userId] }}"
+          }
+        },
+        "id": "11111111-0060-4000-8000-000000000060",
+        "name": "Mark Onboarding Complete",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          4304,
+          704
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "CCkMv75zwDDoj513",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/CCkMv75zwDDoj513",
+            "cachedResultName": "FitAI - Process text message"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "callback_query": "={{ $('Telegram Trigger').item.json.callback_query }}",
+              "message": "={{ $('Telegram Trigger').item.json.message }}",
+              "": "={{ $('Telegram Trigger').item.json }}"
+            },
+            "matchingColumns": [
+              "callback_query",
+              "message",
+              ""
+            ],
+            "schema": [
+              {
+                "id": "callback_query",
+                "displayName": "callback_query",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "message",
+                "displayName": "message",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "",
+                "displayName": "",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.2,
+        "position": [
+          192,
+          112
+        ],
+        "name": "Call process text message",
+        "id": "bb616577-3076-40d8-8cd0-f6bdee27e9a9"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "uc1",
+                "name": "message.text",
+                "type": "string",
+                "value": "={{ $json.message?.text }}"
+              },
+              {
+                "id": "uc2",
+                "name": "chatId",
+                "type": "string",
+                "value": "={{ $json.chatId }}"
+              },
+              {
+                "id": "uc3",
+                "name": "telegramId",
+                "type": "string",
+                "value": "={{ $json.telegramId }}"
+              },
+              {
+                "id": "uc4",
+                "name": "firstName",
+                "type": "string",
+                "value": "={{ $json.firstName }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "set-user-ctx-001",
+        "name": "Set User Context",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          416,
+          112
+        ]
       }
     ],
     "connections": {
@@ -2655,7 +3119,7 @@
         "main": [
           [
             {
-              "node": "Set Text from Message",
+              "node": "Call process text message",
               "type": "main",
               "index": 0
             }
@@ -2669,7 +3133,7 @@
           ],
           [
             {
-              "node": "Set Text from Message",
+              "node": "Call process text message",
               "type": "main",
               "index": 0
             }
@@ -2709,18 +3173,7 @@
         "main": [
           [
             {
-              "node": "Upsert User",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Set Text from Message": {
-        "main": [
-          [
-            {
-              "node": "Check Migration Token",
+              "node": "Set User Context",
               "type": "main",
               "index": 0
             }
@@ -2778,7 +3231,7 @@
           ],
           [
             {
-              "node": "Onboarding Agent",
+              "node": "Load Onboarding Progress",
               "type": "main",
               "index": 0
             }
@@ -2959,14 +3412,14 @@
         "main": [
           [
             {
-              "node": "Save User Profile",
+              "node": "Clear Onboarding Progress",
               "type": "main",
               "index": 0
             }
           ],
           [
             {
-              "node": "Send Response",
+              "node": "Save Onboarding Progress",
               "type": "main",
               "index": 0
             }
@@ -2988,7 +3441,7 @@
         "main": [
           [
             {
-              "node": "Send Profile Done",
+              "node": "Mark Onboarding Complete",
               "type": "main",
               "index": 0
             }
@@ -3015,7 +3468,7 @@
         "main": [
           [
             {
-              "node": "Is Migration Token?",
+              "node": "Normalize Token Result",
               "type": "main",
               "index": 0
             }
@@ -3055,18 +3508,95 @@
         "main": [
           []
         ]
+      },
+      "Normalize Token Result": {
+        "main": [
+          [
+            {
+              "node": "Is Migration Token?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Clear Onboarding Progress": {
+        "main": [
+          [
+            {
+              "node": "Save User Profile",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Onboarding Progress": {
+        "main": [
+          [
+            {
+              "node": "Send Onboarding Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Load Onboarding Progress": {
+        "main": [
+          [
+            {
+              "node": "Onboarding Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark Onboarding Complete": {
+        "main": [
+          [
+            {
+              "node": "Send Profile Done",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call process text message": {
+        "main": [
+          [
+            {
+              "node": "Set User Context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set User Context": {
+        "main": [
+          [
+            {
+              "node": "Check Migration Token",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Mauro Ibarra ",
-    "name": null,
-    "description": null,
-    "autosaved": false,
+    "name": "Version d733f7ca",
+    "description": "",
+    "autosaved": true,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-30T15:57:00.183Z",
-        "id": 162,
+        "createdAt": "2026-03-31T02:50:04.204Z",
+        "id": 235,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "726e3df6-eef5-4abc-a719-edecb56f2872",
+        "versionId": "d733f7ca-2857-41ab-9b92-9e4ca89b5276",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

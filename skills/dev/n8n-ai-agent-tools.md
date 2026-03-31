@@ -113,7 +113,11 @@ El LLM leerá de la conversación el valor y lo pasará al sub-workflow.
 
 ```
 Telegram Trigger
-  → Set Text from Message (extrae message.text y telegramId)
+  → Route Message Type (IF: voice vs text/callback)
+    [voice] → Get Voice File → Transcribe Voice → Set Text from Voice ─┐
+    [text]  → Call process text message (executeWorkflow subprocess)   ─┤
+                                                                         ↓
+                                                              Set User Context (convergencia)
   → Upsert User (SQL: users table)
   → Check User & Membership (SQL: user_id, onboarding_completed)
   → IF "Onboarding Complete?" (string equals "true")
@@ -125,6 +129,9 @@ Telegram Trigger
     [false] → Onboarding response
   → Send Response (Telegram)
 ```
+
+**Nota crítica — nodo de convergencia `Set User Context`:**
+El handler tiene dos caminos para el texto (voz y texto/subprocess). Ambos convergen en el nodo `Set User Context` (Set node) antes de `Upsert User`. Todos los nodos downstream deben referenciar `$('Set User Context').item.json.*` para obtener `message.text`, `chatId`, `telegramId`, `firstName`. **No** referenciar `$('Call process text message').item.json.*` — ese nodo no existe en el path de voz.
 
 ### En el sub-workflow (Progress Calculator, etc.)
 

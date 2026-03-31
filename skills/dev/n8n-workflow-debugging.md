@@ -278,7 +278,136 @@ n8n procesa múltiples items automáticamente. Solo usar `splitInBatches` cuando
 
 ---
 
-## 11. Checklist de debugging rápido
+## 11. telegramTrigger en n8n 2.x — URL, secret token y registro manual
+
+### URL del webhook
+El nodo `telegramTrigger` registra la ruta como `{webhookId}/webhook`. La URL completa es:
+```
+{WEBHOOK_URL}/webhook/{webhookId}/webhook
+```
+(no `/webhook/{webhookId}` — hay un `/webhook` al final).
+
+### Secret token
+n8n genera el header `X-Telegram-Bot-Api-Secret-Token` como:
+```python
+import re
+secret = f"{workflowId}_{nodeId}"
+secret = re.sub(r'[^a-zA-Z0-9_\-]', '', secret)
+```
+Sin este header, n8n retorna 403 en el webhook.
+
+### Credencial con token vacío
+Las credenciales creadas via API en n8n tienen `accessToken = __n8n_BLANK_VALUE_...`. Si el accessToken está en blanco, el nodo **NO** llama a `setWebhook` al activar el workflow. Siempre configurar credenciales via la UI de n8n y verificar que el token real esté guardado.
+
+### N8N_ENCRYPTION_KEY
+n8n genera su propia clave en `/home/node/.n8n/config` (campo `encryptionKey`) si no se pasa `N8N_ENCRYPTION_KEY` al contenedor. La clave en `.env` NO aplica al contenedor standalone — leer la clave real de `/home/node/.n8n/config`.
+
+### Registro manual del webhook
+Si `getWebhookInfo` sigue mostrando la URL antigua después de activar:
+1. Activar el workflow (ciclo deactivate → PUT → activate)
+2. Verificar con `getWebhookInfo` que la URL es correcta
+3. Si no, llamar `setWebhook` manualmente con la URL y el secret calculado:
+```python
+import urllib.request, json
+TOKEN = "..."
+URL = "https://tu-ngrok.ngrok-free.dev/webhook/{webhookId}/webhook"
+SECRET = re.sub(r'[^a-zA-Z0-9_\-]', '', f"{workflowId}_{nodeId}")
+data = json.dumps({"url": URL, "secret_token": SECRET}).encode()
+req = urllib.request.Request(f"https://api.telegram.org/bot{TOKEN}/setWebhook",
+    data=data, headers={"Content-Type": "application/json"}, method="POST")
+print(urllib.request.urlopen(req).read())
+```
+
+---
+
+## 12. Debounce multi-mensaje con PostgreSQL (executeWorkflow subprocess)
+
+**Problema:** Cuando un usuario envía varios mensajes en ráfaga (ej: "hola" + "cómo estás" en 2 segundos), el handler de Telegram crea múltiples ejecuciones paralelas. Si el debounce usa `$getWorkflowStaticData('global')`, cada ejecución tiene su propia copia en memoria y hay race conditions — el estado no se comparte de forma atómica.
+
+**Solución validada:** Usar PostgreSQL para el estado del debounce (tabla `message_buffer`).
+
+### Tabla requerida
+
+```sql
+CREATE TABLE IF NOT EXISTS message_buffer (
+  chat_id   BIGINT PRIMARY KEY,
+  text      TEXT    NOT NULL DEFAULT '',
+  last_ts   BIGINT  NOT NULL DEFAULT 0  -- ms timestamp del último escritor
+);
+```
+
+### Flujo del subprocess `FitAI - Process text message`
+
+```
+Start → Extract Message (Code) → Buffer Write (Postgres) → Debounce Wait (Wait, 2s)
+     → Flush Check (Postgres CTE) → Is Last Writer? (IF) → Set Text from Message
+                                                         → [false] STOP (clean)
+```
+
+### Buffer Write — INSERT atómico con concatenación
+
+```sql
+INSERT INTO message_buffer (chat_id, text, last_ts)
+VALUES ($1, $2, $3)
+ON CONFLICT (chat_id) DO UPDATE SET
+  text = CASE
+    WHEN NOW() - to_timestamp(message_buffer.last_ts / 1000.0) > INTERVAL '30 seconds'
+    THEN EXCLUDED.text           -- reset después de 30s de inactividad
+    ELSE message_buffer.text || E'\n' || EXCLUDED.text  -- concatenar
+  END,
+  last_ts = GREATEST(message_buffer.last_ts, EXCLUDED.last_ts)
+RETURNING chat_id, last_ts
+```
+
+`queryReplacement: ={{ [$json.chatId, $json.text, $json.ts] }}`
+
+**Por qué `GREATEST`:** Si dos ejecuciones llegan casi simultáneamente, la que tiene el ts mayor "gana" — su `last_ts` queda en la fila. Solo esa ejecución podrá hacer el Flush exitosamente.
+
+### Flush Check — DELETE atómico (CTE)
+
+```sql
+WITH deleted AS (
+  DELETE FROM message_buffer
+  WHERE chat_id = $1 AND last_ts = $2
+  RETURNING text
+)
+SELECT text FROM deleted
+```
+
+`queryReplacement: ={{ [$json.chat_id, $json.last_ts] }}`
+
+- Si `last_ts` en DB coincide con `$2` → es el último escritor → DELETE exitoso → retorna `{text: '...'}`
+- Si `last_ts` en DB fue sobreescrito por otro escritor → DELETE finds 0 rows → n8n retorna `{success: 'True'}`
+
+### Gotcha crítico: n8n Postgres typeVersion 2.5 + CTE con 0 filas → `{success: 'True'}`
+
+Cuando un `executeQuery` no retorna filas (incluyendo `SELECT ... FROM deleted` donde el CTE deleted 0 rows), n8n devuelve `{success: 'True'}` en lugar de un array vacío. El flujo NO se detiene — pasa al nodo siguiente con ese objeto. Si el nodo siguiente espera `$json.text`, obtiene `undefined`, lo cual causa errores en cadena.
+
+**Fix obligatorio — IF node "Is Last Writer?" después de Flush Check:**
+
+```json
+{
+  "type": "n8n-nodes-base.if",
+  "typeVersion": 2,
+  "parameters": {
+    "conditions": {
+      "conditions": [{
+        "leftValue": "={{ $json.text }}",
+        "operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+      }]
+    }
+  }
+}
+```
+
+- `true` (text no vacío): este flujo es el último escritor → continuar procesamiento
+- `false` (text vacío o `{success:'True'}`): este flujo NO es el último escritor → **stop limpio (status: success)**
+
+El false branch no tiene conexión → n8n termina la ejecución con éxito sin error.
+
+---
+
+## 13. Checklist de debugging rápido
 
 Cuando un workflow no funciona como se espera:
 
@@ -295,3 +424,6 @@ Cuando un workflow no funciona como se espera:
 11. ✅ ¿`$fromAI()` retorna `"undefined"` string? → usar JSON-in-query: instruir al AI a formatear `query` como JSON
 12. ✅ ¿httpRequest typeVersion 4.2 con body JSON? → usar `specifyBody: "json"` + `jsonBody`, NO `body.mode: "raw"` + `rawBody`
 13. ✅ ¿`vectorStoreQdrant` retrieve-as-tool lanza "Not Found"? → bug en n8n 2.11.3, reemplazar con `toolWorkflow` + sub-workflow HTTP (ver `skills/dev/n8n-ai-agent-tools.md`)
+13. ✅ ¿`telegramTrigger` no recibe mensajes después de activar? → Verificar URL `{WEBHOOK_URL}/webhook/{webhookId}/webhook` y que la credencial tiene token real (no `__n8n_BLANK_VALUE_`). Si la URL está mal, llamar `setWebhook` manualmente con secret = `{workflowId}_{nodeId}` (ver sección 11)
+14. ✅ ¿Postgres `executeQuery` CTE retorna `{success:'True'}` en lugar de datos? → la CTE eliminó 0 filas (otro escritor ganó el `last_ts`). Agregar IF node "Is Last Writer?" después — `$json.text notEmpty` → continuar; false → stop limpio
+15. ✅ ¿Debounce con múltiples mensajes simultáneos? → NO usar `$getWorkflowStaticData` (race condition en memoria). Usar tabla PostgreSQL `message_buffer` con `INSERT ... ON CONFLICT` + `GREATEST(last_ts)` (ver sección 11)

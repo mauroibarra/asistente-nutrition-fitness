@@ -304,6 +304,31 @@ CREATE TABLE admin_users (
 CREATE UNIQUE INDEX idx_admin_users_email ON admin_users(email);
 ```
 
+---
+
+### Tabla: `message_buffer`
+
+Buffer de debounce para mensajes en ráfaga. Almacena estado compartido entre ejecuciones concurrentes del subprocess `FitAI - Process text message` (ID: `CCkMv75zwDDoj513`).
+
+**Migración**: `migrations/005_message_buffer.sql`
+
+```sql
+CREATE TABLE IF NOT EXISTS message_buffer (
+  chat_id   BIGINT PRIMARY KEY,
+  text      TEXT    NOT NULL DEFAULT '',
+  last_ts   BIGINT  NOT NULL DEFAULT 0  -- ms timestamp del último escritor
+);
+```
+
+**Campos**:
+- `chat_id`: ID del chat de Telegram (llave primaria — 1 fila por usuario activo)
+- `text`: Mensajes acumulados del debounce, separados por `\n`
+- `last_ts`: Timestamp en milisegundos del último mensaje recibido. Decide qué ejecución "gana" el flush
+
+**Ciclo de vida**: La fila se inserta al recibir el primer mensaje, se actualiza con `GREATEST(last_ts)` al concatenar mensajes en ráfaga, y se borra atómicamente cuando el "último escritor" hace el flush (DELETE ... RETURNING). No persiste datos a largo plazo — es estado efímero de en-vuelo.
+
+---
+
 ### Trigger para `updated_at`
 
 ```sql

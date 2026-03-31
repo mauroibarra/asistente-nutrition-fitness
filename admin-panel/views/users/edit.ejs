@@ -77,15 +77,40 @@
 <!-- ── Zona de peligro ───────────────────────────────────── -->
 <section class="card danger-zone">
   <h2>Zona de Peligro</h2>
-  <p>
-    Eliminar un usuario borra <strong>permanentemente</strong> su perfil de salud, historial de peso,
-    planes de comidas, rutinas, membresías y pagos. Esta acción <strong>no se puede deshacer</strong>.
-  </p>
 
-  <button type="button" class="btn btn-danger"
-          onclick="document.getElementById('delete-section').style.display='block';this.style.display='none'">
-    Eliminar este usuario
-  </button>
+  <!-- Opción 1: Desactivar -->
+  <div class="danger-option">
+    <div class="danger-option-info">
+      <h3>Desactivar cuenta <span class="badge-reversible">Reversible</span></h3>
+      <p>El usuario no podrá usar el bot. Su perfil, historial, planes y pagos se conservan. Puedes reactivarlo en cualquier momento desde su perfil.</p>
+    </div>
+    <% if (user.is_active) { %>
+      <form method="POST" action="/users/<%= user.id %>/deactivate">
+        <button type="submit" class="btn btn-warning"
+                onclick="return confirm('¿Desactivar este usuario?')">
+          Desactivar
+        </button>
+      </form>
+    <% } else { %>
+      <form method="POST" action="/users/<%= user.id %>/reactivate">
+        <button type="submit" class="btn btn-primary">Reactivar</button>
+      </form>
+    <% } %>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #fee2e2;margin:1.25rem 0">
+
+  <!-- Opción 2: Eliminar definitivamente -->
+  <div class="danger-option">
+    <div class="danger-option-info">
+      <h3>Eliminar definitivamente <span class="badge-irreversible">Irreversible</span></h3>
+      <p>Borra <strong>permanentemente</strong> todo: perfil de salud, historial de peso, planes, membresías, pagos y datos de RAG en Qdrant. <strong>No se puede deshacer.</strong></p>
+    </div>
+    <button type="button" class="btn btn-danger"
+            onclick="document.getElementById('delete-section').style.display='block';this.style.display='none'">
+      Eliminar
+    </button>
+  </div>
 
   <div id="delete-section" style="display:none;margin-top:1.25rem">
     <div class="delete-confirm-box">

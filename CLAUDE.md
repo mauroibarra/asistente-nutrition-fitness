@@ -145,12 +145,15 @@ Mapa de IDs → archivos del repo:
 | Workflow ID | Archivo |
 |-------------|---------|
 | `fI5u4rs3iXPfeXFl` | `n8n/workflows/01-telegram-webhook-handler.json` |
-| `bhJ8qqZXr68Id3pH` | `n8n/workflows/07-progress-calculator.json` |
+| `CCkMv75zwDDoj513` | `n8n/workflows/02-process-text-message.json` |
+| `Gr7BeeNHBx6ZtQGS` | `n8n/workflows/02-main-ai-agent.json` |
+| `Mjmz7R3aFfuLGCs3` | `n8n/workflows/03-onboarding-flow.json` |
 | `KQhP9lQNxCKeOsbJ` | `n8n/workflows/04-meal-plan-generator.json` |
-| `ETjiYAUhXfsVSyWQ` | `n8n/workflows/08-workout-plan-generator.json` |
-| `vAqqjXg2IE1ldgg3` | `n8n/workflows/09-rag-personal-indexer.json` |
 | `SntGuE97yl9efvo5` | `n8n/workflows/05-meal-reminder-scheduler.json` |
 | `tkSAHhjJnO4nTFsM` | `n8n/workflows/06-weight-update-requester.json` |
+| `bhJ8qqZXr68Id3pH` | `n8n/workflows/07-progress-calculator.json` |
+| `ETjiYAUhXfsVSyWQ` | `n8n/workflows/08-workout-plan-generator.json` |
+| `vAqqjXg2IE1ldgg3` | `n8n/workflows/09-rag-personal-indexer.json` |
 | `I4Q4C6SOPY2fnK3W` | `n8n/workflows/10-membership-alert.json` |
 | `3uXT5ld76uIUCENn` | `n8n/workflows/11-knowledge-base-indexer.json` |
 
@@ -279,15 +282,19 @@ El repositorio https://github.com/czlonkowski/n8n-skills contiene patrones y ski
 
 ### Estructura de Workflows de n8n
 - Prefijo: `FitAI - ` seguido del nombre descriptivo
-- Los 8 workflows del sistema (Main AI Agent y Onboarding Flow están integrados en el Handler):
-  1. `FitAI - Telegram Webhook Handler` — punto de entrada, AI Agent integrado
-  2. `FitAI - Progress Calculator` — tool llamada por el AI Agent
-  3. `FitAI - Meal Plan Generator` — tool llamada por el AI Agent
-  4. `FitAI - Workout Plan Generator` — tool llamada por el AI Agent
-  5. `FitAI - RAG Personal Indexer` — indexación de datos del usuario en Qdrant
-  6. `FitAI - Meal Reminder Scheduler` — cron diario
-  7. `FitAI - Weight Update Requester` — cron semanal
-  8. `FitAI - Membership Alert` — cron de alertas de membresía
+- Los 12 workflows del sistema:
+  1. `FitAI - Telegram Webhook Handler` — punto de entrada, enruta texto/voz/callbacks
+  2. `FitAI - Process text message` — subprocess de debounce multi-mensaje (PostgreSQL)
+  3. `FitAI - Main AI Agent` — agente OpenAI con tools, integrado en el handler
+  4. `FitAI - Onboarding Flow` — sub-workflow de onboarding, integrado en el handler
+  5. `FitAI - Meal Plan Generator` — tool llamada por el AI Agent
+  6. `FitAI - Workout Plan Generator` — tool llamada por el AI Agent
+  7. `FitAI - Progress Calculator` — tool llamada por el AI Agent
+  8. `FitAI - RAG Personal Indexer` — indexación de datos del usuario en Qdrant
+  9. `FitAI - Knowledge Base Indexer` — indexación del knowledge base en Qdrant
+  10. `FitAI - Meal Reminder Scheduler` — cron diario
+  11. `FitAI - Weight Update Requester` — cron semanal
+  12. `FitAI - Membership Alert` — cron de alertas de membresía
 
 ### Variables de Entorno
 - Nunca hardcodear credenciales en el código
@@ -399,6 +406,75 @@ Usar typeVersion 2 del IF node. Retornar `'true'`/`'false'` como strings desde S
 
 ### n8n standalone (no docker-compose)
 El contenedor `n8n` es standalone — **no** está en `docker-compose.yml`. No puede resolver hostnames de `fitai-network`. Siempre usar `host.docker.internal` para conectarse a PostgreSQL, Redis y Qdrant desde n8n.
+
+### Convergencia voz + texto — nodo `Set User Context`
+El handler tiene dos paths para obtener el texto del usuario:
+- **Texto/callback**: `Call process text message` (subprocess con debounce) → `Set User Context`
+- **Voz**: `Transcribe Voice` → `Set Text from Voice` → `Set User Context`
+
+Ambos paths convergen en `Set User Context` (Set node). **Todos los nodos downstream deben referenciar `$('Set User Context').item.json.*`** para obtener `message.text`, `chatId`, `telegramId`, `firstName`. Nunca referenciar `$('Call process text message').item.json.*` — ese nodo no existe en el path de voz.
+
+### Debounce multi-mensaje — subprocess `FitAI - Process text message`
+El handler delega el texto a `CCkMv75zwDDoj513` via `executeWorkflow`. Este subprocess:
+1. Escribe el texto en la tabla `message_buffer` (PostgreSQL) con `INSERT ... ON CONFLICT ... GREATEST(last_ts)`
+2. Espera 2 segundos (Wait node)
+3. Intenta DELETE atómico (`WHERE chat_id=$1 AND last_ts=$2`)
+4. **IF "Is Last Writer?"**: si el DELETE retornó texto → continuar; si retornó `{success:'True'}` (0 filas) → stop limpio
+
+La tabla requiere `migrations/005_message_buffer.sql`. Ver `skills/dev/n8n-workflow-debugging.md` sección 11.
+
+### Timezone — siempre usar America/Bogota
+n8n tiene `GENERIC_TIMEZONE=America/Bogota`. En Code nodes:
+```javascript
+// CORRECTO — fecha en hora Colombia
+new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
+
+// INCORRECTO — siempre UTC, no sirve para fechas locales
+new Date().toISOString()
+```
+
+### RAG — estado actual
+- `knowledge_rag`: 106 puntos indexados (4 skills de business)
+- `user_rag`: eventos personales del usuario (indexados por el AI Agent automáticamente)
+- Requiere **Qdrant ≥ 1.10.0** — el paquete `@langchain/qdrant@1.0.1` usa `POST /points/query` que no existe en ≤1.7.4
+- Docker image: `qdrant/qdrant:v1.13.0`
+- `embeddingsOpenAi` typeVersion: **1** (no 1.2), `model` como string plana `"text-embedding-3-small"`
+
+---
+
+## Usuario de Prueba (E2E real)
+
+Para tests que requieren mensajes reales de Telegram:
+
+| Campo | Valor |
+|-------|-------|
+| Nombre | Mauro |
+| `user_id` (DB) | `4` |
+| `telegram_id` / `chat_id` | `1435522255` |
+
+Los usuarios `telegram_id=999999` ("Leandro") y `777001` ("TestFitAI") son ficticios — sin chat real activo.
+
+---
+
+## Reglas de Trabajo con Claude Code
+
+### Investigar antes de probar
+Antes de modificar cualquier nodo o workflow para corregir un comportamiento inesperado:
+1. Leer el JSON del nodo directamente (`GET /api/v1/workflows/{id}`)
+2. Buscar el patrón correcto en `skills/dev/`, documentación oficial de n8n, o internet
+3. Entender exactamente qué hace el nodo antes de modificarlo
+
+**Nunca** hacer prueba-y-error sin haber identificado la causa raíz primero.
+
+### Registrar lecciones como skills
+Cada vez que se aprende la solución correcta a un problema técnico (especialmente con n8n), inmediatamente:
+1. Actualizar el archivo de skill correspondiente en `skills/dev/`
+2. Actualizar el checklist en `skills/dev/n8n-workflow-debugging.md`
+
+Sin este registro, las correcciones se pierden al cerrar el contexto.
+
+### Nunca confirmar sin test
+NUNCA declarar una corrección como "funcionando" sin ejecutar primero un test real que lo valide. Anunciar una solución sin probarla es equivalente a no haberla verificado.
 
 ---
 

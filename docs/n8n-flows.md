@@ -1,12 +1,13 @@
 # Flujos n8n — FitAI Assistant
 
-Este documento describe en detalle los 10 workflows de n8n que componen la lógica de negocio completa del bot FitAI Assistant. Cada workflow se documenta con su trigger, nodos en orden, lógica de ramificación, manejo de errores y credenciales requeridas.
+Este documento describe en detalle los 12 workflows de n8n que componen la lógica de negocio completa del bot FitAI Assistant. Cada workflow se documenta con su trigger, nodos en orden, lógica de ramificación, manejo de errores y credenciales requeridas.
 
 ---
 
 ## Tabla de Contenidos
 
 1. [FitAI - Telegram Webhook Handler](#1-fitai---telegram-webhook-handler)
+   - [1.1 FitAI - Process text message (subprocess)](#11-fitai---process-text-message-subprocess)
 2. [FitAI - Main AI Agent](#2-fitai---main-ai-agent)
 3. [FitAI - Onboarding Flow](#3-fitai---onboarding-flow)
 4. [FitAI - Meal Plan Generator](#4-fitai---meal-plan-generator)
@@ -328,6 +329,103 @@ Webhook
 | Variable de entorno | `WEBHOOK_URL` | URL base del webhook (ej: `https://fitai.example.com`) |
 | Variable de entorno | `ADMIN_TELEGRAM_ID` | ID de Telegram del administrador para notificaciones de error |
 | Variable de entorno | `RATE_LIMIT_MAX` | Número máximo de mensajes por minuto (default: `10`) |
+
+---
+
+## 1.1. FitAI - Process text message (subprocess)
+
+### Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Nombre en n8n** | `FitAI - Process text message` |
+| **ID** | `CCkMv75zwDDoj513` |
+| **Trigger** | `executeWorkflowTrigger` — llamado por `FitAI - Telegram Webhook Handler` |
+| **Propósito** | Debounce de mensajes multi-parte: acumula texto de mensajes en ráfaga, espera 2s y solo el último escritor continúa el flujo. |
+| **Activación** | Activo |
+
+### Descripción del Propósito
+
+Cuando un usuario envía varios mensajes en ráfaga (ej: "hola" → "me puedes ayudar" → "con mi dieta" en 3 segundos), el handler crea múltiples ejecuciones del subprocess. Este subprocess usa PostgreSQL como estado compartido para:
+1. Acumular el texto concatenado en `message_buffer`
+2. Registrar el timestamp del último mensaje recibido (`last_ts`)
+3. Después de 2 segundos (debounce), solo la ejecución cuyo `ts` coincide con el `last_ts` en DB "gana" y continúa — el resto se detiene limpiamente.
+
+### Nodos en Orden
+
+#### Nodo 1: Start (executeWorkflowTrigger)
+Recibe el payload del handler: `{message: {...}, callback_query: {...}}`
+
+#### Nodo 2: Extract Message (Code)
+Extrae `chatId`, `text` y genera `ts = Date.now()`:
+```javascript
+const trigger = $('Start').item.json;
+const chatId = String(trigger.message?.chat?.id || trigger.callback_query?.message?.chat?.id || '');
+const text = String(trigger.message?.text || trigger.callback_query?.data || '');
+const ts = Date.now();
+return [{ json: { chatId, text, ts } }];
+```
+
+#### Nodo 3: Buffer Write (Postgres)
+INSERT atómico con concatenación y `GREATEST(last_ts)`:
+```sql
+INSERT INTO message_buffer (chat_id, text, last_ts)
+VALUES ($1, $2, $3)
+ON CONFLICT (chat_id) DO UPDATE SET
+  text = CASE
+    WHEN NOW() - to_timestamp(message_buffer.last_ts / 1000.0) > INTERVAL '30 seconds'
+    THEN EXCLUDED.text
+    ELSE message_buffer.text || E'\n' || EXCLUDED.text
+  END,
+  last_ts = GREATEST(message_buffer.last_ts, EXCLUDED.last_ts)
+RETURNING chat_id, last_ts
+```
+RETURNING devuelve `chat_id` y el `last_ts` ganador.
+
+#### Nodo 4: Debounce Wait (Wait)
+Pausa la ejecución 2 segundos. Permite que mensajes adicionales en ráfaga se registren en `message_buffer`.
+
+#### Nodo 5: Flush Check (Postgres)
+DELETE atómico — solo tiene éxito si `last_ts` en DB aún coincide con el ts de esta ejecución:
+```sql
+WITH deleted AS (
+  DELETE FROM message_buffer
+  WHERE chat_id = $1 AND last_ts = $2
+  RETURNING text
+)
+SELECT text FROM deleted
+```
+- Último escritor: DELETE exitoso → retorna `{text: 'mensaje concatenado'}`
+- No es el último escritor: 0 filas → n8n retorna `{success: 'True'}`
+
+#### Nodo 6: Is Last Writer? (IF, typeVersion 2)
+Condición: `$json.text notEmpty`
+- `true` → continuar (esta ejecución procesa el texto)
+- `false` → stop limpio (sin error, sin procesamiento)
+
+#### Nodo 7: Set Text from Message (Set)
+Estructura el output para el handler:
+- `message.text` = `$json.text`
+- `chatId`, `telegramId`, `firstName` = desde `$('Start').item.json`
+
+### Lógica de Ramificación
+
+```
+Start → Extract Message → Buffer Write → Debounce Wait → Flush Check
+      → Is Last Writer?
+            ├─ true  → Set Text from Message → (retorna al handler)
+            └─ false → FIN LIMPIO (status: success, sin error)
+```
+
+### Tabla de migración de estado (message_buffer)
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `chat_id` | BIGINT PK | ID del chat de Telegram |
+| `text` | TEXT | Mensajes acumulados (separados por `\n`) |
+| `last_ts` | BIGINT | Timestamp ms del último escritor |
+
+Migración: `migrations/005_message_buffer.sql`
 
 ---
 
