@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-31T14:52:02.603Z",
+  "updatedAt": "2026-03-31T15:28:34.726Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -236,7 +236,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  u.id as user_id,\n  u.first_name,\n  u.is_active,\n  COALESCE(m.status::text, 'none') as membership_status,\n  CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed,\n  CASE\n    WHEN up.user_id IS NOT NULL\n     AND NOT COALESCE(up.onboarding_completed, false)\n     AND (u.phone_number IS NULL OR u.phone_number = '')\n    THEN 'true' ELSE 'false'\n  END as phone_pending\nFROM users u\nLEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW()\nLEFT JOIN user_profiles up ON up.user_id = u.id\nWHERE u.telegram_id = $1\nLIMIT 1",
+        "query": "SELECT\n  u.id as user_id,\n  u.first_name,\n  u.is_active,\n  COALESCE(m.status::text, 'none') as membership_status,\n  CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed,\n  CASE WHEN up.user_id IS NOT NULL AND up.goal IS NOT NULL THEN 'true' ELSE 'false' END as profile_saved,\n  CASE WHEN u.phone_number IS NOT NULL AND u.phone_number != '' THEN 'true' ELSE 'false' END as phone_provided\nFROM users u\nLEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW()\nLEFT JOIN user_profiles up ON up.user_id = u.id\nWHERE u.telegram_id = $1\nLIMIT 1",
         "options": {
           "queryReplacement": "={{ $('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id }}"
         }
@@ -389,8 +389,8 @@
       "typeVersion": 2,
       "name": "FitAI Main AI Agent",
       "position": [
-        2656,
-        0
+        3280,
+        -320
       ]
     },
     {
@@ -411,8 +411,8 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model",
       "position": [
-        2512,
-        144
+        3136,
+        -176
       ],
       "credentials": {
         "openAiApi": {
@@ -432,8 +432,8 @@
       "typeVersion": 1.3,
       "name": "FitAI Memory",
       "position": [
-        2656,
-        144
+        3280,
+        -176
       ]
     },
     {
@@ -449,8 +449,8 @@
       "typeVersion": 2,
       "name": "Onboarding Agent",
       "position": [
-        2720,
-        720
+        2992,
+        528
       ]
     },
     {
@@ -470,8 +470,8 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model Onboarding",
       "position": [
-        2576,
-        928
+        2848,
+        736
       ],
       "credentials": {
         "openAiApi": {
@@ -492,8 +492,8 @@
       "typeVersion": 1.1,
       "name": "Onboarding Memory",
       "position": [
-        2816,
-        928
+        3088,
+        736
       ],
       "credentials": {
         "postgres": {
@@ -516,8 +516,8 @@
       "typeVersion": 1.2,
       "name": "Send Response",
       "position": [
-        3696,
-        16
+        4320,
+        -304
       ],
       "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
       "retryOnFail": true,
@@ -559,8 +559,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3200,
-        288
+        3824,
+        -32
       ]
     },
     {
@@ -592,8 +592,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2880,
-        288
+        3504,
+        -32
       ]
     },
     {
@@ -625,8 +625,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3040,
-        288
+        3664,
+        -32
       ]
     },
     {
@@ -661,8 +661,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2720,
-        288
+        3344,
+        -32
       ]
     },
     {
@@ -682,8 +682,8 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1.3,
       "position": [
-        3328,
-        288
+        3952,
+        -32
       ],
       "credentials": {
         "qdrantApi": {
@@ -702,8 +702,8 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1,
       "position": [
-        3328,
-        464
+        3952,
+        144
       ],
       "credentials": {
         "openAiApi": {
@@ -772,8 +772,8 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Set Phone Data').item.json.chatId }}",
-        "text": "✅ ¡Perfecto! Tu número ha sido guardado. Ya tienes todo configurado.",
+        "chatId": "={{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}",
+        "text": "✅ ¡Perfecto! Ya tienes todo configurado. Puedes escribirme cuando quieras.",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -783,7 +783,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        800,
+        1104,
         864
       ],
       "retryOnFail": true,
@@ -806,8 +806,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3040,
-        720
+        3312,
+        528
       ]
     },
     {
@@ -842,8 +842,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3248,
-        720
+        3520,
+        528
       ]
     },
     {
@@ -859,8 +859,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3856,
-        704
+        4128,
+        512
       ],
       "credentials": {
         "postgres": {
@@ -882,8 +882,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4080,
-        704
+        4352,
+        512
       ],
       "credentials": {
         "postgres": {
@@ -906,8 +906,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        4512,
-        704
+        4784,
+        512
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -948,8 +948,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        4736,
-        704
+        5008,
+        512
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -1091,8 +1091,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2512,
-        576
+        2704,
+        528
       ],
       "credentials": {
         "postgres": {
@@ -1114,8 +1114,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3600,
-        976
+        3872,
+        784
       ],
       "credentials": {
         "postgres": {
@@ -1137,8 +1137,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3600,
-        704
+        3872,
+        512
       ],
       "credentials": {
         "postgres": {
@@ -1161,8 +1161,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3856,
-        976
+        4128,
+        784
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -1188,8 +1188,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4304,
-        704
+        4816,
+        640
       ],
       "credentials": {
         "postgres": {
@@ -1304,14 +1304,6 @@
       ]
     },
     {
-      "id": "phone-pending-if-001",
-      "name": "Phone Pending?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1400,
-        -200
-      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -1321,8 +1313,8 @@
           },
           "conditions": [
             {
-              "id": "cond-phone-pending",
-              "leftValue": "={{ $('Check User & Membership').item.json.phone_pending }}",
+              "id": "cond-profile-saved",
+              "leftValue": "={{ $('Check User & Membership').item.json.profile_saved }}",
               "rightValue": "true",
               "operator": {
                 "type": "string",
@@ -1333,17 +1325,17 @@
           "combinator": "and"
         },
         "options": {}
-      }
+      },
+      "id": "phone-pending-if-001",
+      "name": "Profile Saved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2448,
+        304
+      ]
     },
     {
-      "id": "phone-reminder-001",
-      "name": "Send Phone Reminder",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1600,
-        -100
-      ],
       "parameters": {
         "method": "POST",
         "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
@@ -1366,29 +1358,100 @@
         },
         "options": {}
       },
-      "credentials": {}
+      "id": "phone-reminder-001",
+      "name": "Send Phone Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2768,
+        288
+      ]
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
+        "options": {
+          "queryReplacement": "={{ [String($('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id)] }}"
+        }
+      },
       "id": "complete-onboarding-001",
       "name": "Complete Onboarding",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2800,
-        400
+        784,
+        864
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
-        "options": {
-          "queryReplacement": "={{ [String($('Set Phone Data').item.json.telegram_id)] }}"
-        }
-      },
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
+      }
+    },
+    {
+      "id": "phone-provided-if-001",
+      "name": "Phone Provided?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2768,
+        208
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-phone-provided",
+              "leftValue": "={{ $('Check User & Membership').item.json.phone_provided }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "has-phone-already-001",
+      "name": "Has Phone Already?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4576,
+        512
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-has-phone",
+              "leftValue": "={{ $('Check User & Membership').item.json.phone_provided }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       }
     }
   ],
@@ -1520,7 +1583,7 @@
         ],
         [
           {
-            "node": "Phone Pending?",
+            "node": "Profile Saved?",
             "type": "main",
             "index": 0
           }
@@ -1730,7 +1793,7 @@
       "main": [
         [
           {
-            "node": "Mark Onboarding Complete",
+            "node": "Has Phone Already?",
             "type": "main",
             "index": 0
           }
@@ -1875,11 +1938,22 @@
         ]
       ]
     },
-    "Phone Pending?": {
+    "Complete Onboarding": {
       "main": [
         [
           {
-            "node": "Send Phone Reminder",
+            "node": "Phone ACK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile Saved?": {
+      "main": [
+        [
+          {
+            "node": "Phone Provided?",
             "type": "main",
             "index": 0
           }
@@ -1893,11 +1967,36 @@
         ]
       ]
     },
-    "Complete Onboarding": {
+    "Phone Provided?": {
       "main": [
         [
           {
-            "node": "Phone ACK",
+            "node": "Complete Onboarding",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Phone Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Phone Already?": {
+      "main": [
+        [
+          {
+            "node": "Complete Onboarding",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Onboarding Complete",
             "type": "main",
             "index": 0
           }
@@ -1915,9 +2014,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "9979cb49-cbc9-4abb-9679-014837d992ae",
-  "activeVersionId": "9979cb49-cbc9-4abb-9679-014837d992ae",
-  "versionCounter": 451,
+  "versionId": "dfc07cdb-54a6-4ba8-9e15-69d03f8a792b",
+  "activeVersionId": "dfc07cdb-54a6-4ba8-9e15-69d03f8a792b",
+  "versionCounter": 472,
   "triggerCount": 1,
   "shared": [
     {
@@ -1940,9 +2039,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-31T14:52:02.605Z",
-    "createdAt": "2026-03-31T14:52:02.605Z",
-    "versionId": "9979cb49-cbc9-4abb-9679-014837d992ae",
+    "updatedAt": "2026-03-31T15:28:34.728Z",
+    "createdAt": "2026-03-31T15:28:34.728Z",
+    "versionId": "dfc07cdb-54a6-4ba8-9e15-69d03f8a792b",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -2174,7 +2273,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  u.id as user_id,\n  u.first_name,\n  u.is_active,\n  COALESCE(m.status::text, 'none') as membership_status,\n  CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed,\n  CASE\n    WHEN up.user_id IS NOT NULL\n     AND NOT COALESCE(up.onboarding_completed, false)\n     AND (u.phone_number IS NULL OR u.phone_number = '')\n    THEN 'true' ELSE 'false'\n  END as phone_pending\nFROM users u\nLEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW()\nLEFT JOIN user_profiles up ON up.user_id = u.id\nWHERE u.telegram_id = $1\nLIMIT 1",
+          "query": "SELECT\n  u.id as user_id,\n  u.first_name,\n  u.is_active,\n  COALESCE(m.status::text, 'none') as membership_status,\n  CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed,\n  CASE WHEN up.user_id IS NOT NULL AND up.goal IS NOT NULL THEN 'true' ELSE 'false' END as profile_saved,\n  CASE WHEN u.phone_number IS NOT NULL AND u.phone_number != '' THEN 'true' ELSE 'false' END as phone_provided\nFROM users u\nLEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW()\nLEFT JOIN user_profiles up ON up.user_id = u.id\nWHERE u.telegram_id = $1\nLIMIT 1",
           "options": {
             "queryReplacement": "={{ $('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id }}"
           }
@@ -2327,8 +2426,8 @@
         "typeVersion": 2,
         "name": "FitAI Main AI Agent",
         "position": [
-          2656,
-          0
+          3280,
+          -320
         ]
       },
       {
@@ -2349,8 +2448,8 @@
         "typeVersion": 1.2,
         "name": "OpenAI Chat Model",
         "position": [
-          2512,
-          144
+          3136,
+          -176
         ],
         "credentials": {
           "openAiApi": {
@@ -2370,8 +2469,8 @@
         "typeVersion": 1.3,
         "name": "FitAI Memory",
         "position": [
-          2656,
-          144
+          3280,
+          -176
         ]
       },
       {
@@ -2387,8 +2486,8 @@
         "typeVersion": 2,
         "name": "Onboarding Agent",
         "position": [
-          2720,
-          720
+          2992,
+          528
         ]
       },
       {
@@ -2408,8 +2507,8 @@
         "typeVersion": 1.2,
         "name": "OpenAI Chat Model Onboarding",
         "position": [
-          2576,
-          928
+          2848,
+          736
         ],
         "credentials": {
           "openAiApi": {
@@ -2430,8 +2529,8 @@
         "typeVersion": 1.1,
         "name": "Onboarding Memory",
         "position": [
-          2816,
-          928
+          3088,
+          736
         ],
         "credentials": {
           "postgres": {
@@ -2454,8 +2553,8 @@
         "typeVersion": 1.2,
         "name": "Send Response",
         "position": [
-          3696,
-          16
+          4320,
+          -304
         ],
         "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
         "retryOnFail": true,
@@ -2497,8 +2596,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3200,
-          288
+          3824,
+          -32
         ]
       },
       {
@@ -2530,8 +2629,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2880,
-          288
+          3504,
+          -32
         ]
       },
       {
@@ -2563,8 +2662,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3040,
-          288
+          3664,
+          -32
         ]
       },
       {
@@ -2599,8 +2698,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2720,
-          288
+          3344,
+          -32
         ]
       },
       {
@@ -2620,8 +2719,8 @@
         "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
         "typeVersion": 1.3,
         "position": [
-          3328,
-          288
+          3952,
+          -32
         ],
         "credentials": {
           "qdrantApi": {
@@ -2640,8 +2739,8 @@
         "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
         "typeVersion": 1,
         "position": [
-          3328,
-          464
+          3952,
+          144
         ],
         "credentials": {
           "openAiApi": {
@@ -2710,8 +2809,8 @@
       },
       {
         "parameters": {
-          "chatId": "={{ $('Set Phone Data').item.json.chatId }}",
-          "text": "✅ ¡Perfecto! Tu número ha sido guardado. Ya tienes todo configurado.",
+          "chatId": "={{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}",
+          "text": "✅ ¡Perfecto! Ya tienes todo configurado. Puedes escribirme cuando quieras.",
           "additionalFields": {
             "appendAttribution": false
           }
@@ -2721,7 +2820,7 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          800,
+          1104,
           864
         ],
         "retryOnFail": true,
@@ -2744,8 +2843,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3040,
-          720
+          3312,
+          528
         ]
       },
       {
@@ -2780,8 +2879,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          3248,
-          720
+          3520,
+          528
         ]
       },
       {
@@ -2797,8 +2896,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          3856,
-          704
+          4128,
+          512
         ],
         "credentials": {
           "postgres": {
@@ -2820,8 +2919,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          4080,
-          704
+          4352,
+          512
         ],
         "credentials": {
           "postgres": {
@@ -2844,8 +2943,8 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          4512,
-          704
+          4784,
+          512
         ],
         "retryOnFail": true,
         "maxTries": 3,
@@ -2886,8 +2985,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          4736,
-          704
+          5008,
+          512
         ],
         "retryOnFail": true,
         "maxTries": 3,
@@ -3029,8 +3128,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2512,
-          576
+          2704,
+          528
         ],
         "credentials": {
           "postgres": {
@@ -3052,8 +3151,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          3600,
-          976
+          3872,
+          784
         ],
         "credentials": {
           "postgres": {
@@ -3075,8 +3174,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          3600,
-          704
+          3872,
+          512
         ],
         "credentials": {
           "postgres": {
@@ -3099,8 +3198,8 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          3856,
-          976
+          4128,
+          784
         ],
         "retryOnFail": true,
         "maxTries": 3,
@@ -3126,8 +3225,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          4304,
-          704
+          4816,
+          640
         ],
         "credentials": {
           "postgres": {
@@ -3242,14 +3341,6 @@
         ]
       },
       {
-        "id": "phone-pending-if-001",
-        "name": "Phone Pending?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          1400,
-          -200
-        ],
         "parameters": {
           "conditions": {
             "options": {
@@ -3259,8 +3350,8 @@
             },
             "conditions": [
               {
-                "id": "cond-phone-pending",
-                "leftValue": "={{ $('Check User & Membership').item.json.phone_pending }}",
+                "id": "cond-profile-saved",
+                "leftValue": "={{ $('Check User & Membership').item.json.profile_saved }}",
                 "rightValue": "true",
                 "operator": {
                   "type": "string",
@@ -3271,17 +3362,17 @@
             "combinator": "and"
           },
           "options": {}
-        }
+        },
+        "id": "phone-pending-if-001",
+        "name": "Profile Saved?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2448,
+          304
+        ]
       },
       {
-        "id": "phone-reminder-001",
-        "name": "Send Phone Reminder",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          1600,
-          -100
-        ],
         "parameters": {
           "method": "POST",
           "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
@@ -3304,29 +3395,100 @@
           },
           "options": {}
         },
-        "credentials": {}
+        "id": "phone-reminder-001",
+        "name": "Send Phone Reminder",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2768,
+          288
+        ]
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
+          "options": {
+            "queryReplacement": "={{ [String($('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id)] }}"
+          }
+        },
         "id": "complete-onboarding-001",
         "name": "Complete Onboarding",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2800,
-          400
+          784,
+          864
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
-          "options": {
-            "queryReplacement": "={{ [String($('Set Phone Data').item.json.telegram_id)] }}"
-          }
-        },
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
+        }
+      },
+      {
+        "id": "phone-provided-if-001",
+        "name": "Phone Provided?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2768,
+          208
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "cond-phone-provided",
+                "leftValue": "={{ $('Check User & Membership').item.json.phone_provided }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "has-phone-already-001",
+        "name": "Has Phone Already?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          4576,
+          512
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "cond-has-phone",
+                "leftValue": "={{ $('Check User & Membership').item.json.phone_provided }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
         }
       }
     ],
@@ -3458,7 +3620,7 @@
           ],
           [
             {
-              "node": "Phone Pending?",
+              "node": "Profile Saved?",
               "type": "main",
               "index": 0
             }
@@ -3668,7 +3830,7 @@
         "main": [
           [
             {
-              "node": "Mark Onboarding Complete",
+              "node": "Has Phone Already?",
               "type": "main",
               "index": 0
             }
@@ -3813,11 +3975,22 @@
           ]
         ]
       },
-      "Phone Pending?": {
+      "Complete Onboarding": {
         "main": [
           [
             {
-              "node": "Send Phone Reminder",
+              "node": "Phone ACK",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Profile Saved?": {
+        "main": [
+          [
+            {
+              "node": "Phone Provided?",
               "type": "main",
               "index": 0
             }
@@ -3831,11 +4004,36 @@
           ]
         ]
       },
-      "Complete Onboarding": {
+      "Phone Provided?": {
         "main": [
           [
             {
-              "node": "Phone ACK",
+              "node": "Complete Onboarding",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Send Phone Reminder",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Phone Already?": {
+        "main": [
+          [
+            {
+              "node": "Complete Onboarding",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Mark Onboarding Complete",
               "type": "main",
               "index": 0
             }
@@ -3849,10 +4047,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-31T14:52:04.747Z",
-        "id": 247,
+        "createdAt": "2026-03-31T15:28:37.115Z",
+        "id": 253,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "9979cb49-cbc9-4abb-9679-014837d992ae",
+        "versionId": "dfc07cdb-54a6-4ba8-9e15-69d03f8a792b",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
