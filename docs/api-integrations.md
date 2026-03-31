@@ -1077,11 +1077,14 @@ Configuracion basica del nodo:
 | `payment_logs` | Registro de pagos y transacciones |
 | `user_profiles` | Perfil fisico y preferencias del usuario |
 | `goals` | Objetivos de salud y fitness |
-| `meal_plans` | Planes de nutricion generados |
+| `meal_plans` | Planes de nutricion generados (campo `plan_date` agregado en migración 006) |
 | `exercise_plans` | Planes de entrenamiento generados |
 | `weight_logs` | Registros de peso historicos |
 | `conversation_logs` | Historial de conversaciones con el agente |
 | `admin_users` | Usuarios con privilegios administrativos |
+| `message_buffer` | Buffer de debounce para mensajes en rafaga (migración 005) |
+| `daily_targets` | Metas diarias y consumo acumulado por día (migración 006) |
+| `daily_intake_logs` | Registro detallado de comidas reportadas (migración 006) |
 
 ### Patrones de Queries Frecuentes
 
@@ -1289,6 +1292,110 @@ Se ejecuta cuando un usuario nuevo inicia el bot con `/start`:
     "query": "SELECT pl.id, pl.amount, pl.currency, pl.payment_method, pl.status, pl.transaction_id, pl.created_at FROM payment_logs pl INNER JOIN users u ON pl.user_id = u.id WHERE u.telegram_id = $1 ORDER BY pl.created_at DESC LIMIT 5;",
     "options": {
       "queryReplacement": "={{ $json.telegram_id }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+#### Registrar Comida (tool `log_food_intake`)
+
+INSERT en `daily_intake_logs` + UPSERT en `daily_targets`:
+
+```json
+{
+  "node": "Postgres - Insert Food Log",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "INSERT INTO daily_intake_logs (user_id, log_date, meal_type, description, estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g) VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7) RETURNING id, log_date, meal_type, estimated_calories, estimated_protein_g;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }},={{ $json.meal_type }},={{ $json.description }},={{ $json.estimated_calories }},={{ $json.estimated_protein_g }},={{ $json.estimated_carbs_g }},={{ $json.estimated_fat_g }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+```json
+{
+  "node": "Postgres - Upsert Daily Targets",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "INSERT INTO daily_targets (user_id, target_date, caloric_target, protein_target_g, carb_target_g, fat_target_g, calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g, meals_logged) SELECT $1, CURRENT_DATE, up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g, $2, $3, $4, $5, 1 FROM user_profiles up WHERE up.user_id = $1 ON CONFLICT (user_id, target_date) DO UPDATE SET calories_consumed = daily_targets.calories_consumed + EXCLUDED.calories_consumed, protein_consumed_g = daily_targets.protein_consumed_g + EXCLUDED.protein_consumed_g, carbs_consumed_g = daily_targets.carbs_consumed_g + EXCLUDED.carbs_consumed_g, fat_consumed_g = daily_targets.fat_consumed_g + EXCLUDED.fat_consumed_g, meals_logged = daily_targets.meals_logged + 1, updated_at = NOW() RETURNING calories_consumed, protein_consumed_g, caloric_target, protein_target_g;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }},={{ $json.estimated_calories }},={{ $json.estimated_protein_g }},={{ $json.estimated_carbs_g }},={{ $json.estimated_fat_g }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+Respuesta esperada (UPSERT):
+
+```json
+[
+  {
+    "calories_consumed": 970,
+    "protein_consumed_g": 66,
+    "caloric_target": 1800,
+    "protein_target_g": 135
+  }
+]
+```
+
+#### Obtener Estado del Día (tool `get_daily_status`)
+
+```json
+{
+  "node": "Postgres - Get Daily Targets",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT dt.caloric_target, dt.protein_target_g, dt.carb_target_g, dt.fat_target_g, COALESCE(dt.calories_consumed, 0) AS calories_consumed, COALESCE(dt.protein_consumed_g, 0) AS protein_consumed, COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed, COALESCE(dt.fat_consumed_g, 0) AS fat_consumed, COALESCE(dt.meals_logged, 0) AS meals_logged, dt.plan_adherence_pct FROM daily_targets dt WHERE dt.user_id = $1 AND dt.target_date = CURRENT_DATE;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+```json
+{
+  "node": "Postgres - Get Today Meals",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at FROM daily_intake_logs WHERE user_id = $1 AND log_date = CURRENT_DATE ORDER BY logged_at ASC;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+```json
+{
+  "node": "Postgres - Get Today Plan",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT plan_json FROM meal_plans WHERE user_id = $1 AND is_active = true AND plan_date = CURRENT_DATE;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }}"
     }
   },
   "credentials": {

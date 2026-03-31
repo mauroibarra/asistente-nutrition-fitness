@@ -500,10 +500,104 @@ WHERE up.user_id = $1;
 
 **Salida**: hasta 5 documentos personales del usuario relevantes al mensaje.
 
-#### Nodo 5: Build Context (Code)
+#### Nodos 5a–5e: Carga de datos diarios (PostgreSQL) — en paralelo con nodos 2–4
+
+Estos 5 nodos se ejecutan en paralelo con `Load User Profile`, `Search Knowledge RAG` y `Search User RAG`. Sus resultados se consumen en `Build Context`.
+
+**Nodo 5a: Load Daily Status (PostgreSQL)**
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Query**:
+
+```sql
+SELECT
+  dt.caloric_target,
+  dt.protein_target_g,
+  dt.carb_target_g,
+  dt.fat_target_g,
+  COALESCE(dt.calories_consumed, 0) AS calories_consumed,
+  COALESCE(dt.protein_consumed_g, 0) AS protein_consumed,
+  COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed,
+  COALESCE(dt.fat_consumed_g, 0) AS fat_consumed,
+  COALESCE(dt.meals_logged, 0) AS meals_logged,
+  dt.plan_adherence_pct
+FROM daily_targets dt
+WHERE dt.user_id = $1 AND dt.target_date = CURRENT_DATE;
+```
+
+- **Parámetros**: `[$json.userId]`
+- **alwaysOutputData**: `true` (el primer mensaje del día no tiene fila aún)
+
+**Nodo 5b: Load Today Meals (PostgreSQL)**
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Query**:
+
+```sql
+SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at
+FROM daily_intake_logs
+WHERE user_id = $1 AND log_date = CURRENT_DATE
+ORDER BY logged_at ASC;
+```
+
+- **Parámetros**: `[$json.userId]`
+- **alwaysOutputData**: `true`
+
+**Nodo 5c: Load Today Plan (PostgreSQL)**
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Query**:
+
+```sql
+SELECT plan_json
+FROM meal_plans
+WHERE user_id = $1 AND is_active = true
+AND plan_date = CURRENT_DATE;
+```
+
+- **Parámetros**: `[$json.userId]`
+- **alwaysOutputData**: `true`
+
+**Nodo 5d: Load Weight Trend (PostgreSQL)**
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Query**:
+
+```sql
+SELECT weight_kg, logged_at
+FROM weight_logs
+WHERE user_id = $1
+ORDER BY logged_at DESC
+LIMIT 5;
+```
+
+- **Parámetros**: `[$json.userId]`
+- **alwaysOutputData**: `true`
+
+**Nodo 5e: Load Weekly Average (PostgreSQL)**
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Query**:
+
+```sql
+SELECT
+  AVG(calories_consumed) AS avg_calories,
+  AVG(protein_consumed_g) AS avg_protein,
+  COUNT(CASE WHEN meals_logged >= meal_count THEN 1 END)::float / NULLIF(COUNT(*), 0) * 100 AS adherence_pct
+FROM daily_targets dt
+JOIN user_profiles up ON dt.user_id = up.user_id
+WHERE dt.user_id = $1
+AND dt.target_date >= date_trunc('week', CURRENT_DATE)
+AND dt.target_date <= CURRENT_DATE;
+```
+
+- **Parámetros**: `[$json.userId]`
+- **alwaysOutputData**: `true`
+
+#### Nodo 6: Build Context (Code)
 
 - **Tipo**: Code (JavaScript)
-- **Propósito**: Combinar el perfil del usuario, los resultados de RAG y los datos del trigger en un objeto de contexto unificado para inyectar en el system prompt.
+- **Propósito**: Combinar perfil, RAG, estado del día y tendencia semanal en un objeto de contexto unificado para inyectar las variables del system prompt v2.
 
 ```javascript
 const trigger = $('Sub-Workflow Trigger').first().json;
@@ -511,8 +605,17 @@ const profile = $('Load User Profile').first().json;
 const knowledgeDocs = $('Search Knowledge RAG').all().map(item => item.json.text).join('\n---\n');
 const userDocs = $('Search User RAG').all().map(item => item.json.text).join('\n---\n');
 
-const currentDate = new Date().toISOString().split('T')[0];
+// Datos del día y tendencia semanal
+const dailyTargets = $('Load Daily Status').first()?.json || null;
+const todayMeals = $('Load Today Meals').all().map(item => item.json);
+const todayPlan = $('Load Today Plan').first()?.json || null;
+const weightHistory = $('Load Weight Trend').all().map(item => item.json);
+const weeklyAvg = $('Load Weekly Average').first()?.json || null;
 
+const currentDate = new Date().toISOString();
+const currentHour = new Date().getHours();
+
+// --- userProfile (igual que v1, con campos adicionales de metas) ---
 const userProfile = JSON.stringify({
   gender: profile.gender,
   age: profile.age,
@@ -537,13 +640,65 @@ const userProfile = JSON.stringify({
   caloric_target: profile.caloric_target,
   protein_target_g: profile.protein_target_g,
   carb_target_g: profile.carb_target_g,
-  fat_target_g: profile.fat_target_g
+  fat_target_g: profile.fat_target_g,
+  bmr: profile.bmr,
+  tdee: profile.tdee
 }, null, 2);
+
+// --- NUEVO: dailyStatus ---
+const caloriesConsumed = dailyTargets?.calories_consumed || 0;
+const proteinConsumed = dailyTargets?.protein_consumed || 0;
+const carbsConsumed = dailyTargets?.carbs_consumed || 0;
+const fatConsumed = dailyTargets?.fat_consumed || 0;
+
+const dailyStatus = JSON.stringify({
+  fecha: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
+  calorias: {
+    consumidas: caloriesConsumed,
+    meta: profile.caloric_target,
+    restantes: profile.caloric_target - caloriesConsumed
+  },
+  proteina: {
+    consumida_g: proteinConsumed,
+    meta_g: profile.protein_target_g,
+    restante_g: profile.protein_target_g - proteinConsumed
+  },
+  comidas_reportadas: todayMeals.map(m => ({
+    tipo: m.meal_type,
+    descripcion: m.description,
+    calorias: m.estimated_calories,
+    proteina_g: m.estimated_protein_g
+  })),
+  comidas_pendientes_del_plan: todayPlan ? parsePendingMeals(todayPlan.plan_json, todayMeals) : []
+}, null, 2);
+
+// --- NUEVO: weeklyTrend ---
+const currentWeight = weightHistory[0]?.weight_kg || profile.weight_kg;
+const previousWeight = weightHistory[1]?.weight_kg || null;
+const startWeight = profile.start_weight || weightHistory[weightHistory.length - 1]?.weight_kg || profile.weight_kg;
+
+const weeklyTrend = JSON.stringify({
+  peso_actual: currentWeight,
+  peso_semana_pasada: previousWeight,
+  cambio_semanal_kg: previousWeight ? Math.round((currentWeight - previousWeight) * 10) / 10 : null,
+  promedio_calorico_diario: weeklyAvg?.avg_calories ? Math.round(weeklyAvg.avg_calories) : null,
+  promedio_proteina_diaria_g: weeklyAvg?.avg_protein ? Math.round(weeklyAvg.avg_protein) : null,
+  adherencia_plan_pct: weeklyAvg?.adherence_pct ? Math.round(weeklyAvg.adherence_pct) : null,
+  tendencia: !previousWeight ? 'inicio' : (currentWeight < previousWeight ? 'bajando' : currentWeight > previousWeight ? 'subiendo' : 'estable'),
+  peso_inicio: startWeight,
+  cambio_total_kg: Math.round((currentWeight - startWeight) * 10) / 10
+}, null, 2);
+
+// --- NUEVO: nextAction ---
+const nextAction = JSON.stringify(determineNextAction(dailyTargets, todayMeals, todayPlan, currentHour, profile), null, 2);
 
 return [{
   json: {
     userName: trigger.firstName,
     userProfile,
+    dailyStatus,
+    weeklyTrend,
+    nextAction,
     currentDate,
     ragContext: knowledgeDocs,
     userRagContext: userDocs,
@@ -554,17 +709,48 @@ return [{
     planType: trigger.planType
   }
 }];
+
+// --- Helpers ---
+function parsePendingMeals(planJson, reportedMeals) {
+  const plan = typeof planJson === 'string' ? JSON.parse(planJson) : planJson;
+  const reportedTypes = reportedMeals.map(m => m.meal_type);
+  return (plan.meals || [])
+    .filter(m => !reportedTypes.includes(m.meal_type))
+    .map(m => ({ tipo: m.meal_type, nombre: m.name, calorias: m.calories, proteina_g: m.protein_g, hora: m.time }));
+}
+
+function determineNextAction(dailyTargets, todayMeals, todayPlan, currentHour, profile) {
+  if (todayMeals.length === 0 && currentHour >= parseInt(profile.wake_up_time || '7')) {
+    return { tipo: 'reportar_comida', descripcion: 'Preguntarle que desayuno' };
+  }
+  const plan = todayPlan ? (typeof todayPlan.plan_json === 'string' ? JSON.parse(todayPlan.plan_json) : todayPlan.plan_json) : null;
+  if (plan?.meals) {
+    const reportedTypes = todayMeals.map(m => m.meal_type);
+    const next = plan.meals.find(m => !reportedTypes.includes(m.meal_type));
+    if (next) {
+      return {
+        tipo: 'proxima_comida',
+        descripcion: `Su proxima comida es ${next.name} a las ${next.time}`,
+        comida: { tipo: next.meal_type, nombre: next.name, calorias: next.calories, proteina_g: next.protein_g, hora: next.time }
+      };
+    }
+  }
+  return { tipo: 'check_in', descripcion: 'Dia casi completo, preguntar como le fue' };
+}
 ```
 
-#### Nodo 6: AI Agent
+#### Nodo 7: AI Agent
 
 - **Tipo**: AI Agent (LangChain)
 - **Configuración del agente**:
   - **Agent Type**: OpenAI Functions Agent
-  - **System Prompt**: cargado desde `prompts/system-prompt.md` con las siguientes variables inyectadas dinámicamente:
+  - **System Prompt**: cargado desde `prompts/system-prompt.md` (v2) con las siguientes variables inyectadas dinámicamente:
     - `{{userName}}` → `{{ $json.userName }}`
     - `{{userProfile}}` → `{{ $json.userProfile }}`
     - `{{currentDate}}` → `{{ $json.currentDate }}`
+    - `{{dailyStatus}}` → `{{ $json.dailyStatus }}` ← **NUEVO v2**
+    - `{{weeklyTrend}}` → `{{ $json.weeklyTrend }}` ← **NUEVO v2**
+    - `{{nextAction}}` → `{{ $json.nextAction }}` ← **NUEVO v2**
     - `{{ragContext}}` → `{{ $json.ragContext }}`
     - `{{userRagContext}}` → `{{ $json.userRagContext }}`
   - **Input**: `{{ $json.text }}`
@@ -766,10 +952,15 @@ VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 ```
 Sub-Workflow Trigger
-  → Load User Profile (PostgreSQL)
-  → Search Knowledge RAG (Qdrant)     ← en paralelo
-  → Search User RAG (Qdrant)          ← en paralelo
-  → Build Context (Code)
+  → Load User Profile (PostgreSQL)         ← en paralelo
+  → Search Knowledge RAG (Qdrant)          ← en paralelo
+  → Search User RAG (Qdrant)               ← en paralelo
+  → Load Daily Status (PostgreSQL)         ← en paralelo (NUEVO v2)
+  → Load Today Meals (PostgreSQL)          ← en paralelo (NUEVO v2)
+  → Load Today Plan (PostgreSQL)           ← en paralelo (NUEVO v2)
+  → Load Weight Trend (PostgreSQL)         ← en paralelo (NUEVO v2)
+  → Load Weekly Average (PostgreSQL)       ← en paralelo (NUEVO v2)
+  → Build Context (Code)                   ← actualizado con dailyStatus, weeklyTrend, nextAction
     → AI Agent (con tools conectados)
       ├─ [Si tool call] → Ejecuta sub-workflow correspondiente → regresa al agente
       └─ [Respuesta final] → Send Response to Telegram
@@ -777,7 +968,7 @@ Sub-Workflow Trigger
             → Trigger RAG Indexer (asíncrono)
 ```
 
-Los nodos 2, 3 y 4 (Load User Profile, Search Knowledge RAG, Search User RAG) se ejecutan en paralelo para minimizar la latencia. Sus salidas se combinan en Build Context.
+Los 8 nodos de carga (Load User Profile, Search Knowledge RAG, Search User RAG, Load Daily Status, Load Today Meals, Load Today Plan, Load Weight Trend, Load Weekly Average) se ejecutan en paralelo para minimizar la latencia. Todos tienen `alwaysOutputData: true` para no detener el flujo cuando no hay datos del día (primer mensaje del día, primer día del usuario).
 
 ### Manejo de Errores
 
@@ -2927,3 +3118,276 @@ Todas las credenciales se configuran una sola vez en n8n y se referencian por no
 | `MEMBERSHIP_ALERT_DAYS` | `3` | Días de anticipación para alertas |
 | `WEIGHT_REQUEST_DAY` | `1` | Día para solicitar peso (1=lunes) |
 | `WEIGHT_REQUEST_HOUR` | `09` | Hora para solicitar peso |
+
+---
+
+## 11. FitAI - Log Food Intake (tool `log_food_intake`)
+
+### Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Nombre en n8n** | `FitAI - Log Food Intake` |
+| **Trigger** | Tool Workflow (llamado por el AI Agent via `toolWorkflow` typeVersion 1.3) |
+| **Propósito** | Registra una comida reportada por el usuario: inserta en `daily_intake_logs`, actualiza el acumulado en `daily_targets`, y retorna el balance actualizado del día. |
+| **Cuándo se invoca** | Cada vez que el usuario reporta haber comido algo. El AI Agent estima los macros y llama esta tool antes de responder. |
+
+### Parámetros de Entrada (desde el AI Agent)
+
+| Parámetro | Tipo | Requerido | Descripción |
+|-----------|------|-----------|-------------|
+| `meal_type` | string (enum) | Sí | `breakfast`, `lunch`, `snack`, `dinner` |
+| `description` | string | Sí | Descripción libre de lo que comió el usuario |
+| `estimated_calories` | number | Sí | Calorías estimadas por el AI |
+| `estimated_protein_g` | number | Sí | Proteína estimada en gramos |
+| `estimated_carbs_g` | number | Sí | Carbohidratos estimados en gramos |
+| `estimated_fat_g` | number | Sí | Grasa estimada en gramos |
+
+### Nodos en Orden
+
+#### Nodo 1: Sub-Workflow Trigger
+
+- **Datos de entrada**: `userId`, `chatId`, `meal_type`, `description`, `estimated_calories`, `estimated_protein_g`, `estimated_carbs_g`, `estimated_fat_g`
+
+#### Nodo 2: Insert Food Log (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Query**:
+
+```sql
+INSERT INTO daily_intake_logs (
+  user_id, log_date, meal_type, description,
+  estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g
+)
+VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7)
+RETURNING id, log_date, meal_type, estimated_calories, estimated_protein_g;
+```
+
+- **Parámetros**: `[userId, meal_type, description, estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g]`
+
+#### Nodo 3: Upsert Daily Targets (PostgreSQL)
+
+Crea el registro del día si no existe, o actualiza los acumulados si ya existe. Las metas se copian de `user_profiles` en la inserción inicial.
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Query**:
+
+```sql
+INSERT INTO daily_targets (
+  user_id, target_date,
+  caloric_target, protein_target_g, carb_target_g, fat_target_g,
+  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,
+  meals_logged
+)
+SELECT
+  $1, CURRENT_DATE,
+  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,
+  $2, $3, $4, $5,
+  1
+FROM user_profiles up
+WHERE up.user_id = $1
+ON CONFLICT (user_id, target_date) DO UPDATE SET
+  calories_consumed  = daily_targets.calories_consumed  + EXCLUDED.calories_consumed,
+  protein_consumed_g = daily_targets.protein_consumed_g + EXCLUDED.protein_consumed_g,
+  carbs_consumed_g   = daily_targets.carbs_consumed_g   + EXCLUDED.carbs_consumed_g,
+  fat_consumed_g     = daily_targets.fat_consumed_g     + EXCLUDED.fat_consumed_g,
+  meals_logged       = daily_targets.meals_logged + 1,
+  updated_at         = NOW()
+RETURNING
+  calories_consumed, protein_consumed_g,
+  caloric_target, protein_target_g;
+```
+
+- **Parámetros**: `[userId, estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g]`
+
+#### Nodo 4: Build Response (Code)
+
+Formatea el balance actualizado del día para retornarlo al AI Agent.
+
+```javascript
+const targets = $('Upsert Daily Targets').first().json;
+const log = $('Insert Food Log').first().json;
+
+return [{
+  json: {
+    success: true,
+    registro: {
+      meal_type: log.meal_type,
+      calorias: log.estimated_calories,
+      proteina_g: log.estimated_protein_g,
+      fecha: log.log_date
+    },
+    balance_dia: {
+      calorias_consumidas: targets.calories_consumed,
+      calorias_meta: targets.caloric_target,
+      calorias_restantes: targets.caloric_target - targets.calories_consumed,
+      proteina_consumida_g: targets.protein_consumed_g,
+      proteina_meta_g: targets.protein_target_g,
+      proteina_restante_g: targets.protein_target_g - targets.protein_consumed_g
+    }
+  }
+}];
+```
+
+### Lógica de Ramificación
+
+```
+Sub-Workflow Trigger
+  → Insert Food Log (PostgreSQL)
+  → Upsert Daily Targets (PostgreSQL)   ← INSERT ... ON CONFLICT DO UPDATE (atómico)
+  → Build Response (Code)
+  → [retorna balance al AI Agent]
+```
+
+### Manejo de Errores
+
+- **INSERT falla** (usuario no existe): el AI Agent recibe el error y responde sin mostrar detalles técnicos.
+- **UPSERT falla** (perfil sin metas): si `caloric_target` es NULL en `user_profiles`, el INSERT falla. El AI Agent debe generar el perfil primero (caso de usuario recién onboarded sin metas calculadas).
+
+### Variables de Entorno y Credenciales
+
+| Tipo | Nombre | Propósito |
+|------|--------|-----------|
+| Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
+
+---
+
+## 12. FitAI - Get Daily Status (tool `get_daily_status`)
+
+### Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Nombre en n8n** | `FitAI - Get Daily Status` |
+| **Trigger** | Tool Workflow (llamado por el AI Agent via `toolWorkflow` typeVersion 1.3) |
+| **Propósito** | Obtiene el estado completo del día actual: calorías y macros consumidos vs meta, comidas reportadas, comidas pendientes del plan, y ejercicio programado. |
+| **Cuándo se invoca** | Cuando el AI Agent necesita contexto actualizado del día antes de responder. Útil si `{{dailyStatus}}` en el system prompt está desactualizado (el usuario reportó algo en otra sesión). |
+
+### Parámetros de Entrada
+
+Ninguno. El `userId` viene del contexto del `fields.values` del nodo toolWorkflow.
+
+### Nodos en Orden
+
+#### Nodo 1: Sub-Workflow Trigger
+
+- **Datos de entrada**: `userId`
+
+#### Nodo 2: Get Daily Targets (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **alwaysOutputData**: `true`
+- **Query**:
+
+```sql
+SELECT
+  dt.caloric_target,
+  dt.protein_target_g,
+  dt.carb_target_g,
+  dt.fat_target_g,
+  COALESCE(dt.calories_consumed, 0) AS calories_consumed,
+  COALESCE(dt.protein_consumed_g, 0) AS protein_consumed,
+  COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed,
+  COALESCE(dt.fat_consumed_g, 0) AS fat_consumed,
+  COALESCE(dt.meals_logged, 0) AS meals_logged,
+  dt.plan_adherence_pct
+FROM daily_targets dt
+WHERE dt.user_id = $1 AND dt.target_date = CURRENT_DATE;
+```
+
+- **Parámetros**: `[$json.userId]`
+
+#### Nodo 3: Get Today Meals (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **alwaysOutputData**: `true`
+- **Query**:
+
+```sql
+SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at
+FROM daily_intake_logs
+WHERE user_id = $1 AND log_date = CURRENT_DATE
+ORDER BY logged_at ASC;
+```
+
+- **Parámetros**: `[$json.userId]`
+
+#### Nodo 4: Get Today Plan (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **alwaysOutputData**: `true`
+- **Query**:
+
+```sql
+SELECT plan_json
+FROM meal_plans
+WHERE user_id = $1 AND is_active = true
+AND plan_date = CURRENT_DATE;
+```
+
+- **Parámetros**: `[$json.userId]`
+
+#### Nodo 5: Build Status Response (Code)
+
+Combina los tres resultados en un objeto de estado completo del día.
+
+```javascript
+const targets = $('Get Daily Targets').first()?.json || null;
+const meals = $('Get Today Meals').all().map(item => item.json);
+const planRow = $('Get Today Plan').first()?.json || null;
+
+const plan = planRow?.plan_json
+  ? (typeof planRow.plan_json === 'string' ? JSON.parse(planRow.plan_json) : planRow.plan_json)
+  : null;
+
+const reportedTypes = meals.map(m => m.meal_type);
+const pendingMeals = plan?.meals
+  ? plan.meals.filter(m => !reportedTypes.includes(m.meal_type))
+      .map(m => ({ tipo: m.meal_type, nombre: m.name, calorias: m.calories, proteina_g: m.protein_g, hora: m.time }))
+  : [];
+
+return [{
+  json: {
+    fecha: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
+    calorias: {
+      consumidas: targets?.calories_consumed || 0,
+      meta: targets?.caloric_target || null,
+      restantes: targets ? targets.caloric_target - targets.calories_consumed : null
+    },
+    proteina: {
+      consumida_g: targets?.protein_consumed || 0,
+      meta_g: targets?.protein_target_g || null,
+      restante_g: targets ? targets.protein_target_g - targets.protein_consumed : null
+    },
+    comidas_reportadas: meals.map(m => ({
+      tipo: m.meal_type,
+      descripcion: m.description,
+      calorias: m.estimated_calories,
+      proteina_g: m.estimated_protein_g
+    })),
+    comidas_pendientes_del_plan: pendingMeals
+  }
+}];
+```
+
+### Lógica de Ramificación
+
+```
+Sub-Workflow Trigger
+  → Get Daily Targets (PostgreSQL)   ← alwaysOutputData: true
+  → Get Today Meals (PostgreSQL)     ← alwaysOutputData: true, en paralelo
+  → Get Today Plan (PostgreSQL)      ← alwaysOutputData: true, en paralelo
+  → Build Status Response (Code)
+  → [retorna estado completo al AI Agent]
+```
+
+### Manejo de Errores
+
+- **Sin registro en `daily_targets`** (primer mensaje del día): el nodo retorna `{}` (alwaysOutputData). El código maneja `null` y retorna 0 en todos los acumulados.
+- **Sin plan activo para hoy**: `comidas_pendientes_del_plan` retorna array vacío.
+
+### Variables de Entorno y Credenciales
+
+| Tipo | Nombre | Propósito |
+|------|--------|-----------|
+| Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |

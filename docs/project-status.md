@@ -1,6 +1,6 @@
 # Estado del Proyecto — FitAI Assistant
 
-**Última actualización:** 2026-03-30
+**Última actualización:** 2026-03-31
 
 ---
 
@@ -172,21 +172,24 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 | 6 | `docker-compose.yml` | ✅ Completo | 6 servicios con healthchecks, volumes, networks |
 | 7 | `infra/nginx.conf` | ✅ Completo | Reverse proxy, rate limiting, security headers |
 | 8 | `docs/architecture.md` | ✅ Completo | Diagramas Mermaid, flujo request-response, ADRs |
-| 9 | `docs/data-models.md` | ✅ Completo | SQL completo, ER diagram, JSON de ejemplo |
-| 10 | `docs/n8n-flows.md` | ✅ Completo | 8 workflows documentados con nodos y lógica |
-| 11 | `docs/api-integrations.md` | ✅ Completo | Telegram, OpenAI, Qdrant, PostgreSQL, Redis |
+| 9 | `docs/data-models.md` | ✅ Completo | SQL completo, ER diagram, JSON de ejemplo; incluye daily_targets, daily_intake_logs, plan_date en meal_plans |
+| 10 | `docs/n8n-flows.md` | ✅ Completo | 12 workflows + 2 nuevas tools (log_food_intake, get_daily_status); Main AI Agent v2 con 5 nodos paralelos |
+| 11 | `docs/api-integrations.md` | ✅ Completo | Telegram, OpenAI, Qdrant, PostgreSQL, Redis; queries daily_targets y daily_intake_logs |
 | 12 | `docs/admin-panel.md` | ✅ Completo | Wireframes, endpoints, auth, integración |
 | 13 | `docs/deployment.md` | ✅ Completo | Guía VPS, Docker, SSL, backups, monitoreo |
 | 14 | `migrations/001_initial_schema.sql` | ✅ Completo | Schema inicial completo |
 | 15 | `migrations/002_contact_fields.sql` | ✅ Completo | Columnas: document_number, country, city, phone_number en users |
 | 16 | `migrations/003_migration_token.sql` | ✅ Completo | Columnas: migration_token, migration_token_expires_at en users |
+| 16b | `migrations/005_message_buffer.sql` | ✅ Ejecutado | Tabla message_buffer para debounce multi-mensaje |
+| 16c | `migrations/006_daily_tracking.sql` | ⏳ Pendiente ejecutar | Tablas daily_targets, daily_intake_logs; ALTER meal_plans ADD plan_date |
 | 17 | `skills/business/nutrition.md` | ✅ Completo | Fórmulas, macros, alimentos |
 | 18 | `skills/business/fitness.md` | ✅ Completo | Principios, rutinas completas |
 | 19 | `skills/business/habit-psychology.md` | ✅ Completo | Modelo de hábito, coaching |
 | 20 | `skills/business/metrics-calculation.md` | ✅ Completo | 9 funciones JS de cálculo |
 | 21 | `skills/dev/n8n-workflow-debugging.md` | ✅ Completo | Guía de debugging de workflows n8n |
 | 22 | `skills/dev/n8n-ai-agent-tools.md` | ✅ Completo | Patrones correctos de AI Agent + toolWorkflow |
-| 23 | `prompts/system-prompt.md` | ✅ Completo | System prompt con personalidad y reglas |
+| 23 | `prompts/system-prompt.md` | ✅ v2 Completo | System prompt v2 (coach proactivo): dailyStatus, weeklyTrend, nextAction, 14 secciones |
+| 23b | `docs/system-prompt-v2-migration-guide.md` | ✅ Completo | Guía técnica de migración v1→v2: SQL, código Build Context, nuevas tools |
 | 24 | `prompts/onboarding.md` | ✅ Completo | 20 preguntas de onboarding (incluye país, ciudad, documento) |
 | 25 | `prompts/meal-plan-generation.md` | ✅ Completo | Templates de planes de comidas |
 | 26 | `prompts/workout-plan-generation.md` | ✅ Completo | Templates de rutinas |
@@ -204,14 +207,27 @@ El sistema está corriendo localmente con Docker. **Todos los 9 workflows activo
 
 ## Próximos Pasos
 
+### Migración System Prompt v2 (en progreso)
+1. **Ejecutar `migrations/006_daily_tracking.sql`** en la DB local — crea `daily_targets`, `daily_intake_logs`, agrega `plan_date` a `meal_plans`
+2. **Implementar nodos paralelos en Main AI Agent** (Load Daily Status, Load Today Meals, Load Today Plan, Load Weight Trend, Load Weekly Average) según `docs/n8n-flows.md` sección 2
+3. **Actualizar nodo Build Context** en Main AI Agent con el código v2 de la guía de migración
+4. **Actualizar System Prompt en n8n** con las nuevas variables `{{dailyStatus}}`, `{{weeklyTrend}}`, `{{nextAction}}`
+5. **Crear workflow `FitAI - Log Food Intake`** (tool `log_food_intake`) según `docs/n8n-flows.md` sección 11
+6. **Crear workflow `FitAI - Get Daily Status`** (tool `get_daily_status`) según `docs/n8n-flows.md` sección 12
+7. **Modificar Meal Plan Generator** para generar planes diarios (`plan_date`) en vez de semanales
+8. **Testear flujo completo**: mensaje → build context con dailyStatus → agente responde con contexto del día
+
+### Workflows Cron Pendientes (post v2)
+9. **Morning Briefing** — cron 7am: envía plan del día + primera comida al usuario
+10. **Evening Check-in** — cron 9pm: pide reporte de cómo fue el día
+
 ### Corto Plazo
-1. **Prueba E2E completa** — onboarding nuevo usuario → planes → progreso → recordatorios
-2. **Flujo de onboarding en n8n** — verificar que las 20 preguntas actualizadas (país, ciudad, documento) funcionan correctamente en el Onboarding Agent y que `[PERFIL_COMPLETO]` incluye esos campos
+11. **Prueba E2E completa** — onboarding nuevo usuario → planes → progreso → recordatorios
 
 ### Producción
-3. **Migrar a VPS** — según `docs/deployment.md`
-4. **Configurar HTTPS** con Certbot / Nginx
-5. **Activar pagos** — integrar pasarela en el panel admin
+12. **Migrar a VPS** — según `docs/deployment.md`
+13. **Configurar HTTPS** con Certbot / Nginx
+14. **Activar pagos** — integrar pasarela en el panel admin
 
 ---
 

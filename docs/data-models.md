@@ -210,6 +210,7 @@ CREATE TABLE meal_plans (
     user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     week_number     INTEGER NOT NULL,
     year            INTEGER NOT NULL,
+    plan_date       DATE,         -- agregado en migración 006: fecha específica del plan diario (NULL = plan semanal legacy)
     plan_json       JSONB NOT NULL,
     total_calories  DECIMAL(7, 1),
     is_active       BOOLEAN DEFAULT true,
@@ -220,7 +221,12 @@ CREATE TABLE meal_plans (
 
 CREATE INDEX idx_meal_plans_user_active ON meal_plans(user_id) WHERE is_active = true;
 CREATE INDEX idx_meal_plans_week ON meal_plans(user_id, year, week_number);
+CREATE INDEX idx_meal_plans_user_date ON meal_plans(user_id, plan_date);  -- migración 006
 ```
+
+**Campos no obvios**:
+- `plan_date`: Fecha específica del plan diario (sistema prompt v2). Antes los planes eran semanales (`week_number` + `year`); con v2, el `Meal Plan Generator` genera planes por día. `NULL` en registros legacy (planes semanales pre-v2). La query del AI Agent usa `WHERE plan_date = CURRENT_DATE AND is_active = true`.
+- `week_number` / `year`: Mantienen retrocompatibilidad con planes semanales existentes.
 
 ### Tabla: `exercise_plans`
 
@@ -326,6 +332,98 @@ CREATE TABLE IF NOT EXISTS message_buffer (
 - `last_ts`: Timestamp en milisegundos del último mensaje recibido. Decide qué ejecución "gana" el flush
 
 **Ciclo de vida**: La fila se inserta al recibir el primer mensaje, se actualiza con `GREATEST(last_ts)` al concatenar mensajes en ráfaga, y se borra atómicamente cuando el "último escritor" hace el flush (DELETE ... RETURNING). No persiste datos a largo plazo — es estado efímero de en-vuelo.
+
+---
+
+### Tabla: `daily_targets`
+
+Registro diario de metas calóricas/macro y consumo acumulado del usuario. Creada en migración `006_daily_tracking.sql`. Requerida por el system prompt v2 para calcular `{{dailyStatus}}`.
+
+```sql
+CREATE TABLE daily_targets (
+  id                  SERIAL PRIMARY KEY,
+  user_id             INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  target_date         DATE NOT NULL,
+  caloric_target      INTEGER NOT NULL,
+  protein_target_g    INTEGER NOT NULL,
+  carb_target_g       INTEGER NOT NULL,
+  fat_target_g        INTEGER NOT NULL,
+  calories_consumed   INTEGER DEFAULT 0,
+  protein_consumed_g  INTEGER DEFAULT 0,
+  carbs_consumed_g    INTEGER DEFAULT 0,
+  fat_consumed_g      INTEGER DEFAULT 0,
+  meals_logged        INTEGER DEFAULT 0,
+  plan_adherence_pct  NUMERIC(5,2),
+  notes               TEXT,
+  created_at          TIMESTAMPTZ DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, target_date)
+);
+
+CREATE INDEX idx_daily_targets_user_date ON daily_targets(user_id, target_date);
+```
+
+**Campos**:
+- `target_date`: Fecha del registro (una fila por usuario por día)
+- `caloric_target` / `protein_target_g` / `carb_target_g` / `fat_target_g`: Metas copiadas de `user_profiles` al crear el registro del día (o al generar el plan diario)
+- `calories_consumed` / `protein_consumed_g` / `carbs_consumed_g` / `fat_consumed_g`: Acumulado actualizado por la tool `log_food_intake` en cada reporte de comida (UPDATE ... SET field = field + X)
+- `meals_logged`: Contador de cuántas comidas ha reportado el usuario ese día
+- `plan_adherence_pct`: Porcentaje de comidas del plan seguidas vs comidas del plan total. Calculado por `log_food_intake` al marcar `was_from_plan = true`
+
+**Ciclo de vida**: La fila se crea con la primera comida reportada del día (o cuando el Meal Plan Generator genera el plan diario). Se actualiza con cada llamada a `log_food_intake`. Se conserva indefinidamente como historial para calcular `{{weeklyTrend}}`.
+
+**Relaciones**: Usada junto con `daily_intake_logs` para construir `{{dailyStatus}}`, y junto con `weight_logs` para construir `{{weeklyTrend}}`.
+
+---
+
+### Tabla: `daily_intake_logs`
+
+Registro detallado de cada comida que el usuario reporta. Una fila por reporte. Creada en migración `006_daily_tracking.sql`. La tool `log_food_intake` inserta aquí antes de actualizar `daily_targets`.
+
+```sql
+CREATE TABLE daily_intake_logs (
+  id                    SERIAL PRIMARY KEY,
+  user_id               INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  log_date              DATE NOT NULL DEFAULT CURRENT_DATE,
+  meal_type             VARCHAR(20) NOT NULL, -- breakfast, lunch, snack, dinner
+  description           TEXT NOT NULL,
+  estimated_calories    INTEGER,
+  estimated_protein_g   INTEGER,
+  estimated_carbs_g     INTEGER,
+  estimated_fat_g       INTEGER,
+  was_from_plan         BOOLEAN DEFAULT false,
+  logged_at             TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_daily_intake_user_date ON daily_intake_logs(user_id, log_date);
+```
+
+**Campos**:
+- `log_date`: Fecha a la que corresponde la comida (no el timestamp de cuando se reportó — puede reportarse tarde)
+- `meal_type`: Tipo de comida: `breakfast`, `lunch`, `snack`, `dinner`. Enum validado en la tool.
+- `description`: Texto libre de lo que comió el usuario ("3 huevos revueltos con tortillas")
+- `estimated_calories` / `estimated_protein_g` / `estimated_carbs_g` / `estimated_fat_g`: Estimados por el AI Agent (no requieren ser exactos al gramo)
+- `was_from_plan`: `true` si la comida reportada coincide con una comida del plan activo del día. Usado para calcular `plan_adherence_pct`
+
+**Ciclo de vida**: Inmutable después de la inserción. Se consulta con `SELECT ... WHERE log_date = CURRENT_DATE` para mostrar las comidas del día al AI Agent.
+
+**JSON de ejemplo** (una fila):
+
+```json
+{
+  "id": 142,
+  "user_id": 69,
+  "log_date": "2026-03-31",
+  "meal_type": "breakfast",
+  "description": "3 huevos revueltos con tortillas y cafe con leche",
+  "estimated_calories": 450,
+  "estimated_protein_g": 28,
+  "estimated_carbs_g": 38,
+  "estimated_fat_g": 18,
+  "was_from_plan": true,
+  "logged_at": "2026-03-31T09:15:00Z"
+}
+```
 
 ---
 
