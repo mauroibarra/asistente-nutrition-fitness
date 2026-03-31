@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-31T14:25:46.268Z",
+  "updatedAt": "2026-03-31T14:35:34.112Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -1338,26 +1338,35 @@
     {
       "id": "phone-reminder-001",
       "name": "Send Phone Reminder",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1600,
         -100
       ],
       "parameters": {
-        "chatId": "={{ $('Set User Context').item.json.chatId }}",
-        "text": "📱 Aún necesito tu número de teléfono para completar tu registro.\n\nPresiona el botón de abajo para compartirlo.",
-        "additionalFields": {
-          "appendAttribution": false,
-          "reply_markup": "{\"keyboard\":[[{\"text\":\"📱 Compartir mi número\",\"request_contact\":true}]],\"resize_keyboard\":true,\"one_time_keyboard\":true}"
-        }
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Set User Context').item.json.chatId }}"
+            },
+            {
+              "name": "text",
+              "value": "📱 Aún necesito tu número de teléfono para completar tu registro.\n\nPresiona el botón de abajo para compartirlo."
+            },
+            {
+              "name": "reply_markup",
+              "value": "={{ JSON.stringify({ keyboard: [[{ text: '📱 Compartir mi número', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }) }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "credentials": {
-        "telegramApi": {
-          "id": "1duS64x2hsrz3moJ",
-          "name": "Telegram account fitia"
-        }
-      }
+      "credentials": {}
     }
   ],
   "connections": {
@@ -1872,9 +1881,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "5d786d00-51db-4a94-bd2b-fc91024aec13",
-  "activeVersionId": "5d786d00-51db-4a94-bd2b-fc91024aec13",
-  "versionCounter": 439,
+  "versionId": "c60648e5-3fbc-4716-a12a-5fafb7bcd13a",
+  "activeVersionId": "c60648e5-3fbc-4716-a12a-5fafb7bcd13a",
+  "versionCounter": 443,
   "triggerCount": 1,
   "shared": [
     {
@@ -1897,9 +1906,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-31T14:25:46.273Z",
-    "createdAt": "2026-03-31T14:25:46.273Z",
-    "versionId": "5d786d00-51db-4a94-bd2b-fc91024aec13",
+    "updatedAt": "2026-03-31T14:35:34.115Z",
+    "createdAt": "2026-03-31T14:35:34.115Z",
+    "versionId": "c60648e5-3fbc-4716-a12a-5fafb7bcd13a",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -3233,26 +3242,35 @@
       {
         "id": "phone-reminder-001",
         "name": "Send Phone Reminder",
-        "type": "n8n-nodes-base.telegram",
-        "typeVersion": 1.2,
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
         "position": [
           1600,
           -100
         ],
         "parameters": {
-          "chatId": "={{ $('Set User Context').item.json.chatId }}",
-          "text": "📱 Aún necesito tu número de teléfono para completar tu registro.\n\nPresiona el botón de abajo para compartirlo.",
-          "additionalFields": {
-            "appendAttribution": false,
-            "reply_markup": "{\"keyboard\":[[{\"text\":\"📱 Compartir mi número\",\"request_contact\":true}]],\"resize_keyboard\":true,\"one_time_keyboard\":true}"
-          }
+          "method": "POST",
+          "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "chat_id",
+                "value": "={{ $('Set User Context').item.json.chatId }}"
+              },
+              {
+                "name": "text",
+                "value": "📱 Aún necesito tu número de teléfono para completar tu registro.\n\nPresiona el botón de abajo para compartirlo."
+              },
+              {
+                "name": "reply_markup",
+                "value": "={{ JSON.stringify({ keyboard: [[{ text: '📱 Compartir mi número', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }) }}"
+              }
+            ]
+          },
+          "options": {}
         },
-        "credentials": {
-          "telegramApi": {
-            "id": "1duS64x2hsrz3moJ",
-            "name": "Telegram account fitia"
-          }
-        }
+        "credentials": {}
       }
     ],
     "connections": {
@@ -3763,10 +3781,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-31T14:25:48.395Z",
-        "id": 241,
+        "createdAt": "2026-03-31T14:35:36.295Z",
+        "id": 243,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "5d786d00-51db-4a94-bd2b-fc91024aec13",
+        "versionId": "c60648e5-3fbc-4716-a12a-5fafb7bcd13a",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
