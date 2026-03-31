@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-31T14:44:36.137Z",
+  "updatedAt": "2026-03-31T14:52:02.603Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -236,7 +236,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT u.id as user_id, u.first_name, u.is_active, COALESCE(m.status::text, 'none') as membership_status, CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed, CASE WHEN COALESCE(up.phone_pending, false) THEN 'true' ELSE 'false' END as phone_pending FROM users u LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW() LEFT JOIN user_profiles up ON up.user_id = u.id WHERE u.telegram_id = $1 LIMIT 1",
+        "query": "SELECT\n  u.id as user_id,\n  u.first_name,\n  u.is_active,\n  COALESCE(m.status::text, 'none') as membership_status,\n  CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed,\n  CASE\n    WHEN up.user_id IS NOT NULL\n     AND NOT COALESCE(up.onboarding_completed, false)\n     AND (u.phone_number IS NULL OR u.phone_number = '')\n    THEN 'true' ELSE 'false'\n  END as phone_pending\nFROM users u\nLEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW()\nLEFT JOIN user_profiles up ON up.user_id = u.id\nWHERE u.telegram_id = $1\nLIMIT 1",
         "options": {
           "queryReplacement": "={{ $('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id }}"
         }
@@ -1178,7 +1178,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE user_profiles SET phone_pending = true, updated_at = NOW() WHERE user_id = $1",
+        "query": "UPDATE user_profiles SET updated_at = NOW() WHERE user_id = $1",
         "options": {
           "queryReplacement": "={{ [$('Parse Profile').item.json.userId] }}"
         }
@@ -1379,7 +1379,7 @@
       ],
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE user_profiles SET phone_pending = false, onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
+        "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
         "options": {
           "queryReplacement": "={{ [String($('Set Phone Data').item.json.telegram_id)] }}"
         }
@@ -1915,9 +1915,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "5877619a-53f0-4f3b-bc3c-3a7358d7d044",
-  "activeVersionId": "5877619a-53f0-4f3b-bc3c-3a7358d7d044",
-  "versionCounter": 447,
+  "versionId": "9979cb49-cbc9-4abb-9679-014837d992ae",
+  "activeVersionId": "9979cb49-cbc9-4abb-9679-014837d992ae",
+  "versionCounter": 451,
   "triggerCount": 1,
   "shared": [
     {
@@ -1940,9 +1940,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-31T14:44:36.140Z",
-    "createdAt": "2026-03-31T14:44:36.140Z",
-    "versionId": "5877619a-53f0-4f3b-bc3c-3a7358d7d044",
+    "updatedAt": "2026-03-31T14:52:02.605Z",
+    "createdAt": "2026-03-31T14:52:02.605Z",
+    "versionId": "9979cb49-cbc9-4abb-9679-014837d992ae",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -2174,7 +2174,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT u.id as user_id, u.first_name, u.is_active, COALESCE(m.status::text, 'none') as membership_status, CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed, CASE WHEN COALESCE(up.phone_pending, false) THEN 'true' ELSE 'false' END as phone_pending FROM users u LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW() LEFT JOIN user_profiles up ON up.user_id = u.id WHERE u.telegram_id = $1 LIMIT 1",
+          "query": "SELECT\n  u.id as user_id,\n  u.first_name,\n  u.is_active,\n  COALESCE(m.status::text, 'none') as membership_status,\n  CASE WHEN COALESCE(up.onboarding_completed, false) THEN 'true' ELSE 'false' END as onboarding_completed,\n  CASE\n    WHEN up.user_id IS NOT NULL\n     AND NOT COALESCE(up.onboarding_completed, false)\n     AND (u.phone_number IS NULL OR u.phone_number = '')\n    THEN 'true' ELSE 'false'\n  END as phone_pending\nFROM users u\nLEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active' AND m.expires_at > NOW()\nLEFT JOIN user_profiles up ON up.user_id = u.id\nWHERE u.telegram_id = $1\nLIMIT 1",
           "options": {
             "queryReplacement": "={{ $('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id }}"
           }
@@ -3116,7 +3116,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "UPDATE user_profiles SET phone_pending = true, updated_at = NOW() WHERE user_id = $1",
+          "query": "UPDATE user_profiles SET updated_at = NOW() WHERE user_id = $1",
           "options": {
             "queryReplacement": "={{ [$('Parse Profile').item.json.userId] }}"
           }
@@ -3317,7 +3317,7 @@
         ],
         "parameters": {
           "operation": "executeQuery",
-          "query": "UPDATE user_profiles SET phone_pending = false, onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
+          "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
           "options": {
             "queryReplacement": "={{ [String($('Set Phone Data').item.json.telegram_id)] }}"
           }
@@ -3849,10 +3849,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-31T14:44:38.262Z",
-        "id": 245,
+        "createdAt": "2026-03-31T14:52:04.747Z",
+        "id": 247,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "5877619a-53f0-4f3b-bc3c-3a7358d7d044",
+        "versionId": "9979cb49-cbc9-4abb-9679-014837d992ae",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
