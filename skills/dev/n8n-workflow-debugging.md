@@ -424,6 +424,39 @@ Cuando un workflow no funciona como se espera:
 11. ✅ ¿`$fromAI()` retorna `"undefined"` string? → usar JSON-in-query: instruir al AI a formatear `query` como JSON
 12. ✅ ¿httpRequest typeVersion 4.2 con body JSON? → usar `specifyBody: "json"` + `jsonBody`, NO `body.mode: "raw"` + `rawBody`
 13. ✅ ¿`vectorStoreQdrant` retrieve-as-tool lanza "Not Found"? → bug en n8n 2.11.3, reemplazar con `toolWorkflow` + sub-workflow HTTP (ver `skills/dev/n8n-ai-agent-tools.md`)
-13. ✅ ¿`telegramTrigger` no recibe mensajes después de activar? → Verificar URL `{WEBHOOK_URL}/webhook/{webhookId}/webhook` y que la credencial tiene token real (no `__n8n_BLANK_VALUE_`). Si la URL está mal, llamar `setWebhook` manualmente con secret = `{workflowId}_{nodeId}` (ver sección 11)
-14. ✅ ¿Postgres `executeQuery` CTE retorna `{success:'True'}` en lugar de datos? → la CTE eliminó 0 filas (otro escritor ganó el `last_ts`). Agregar IF node "Is Last Writer?" después — `$json.text notEmpty` → continuar; false → stop limpio
-15. ✅ ¿Debounce con múltiples mensajes simultáneos? → NO usar `$getWorkflowStaticData` (race condition en memoria). Usar tabla PostgreSQL `message_buffer` con `INSERT ... ON CONFLICT` + `GREATEST(last_ts)` (ver sección 11)
+14. ✅ ¿`telegramTrigger` no recibe mensajes después de activar? → Verificar URL `{WEBHOOK_URL}/webhook/{webhookId}/webhook` y que la credencial tiene token real (no `__n8n_BLANK_VALUE_`). Si la URL está mal, llamar `setWebhook` manualmente con secret = `{workflowId}_{nodeId}` (ver sección 11)
+15. ✅ ¿Postgres `executeQuery` CTE retorna `{success:'True'}` en lugar de datos? → la CTE eliminó 0 filas (otro escritor ganó el `last_ts`). Agregar IF node "Is Last Writer?" después — `$json.text notEmpty` → continuar; false → stop limpio
+16. ✅ ¿Debounce con múltiples mensajes simultáneos? → NO usar `$getWorkflowStaticData` (race condition en memoria). Usar tabla PostgreSQL `message_buffer` con `INSERT ... ON CONFLICT` + `GREATEST(last_ts)` (ver sección 11)
+17. ✅ ¿Flujo con IF nodes o state machine? → **Validar TODAS las combinaciones de estado antes de implementar** (ver regla E2E abajo)
+
+---
+
+## 14. Regla E2E — Validar todas las combinaciones de estado
+
+**OBLIGATORIO antes de implementar cualquier flujo con IF nodes, routing condicional o state machines.**
+
+### Proceso
+
+1. Listar todas las variables de estado y sus valores posibles (booleanos, nulls, strings)
+2. Construir la tabla de combinaciones (2^n para n variables booleanas)
+3. Para **cada combinación**, responder: ¿cuál es el path correcto? ¿tiene sentido el routing?
+4. Verificar también el flujo **post-acción**: después de guardar datos, ¿las condiciones aguas abajo siguen siendo correctas?
+5. Pregunta clave: ¿puede un usuario llegar a este estado sin haber completado el paso previo esperado?
+
+### Ejemplo — Onboarding (3 variables, 8 combinaciones)
+
+| `onboarding_completed` | `profile_saved` | `phone_provided` | Routing correcto |
+|---|---|---|---|
+| true | any | any | AI Agent |
+| false | false | false | Onboarding Agent |
+| false | false | true | Onboarding Agent (no pedir teléfono si no hay perfil) |
+| false | true | false | Send Phone Reminder |
+| false | true | true | Complete Onboarding directo |
+
+### Por qué esto importa
+
+Se diseñó `phone_pending` dos veces (flag + derivado) con fallos en ambas iteraciones porque solo se validó el "camino feliz":
+- **Fallo 1:** Usuario con profile row pero sin perfil real recibía botón de teléfono sin haber completado el onboarding
+- **Fallo 2:** Al completar el perfil siempre se pedía el teléfono, ignorando que el usuario podría ya tenerlo
+
+La solución final usa `profile_saved` (derivado de `goal IS NOT NULL`) + `phone_provided` (derivado de `phone_number != ''`) con todos los caminos validados explícitamente.

@@ -473,6 +473,19 @@ Cada vez que se aprende la solución correcta a un problema técnico (especialme
 
 Sin este registro, las correcciones se pierden al cerrar el contexto.
 
+### Validar todas las combinaciones antes de implementar flujos con estados
+Antes de implementar o modificar cualquier flujo con múltiples estados (IF nodes, state machines, routing condicional):
+
+1. Listar **todas** las variables de estado relevantes y sus valores posibles
+2. Construir la tabla de combinaciones (2^n para n booleanos)
+3. Verificar que **cada combinación** tiene un routing lógico y correcto — incluyendo las que parecen imposibles en el flujo normal
+4. Verificar el flujo **post-acción**: ¿qué pasa después de guardar datos? ¿siguen siendo correctas las condiciones?
+5. Preguntar explícitamente: ¿puede un usuario llegar a este estado sin haber pasado por el paso previo esperado?
+
+**Por qué:** Se diseñó `phone_pending` como flag y luego como derivado, ambos con fallos porque solo se validó el "camino feliz":
+- `phone_pending=true` sin perfil → botón de teléfono sin haber completado el onboarding
+- Al guardar perfil siempre pedía teléfono, ignorando que el usuario podría ya tenerlo
+
 ### Nunca confirmar sin test
 NUNCA declarar una corrección como "funcionando" sin ejecutar primero un test real que lo valide. Anunciar una solución sin probarla es equivalente a no haberla verificado.
 
