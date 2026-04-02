@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T01:22:28.545Z",
+  "updatedAt": "2026-04-02T01:30:30.373Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -1717,7 +1717,7 @@
     },
     {
       "id": "vs-knowledge-rag-tool",
-      "name": "Tool: Conocimiento Nutricional",
+      "name": "Tool: Base de Conocimiento",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1.3,
       "position": [
@@ -2450,14 +2450,14 @@
       "ai_embedding": [
         [
           {
-            "node": "Tool: Conocimiento Nutricional",
+            "node": "Tool: Base de Conocimiento",
             "type": "ai_embedding",
             "index": 0
           }
         ]
       ]
     },
-    "Tool: Conocimiento Nutricional": {
+    "Tool: Base de Conocimiento": {
       "ai_tool": [
         [
           {
@@ -2479,9 +2479,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "e5c5bfcf-fb79-4686-999c-0970d7032f56",
-  "activeVersionId": "e5c5bfcf-fb79-4686-999c-0970d7032f56",
-  "versionCounter": 541,
+  "versionId": "8712f226-e617-40f7-9a24-8a90f0027f54",
+  "activeVersionId": "8712f226-e617-40f7-9a24-8a90f0027f54",
+  "versionCounter": 545,
   "triggerCount": 1,
   "shared": [
     {
@@ -2504,9 +2504,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T01:22:28.548Z",
-    "createdAt": "2026-04-02T01:22:28.548Z",
-    "versionId": "e5c5bfcf-fb79-4686-999c-0970d7032f56",
+    "updatedAt": "2026-04-02T01:30:30.377Z",
+    "createdAt": "2026-04-02T01:30:30.377Z",
+    "versionId": "8712f226-e617-40f7-9a24-8a90f0027f54",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -4219,7 +4219,7 @@
       },
       {
         "id": "vs-knowledge-rag-tool",
-        "name": "Tool: Conocimiento Nutricional",
+        "name": "Tool: Base de Conocimiento",
         "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
         "typeVersion": 1.3,
         "position": [
@@ -4952,14 +4952,14 @@
         "ai_embedding": [
           [
             {
-              "node": "Tool: Conocimiento Nutricional",
+              "node": "Tool: Base de Conocimiento",
               "type": "ai_embedding",
               "index": 0
             }
           ]
         ]
       },
-      "Tool: Conocimiento Nutricional": {
+      "Tool: Base de Conocimiento": {
         "ai_tool": [
           [
             {
@@ -4977,10 +4977,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T01:22:31.760Z",
-        "id": 339,
+        "createdAt": "2026-04-02T01:30:33.529Z",
+        "id": 341,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "e5c5bfcf-fb79-4686-999c-0970d7032f56",
+        "versionId": "8712f226-e617-40f7-9a24-8a90f0027f54",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
