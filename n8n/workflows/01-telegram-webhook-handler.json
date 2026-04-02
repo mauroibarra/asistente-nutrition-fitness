@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T01:30:30.373Z",
+  "updatedAt": "2026-04-02T01:34:51.013Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -1726,7 +1726,7 @@
       ],
       "parameters": {
         "mode": "retrieve-as-tool",
-        "toolDescription": "Base de conocimiento experta en nutricion, fitness, entrenamiento, suplementacion y habitos saludables. Usala para responder preguntas tecnicas del usuario sobre nutricion, ejercicio, suplementos o principios de entrenamiento.",
+        "toolDescription": "Base de conocimiento experta en nutricion, fitness, entrenamiento, suplementacion, habitos saludables, psicologia del cambio, y estrategias de coaching. Consultar SIEMPRE que el usuario:\n- Pregunte algo tecnico sobre nutricion, ejercicio o suplementos\n- Se sienta estancado, en meseta, o sin progreso (hay protocolos especificos para romper mesetas)\n- Necesite ayuda para crear habitos o mantener consistencia (hay tecnicas como habit stacking)\n- Pregunte sobre ritmos seguros de perdida o ganancia de peso\n- Pregunte sobre tipos de entrenamiento, volumen, frecuencia o deload\n- Exprese frustracion con su proceso (hay estrategias de coaching basadas en evidencia)\n- Necesite interpretar metricas como IMC, ritmo semanal de cambio de peso, o porcentaje de grasa corporal (hay tablas de rangos y clasificaciones)",
         "qdrantCollection": {
           "__rl": true,
           "mode": "id",
@@ -2479,9 +2479,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "8712f226-e617-40f7-9a24-8a90f0027f54",
-  "activeVersionId": "8712f226-e617-40f7-9a24-8a90f0027f54",
-  "versionCounter": 545,
+  "versionId": "d907e711-4538-464b-a455-cbe688f5dc5b",
+  "activeVersionId": "d907e711-4538-464b-a455-cbe688f5dc5b",
+  "versionCounter": 549,
   "triggerCount": 1,
   "shared": [
     {
@@ -2504,9 +2504,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T01:30:30.377Z",
-    "createdAt": "2026-04-02T01:30:30.377Z",
-    "versionId": "8712f226-e617-40f7-9a24-8a90f0027f54",
+    "updatedAt": "2026-04-02T01:34:51.017Z",
+    "createdAt": "2026-04-02T01:34:51.017Z",
+    "versionId": "d907e711-4538-464b-a455-cbe688f5dc5b",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -4228,7 +4228,7 @@
         ],
         "parameters": {
           "mode": "retrieve-as-tool",
-          "toolDescription": "Base de conocimiento experta en nutricion, fitness, entrenamiento, suplementacion y habitos saludables. Usala para responder preguntas tecnicas del usuario sobre nutricion, ejercicio, suplementos o principios de entrenamiento.",
+          "toolDescription": "Base de conocimiento experta en nutricion, fitness, entrenamiento, suplementacion, habitos saludables, psicologia del cambio, y estrategias de coaching. Consultar SIEMPRE que el usuario:\n- Pregunte algo tecnico sobre nutricion, ejercicio o suplementos\n- Se sienta estancado, en meseta, o sin progreso (hay protocolos especificos para romper mesetas)\n- Necesite ayuda para crear habitos o mantener consistencia (hay tecnicas como habit stacking)\n- Pregunte sobre ritmos seguros de perdida o ganancia de peso\n- Pregunte sobre tipos de entrenamiento, volumen, frecuencia o deload\n- Exprese frustracion con su proceso (hay estrategias de coaching basadas en evidencia)\n- Necesite interpretar metricas como IMC, ritmo semanal de cambio de peso, o porcentaje de grasa corporal (hay tablas de rangos y clasificaciones)",
           "qdrantCollection": {
             "__rl": true,
             "mode": "id",
@@ -4977,10 +4977,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T01:30:33.529Z",
-        "id": 341,
+        "createdAt": "2026-04-02T01:34:54.265Z",
+        "id": 343,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "8712f226-e617-40f7-9a24-8a90f0027f54",
+        "versionId": "d907e711-4538-464b-a455-cbe688f5dc5b",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
