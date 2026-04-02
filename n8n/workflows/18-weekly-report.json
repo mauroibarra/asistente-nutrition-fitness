@@ -1,0 +1,456 @@
+{
+  "updatedAt": "2026-04-01T20:46:12.924Z",
+  "createdAt": "2026-04-01T20:41:22.079Z",
+  "id": "gsIQcXRlMznc3uJ8",
+  "name": "FitAI - Weekly Report",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "wr-01",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * 0"
+            }
+          ]
+        },
+        "timezone": "America/Bogota"
+      }
+    },
+    {
+      "id": "wr-02",
+      "name": "Get Active Users with Weekly Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        480,
+        300
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.height_cm, up.gender, up.age,\n       g.goal_type, g.target_weight, g.start_weight, g.start_date,\n       w_current.weight_kg AS current_weight,\n       w_current.logged_at AS current_weight_date,\n       w_prev.weight_kg AS previous_weight,\n       weekly.avg_calories, weekly.avg_protein, weekly.days_tracked,\n       weekly.avg_adherence,\n       workouts.completed AS workouts_completed,\n       up.training_days_per_week\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg, logged_at FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) w_current ON true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id AND logged_at < CURRENT_DATE - INTERVAL '5 days' ORDER BY logged_at DESC LIMIT 1\n) w_prev ON true\nLEFT JOIN LATERAL (\n  SELECT\n    ROUND(AVG(calories_consumed)) AS avg_calories,\n    ROUND(AVG(protein_consumed_g)) AS avg_protein,\n    COUNT(*) FILTER (WHERE meals_logged > 0) AS days_tracked,\n    ROUND(AVG(plan_adherence_pct)) AS avg_adherence\n  FROM daily_targets\n  WHERE user_id = u.id AND target_date >= CURRENT_DATE - INTERVAL '7 days' AND target_date < CURRENT_DATE\n) weekly ON true\nLEFT JOIN LATERAL (\n  SELECT COUNT(*) AS completed FROM conversation_logs\n  WHERE user_id = u.id AND message_type = 'workout_completed' AND created_at >= CURRENT_DATE - INTERVAL '7 days'\n) workouts ON true\nWHERE u.is_active = true\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id\n      AND cl.message_type = 'weekly_report'\n      AND cl.created_at::date = CURRENT_DATE\n  );",
+        "options": {}
+      }
+    },
+    {
+      "id": "wr-03",
+      "name": "Has Users?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "wr-04",
+      "name": "Build Weekly Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        160
+      ],
+      "parameters": {
+        "jsCode": "const d = $json;\nconst firstName = d.first_name;\nconst currentWeight = d.current_weight;\nconst previousWeight = d.previous_weight;\nconst startWeight = d.start_weight;\nconst targetWeight = d.target_weight;\n\nlet weightSection = '';\nif (currentWeight && previousWeight) {\n  const weeklyChange = Math.round((currentWeight - previousWeight) * 10) / 10;\n  const direction = weeklyChange < 0 ? 'bajaste' : weeklyChange > 0 ? 'subiste' : 'te mantuviste en';\n  const changeAbs = Math.abs(weeklyChange);\n  weightSection = `Peso: *${currentWeight} kg* (${direction} *${changeAbs} kg* esta semana)`;\n  if (startWeight) {\n    const totalChange = Math.round((currentWeight - startWeight) * 10) / 10;\n    weightSection += `\\nDesde el inicio: *${totalChange > 0 ? '+' : ''}${totalChange} kg*`;\n  }\n} else if (currentWeight) {\n  weightSection = `Peso actual: *${currentWeight} kg* (no tengo dato de la semana pasada)`;\n} else {\n  weightSection = `No me reportaste peso esta semana. ¡Pésate mañana en ayunas!`;\n}\n\nlet goalSection = '';\nif (currentWeight && targetWeight && startWeight) {\n  const totalToChange = Math.abs(startWeight - targetWeight);\n  const changed = Math.abs(startWeight - currentWeight);\n  const pct = totalToChange > 0 ? Math.round((changed / totalToChange) * 100) : 0;\n  const remaining = Math.round(Math.abs(currentWeight - targetWeight) * 10) / 10;\n  goalSection = `Meta: *${pct}% completada* (faltan *${remaining} kg*)`;\n  if (previousWeight && currentWeight !== previousWeight) {\n    const weeklyRate = Math.abs(currentWeight - previousWeight);\n    if (weeklyRate > 0.1) {\n      const weeksRemaining = Math.ceil(remaining / weeklyRate);\n      goalSection += ` — a este ritmo, ~*${weeksRemaining} semanas* más`;\n    }\n  }\n}\n\nlet nutritionSection = '';\nif (d.avg_calories && d.days_tracked > 0) {\n  nutritionSection = `Calorías promedio: *${d.avg_calories} kcal/día* (meta: ${d.caloric_target})\\nProteína promedio: *${d.avg_protein}g/día* (meta: ${d.protein_target_g})\\nDías registrados: ${d.days_tracked} de 7`;\n  if (d.avg_adherence) nutritionSection += `\\nAdherencia: *${d.avg_adherence}%*`;\n} else {\n  nutritionSection = `No tengo datos de nutrición de esta semana. Recuerda reportarme lo que comes cada día.`;\n}\n\nlet exerciseSection = '';\nconst workoutsTarget = d.training_days_per_week || 0;\nconst workoutsCompleted = d.workouts_completed || 0;\nif (workoutsTarget > 0) exerciseSection = `Ejercicio: *${workoutsCompleted} de ${workoutsTarget} sesiones*`;\n\nlet bmiSection = '';\nif (currentWeight && d.height_cm) {\n  const heightM = d.height_cm / 100;\n  const bmi = Math.round((currentWeight / (heightM * heightM)) * 10) / 10;\n  bmiSection = `IMC: *${bmi}*`;\n}\n\nlet message = `${firstName}, tu resumen de la semana:\\n\\n`;\nmessage += weightSection + '\\n';\nif (goalSection) message += goalSection + '\\n';\nmessage += '\\n' + nutritionSection + '\\n';\nif (exerciseSection) message += '\\n' + exerciseSection + '\\n';\nif (bmiSection) message += bmiSection + '\\n';\n\nif (d.avg_calories && Math.abs(d.avg_calories - d.caloric_target) <= 100 && currentWeight && previousWeight) {\n  const goingRight = (d.goal_type === 'lose_fat' && currentWeight <= previousWeight) ||\n                     (d.goal_type === 'gain_muscle' && currentWeight >= previousWeight);\n  if (goingRight) message += '\\nBuena semana. Los números dicen que vas en la dirección correcta.';\n}\n\nmessage += '\\n\\nEsta semana vamos por más. Tu plan de mañana te lo mando temprano.';\n\nreturn [{ json: { telegramId: d.telegram_id, userId: d.user_id, message } }];\n"
+      }
+    },
+    {
+      "id": "wr-05",
+      "name": "Send Report",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        160
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.telegramId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "wr-06",
+      "name": "Log Report",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1440,
+        160
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'weekly_report', '[proactive]', $2, NOW());",
+        "options": {
+          "queryReplacement": "={ [$('Build Weekly Report').item.json.userId, $('Build Weekly Report').item.json.message] }"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Users with Weekly Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Users with Weekly Data": {
+      "main": [
+        [
+          {
+            "node": "Has Users?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Users?": {
+      "main": [
+        [
+          {
+            "node": "Build Weekly Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Weekly Report": {
+      "main": [
+        [
+          {
+            "node": "Send Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Report": {
+      "main": [
+        [
+          {
+            "node": "Log Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Cron Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "c61cf6f3-c3fc-411b-8748-ef8bc7c365ab",
+  "activeVersionId": "c61cf6f3-c3fc-411b-8748-ef8bc7c365ab",
+  "versionCounter": 12,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-01T20:41:22.081Z",
+      "createdAt": "2026-04-01T20:41:22.081Z",
+      "role": "workflow:owner",
+      "workflowId": "gsIQcXRlMznc3uJ8",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-01T20:46:12.925Z",
+    "createdAt": "2026-04-01T20:46:12.925Z",
+    "versionId": "c61cf6f3-c3fc-411b-8748-ef8bc7c365ab",
+    "workflowId": "gsIQcXRlMznc3uJ8",
+    "nodes": [
+      {
+        "id": "wr-01",
+        "name": "Cron Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 10 * * 0"
+              }
+            ]
+          },
+          "timezone": "America/Bogota"
+        }
+      },
+      {
+        "id": "wr-02",
+        "name": "Get Active Users with Weekly Data",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          480,
+          300
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.height_cm, up.gender, up.age,\n       g.goal_type, g.target_weight, g.start_weight, g.start_date,\n       w_current.weight_kg AS current_weight,\n       w_current.logged_at AS current_weight_date,\n       w_prev.weight_kg AS previous_weight,\n       weekly.avg_calories, weekly.avg_protein, weekly.days_tracked,\n       weekly.avg_adherence,\n       workouts.completed AS workouts_completed,\n       up.training_days_per_week\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg, logged_at FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) w_current ON true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id AND logged_at < CURRENT_DATE - INTERVAL '5 days' ORDER BY logged_at DESC LIMIT 1\n) w_prev ON true\nLEFT JOIN LATERAL (\n  SELECT\n    ROUND(AVG(calories_consumed)) AS avg_calories,\n    ROUND(AVG(protein_consumed_g)) AS avg_protein,\n    COUNT(*) FILTER (WHERE meals_logged > 0) AS days_tracked,\n    ROUND(AVG(plan_adherence_pct)) AS avg_adherence\n  FROM daily_targets\n  WHERE user_id = u.id AND target_date >= CURRENT_DATE - INTERVAL '7 days' AND target_date < CURRENT_DATE\n) weekly ON true\nLEFT JOIN LATERAL (\n  SELECT COUNT(*) AS completed FROM conversation_logs\n  WHERE user_id = u.id AND message_type = 'workout_completed' AND created_at >= CURRENT_DATE - INTERVAL '7 days'\n) workouts ON true\nWHERE u.is_active = true\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id\n      AND cl.message_type = 'weekly_report'\n      AND cl.created_at::date = CURRENT_DATE\n  );",
+          "options": {}
+        }
+      },
+      {
+        "id": "wr-03",
+        "name": "Has Users?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          720,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $input.all().length }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "wr-04",
+        "name": "Build Weekly Report",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          160
+        ],
+        "parameters": {
+          "jsCode": "const d = $json;\nconst firstName = d.first_name;\nconst currentWeight = d.current_weight;\nconst previousWeight = d.previous_weight;\nconst startWeight = d.start_weight;\nconst targetWeight = d.target_weight;\n\nlet weightSection = '';\nif (currentWeight && previousWeight) {\n  const weeklyChange = Math.round((currentWeight - previousWeight) * 10) / 10;\n  const direction = weeklyChange < 0 ? 'bajaste' : weeklyChange > 0 ? 'subiste' : 'te mantuviste en';\n  const changeAbs = Math.abs(weeklyChange);\n  weightSection = `Peso: *${currentWeight} kg* (${direction} *${changeAbs} kg* esta semana)`;\n  if (startWeight) {\n    const totalChange = Math.round((currentWeight - startWeight) * 10) / 10;\n    weightSection += `\\nDesde el inicio: *${totalChange > 0 ? '+' : ''}${totalChange} kg*`;\n  }\n} else if (currentWeight) {\n  weightSection = `Peso actual: *${currentWeight} kg* (no tengo dato de la semana pasada)`;\n} else {\n  weightSection = `No me reportaste peso esta semana. ¡Pésate mañana en ayunas!`;\n}\n\nlet goalSection = '';\nif (currentWeight && targetWeight && startWeight) {\n  const totalToChange = Math.abs(startWeight - targetWeight);\n  const changed = Math.abs(startWeight - currentWeight);\n  const pct = totalToChange > 0 ? Math.round((changed / totalToChange) * 100) : 0;\n  const remaining = Math.round(Math.abs(currentWeight - targetWeight) * 10) / 10;\n  goalSection = `Meta: *${pct}% completada* (faltan *${remaining} kg*)`;\n  if (previousWeight && currentWeight !== previousWeight) {\n    const weeklyRate = Math.abs(currentWeight - previousWeight);\n    if (weeklyRate > 0.1) {\n      const weeksRemaining = Math.ceil(remaining / weeklyRate);\n      goalSection += ` — a este ritmo, ~*${weeksRemaining} semanas* más`;\n    }\n  }\n}\n\nlet nutritionSection = '';\nif (d.avg_calories && d.days_tracked > 0) {\n  nutritionSection = `Calorías promedio: *${d.avg_calories} kcal/día* (meta: ${d.caloric_target})\\nProteína promedio: *${d.avg_protein}g/día* (meta: ${d.protein_target_g})\\nDías registrados: ${d.days_tracked} de 7`;\n  if (d.avg_adherence) nutritionSection += `\\nAdherencia: *${d.avg_adherence}%*`;\n} else {\n  nutritionSection = `No tengo datos de nutrición de esta semana. Recuerda reportarme lo que comes cada día.`;\n}\n\nlet exerciseSection = '';\nconst workoutsTarget = d.training_days_per_week || 0;\nconst workoutsCompleted = d.workouts_completed || 0;\nif (workoutsTarget > 0) exerciseSection = `Ejercicio: *${workoutsCompleted} de ${workoutsTarget} sesiones*`;\n\nlet bmiSection = '';\nif (currentWeight && d.height_cm) {\n  const heightM = d.height_cm / 100;\n  const bmi = Math.round((currentWeight / (heightM * heightM)) * 10) / 10;\n  bmiSection = `IMC: *${bmi}*`;\n}\n\nlet message = `${firstName}, tu resumen de la semana:\\n\\n`;\nmessage += weightSection + '\\n';\nif (goalSection) message += goalSection + '\\n';\nmessage += '\\n' + nutritionSection + '\\n';\nif (exerciseSection) message += '\\n' + exerciseSection + '\\n';\nif (bmiSection) message += bmiSection + '\\n';\n\nif (d.avg_calories && Math.abs(d.avg_calories - d.caloric_target) <= 100 && currentWeight && previousWeight) {\n  const goingRight = (d.goal_type === 'lose_fat' && currentWeight <= previousWeight) ||\n                     (d.goal_type === 'gain_muscle' && currentWeight >= previousWeight);\n  if (goingRight) message += '\\nBuena semana. Los números dicen que vas en la dirección correcta.';\n}\n\nmessage += '\\n\\nEsta semana vamos por más. Tu plan de mañana te lo mando temprano.';\n\nreturn [{ json: { telegramId: d.telegram_id, userId: d.user_id, message } }];\n"
+        }
+      },
+      {
+        "id": "wr-05",
+        "name": "Send Report",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1200,
+          160
+        ],
+        "continueOnFail": true,
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        },
+        "parameters": {
+          "chatId": "={{ $json.telegramId }}",
+          "text": "={{ $json.message }}",
+          "additionalFields": {
+            "parse_mode": "Markdown",
+            "appendAttribution": false
+          }
+        }
+      },
+      {
+        "id": "wr-06",
+        "name": "Log Report",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1440,
+          160
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'weekly_report', '[proactive]', $2, NOW());",
+          "options": {
+            "queryReplacement": "={ [$('Build Weekly Report').item.json.userId, $('Build Weekly Report').item.json.message] }"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Cron Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Active Users with Weekly Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Active Users with Weekly Data": {
+        "main": [
+          [
+            {
+              "node": "Has Users?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Users?": {
+        "main": [
+          [
+            {
+              "node": "Build Weekly Report",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Build Weekly Report": {
+        "main": [
+          [
+            {
+              "node": "Send Report",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Report": {
+        "main": [
+          [
+            {
+              "node": "Log Report",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-01T20:46:13.964Z",
+        "id": 287,
+        "workflowId": "gsIQcXRlMznc3uJ8",
+        "versionId": "c61cf6f3-c3fc-411b-8748-ef8bc7c365ab",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
+}

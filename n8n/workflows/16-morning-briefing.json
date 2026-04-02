@@ -1,0 +1,456 @@
+{
+  "updatedAt": "2026-04-01T20:46:09.689Z",
+  "createdAt": "2026-04-01T20:41:18.858Z",
+  "id": "NFhsChTrhIc05uyc",
+  "name": "FitAI - Morning Briefing",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "mb-01",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/30 5-9 * * *"
+            }
+          ]
+        },
+        "timezone": "America/Bogota"
+      }
+    },
+    {
+      "id": "mb-02",
+      "name": "Get Users for Current Window",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        480,
+        300
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.wake_up_time, up.caloric_target, up.protein_target_g,\n       mp.plan_json, mp.total_calories,\n       g.target_weight, g.start_weight,\n       wl.weight_kg AS current_weight\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) wl ON true\nWHERE u.is_active = true\n  AND ABS(EXTRACT(EPOCH FROM (up.wake_up_time::time - LOCALTIME)) / 60) <= 15\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'morning_briefing' AND cl.created_at::date = CURRENT_DATE\n  );",
+        "options": {}
+      }
+    },
+    {
+      "id": "mb-03",
+      "name": "Has Users?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "mb-04",
+      "name": "Build Briefing Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        160
+      ],
+      "parameters": {
+        "jsCode": "const plan = $json.plan_json\n  ? (typeof $json.plan_json === 'string' ? JSON.parse($json.plan_json) : $json.plan_json)\n  : null;\n\nconst firstName = $json.first_name;\nconst caloricTarget = $json.caloric_target;\nconst proteinTarget = $json.protein_target_g;\n\nlet mealsText = '';\nif (plan?.meals) {\n  for (const meal of plan.meals) {\n    mealsText += `${meal.meal_label} (${meal.time}): ${meal.name} — *${meal.calories} kcal*\\n`;\n  }\n}\n\nconst currentWeight = $json.current_weight;\nconst targetWeight = $json.target_weight;\nconst startWeight = $json.start_weight;\nlet motivation = '';\nif (currentWeight && targetWeight && startWeight) {\n  const totalToChange = Math.abs(startWeight - targetWeight);\n  const changed = Math.abs(startWeight - currentWeight);\n  const pct = totalToChange > 0 ? Math.round((changed / totalToChange) * 100) : 0;\n  if (pct >= 75) motivation = 'Ya llevas más del 75% de tu meta. ¡La recta final!';\n  else if (pct >= 50) motivation = 'Más de la mitad del camino recorrido. Sigue así.';\n  else if (pct >= 25) motivation = 'Un cuarto de tu meta completado. Cada día cuenta.';\n}\n\nconst greetings = [\n  `Buenos días, ${firstName}!`,\n  `Buen día, ${firstName}!`,\n  `Hey ${firstName}, ¡arrancamos el día!`,\n  `${firstName}, aquí está tu plan de hoy:`,\n  `¡Buenos días! ¿Listo para hoy, ${firstName}?`\n];\nconst greeting = greetings[Math.floor(Math.random() * greetings.length)];\n\nlet message = `${greeting}\\n\\n`;\nif (mealsText) {\n  message += `${mealsText}\\nMeta del día: *${caloricTarget} kcal* | *${proteinTarget}g proteína*`;\n} else {\n  message += `Hoy no tienes plan de comidas generado. Escríbeme y te armo uno rápido.`;\n}\nif (motivation) message += `\\n\\n${motivation}`;\n\nreturn [{ json: { telegramId: $json.telegram_id, userId: $json.user_id, message } }];\n"
+      }
+    },
+    {
+      "id": "mb-05",
+      "name": "Send Briefing",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        160
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.telegramId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "mb-06",
+      "name": "Log Briefing Sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1440,
+        160
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'morning_briefing', '[proactive]', $2, NOW());",
+        "options": {
+          "queryReplacement": "={ [$('Build Briefing Message').item.json.userId, $('Build Briefing Message').item.json.message] }"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Users for Current Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Users for Current Window": {
+      "main": [
+        [
+          {
+            "node": "Has Users?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Users?": {
+      "main": [
+        [
+          {
+            "node": "Build Briefing Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Briefing Message": {
+      "main": [
+        [
+          {
+            "node": "Send Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Briefing": {
+      "main": [
+        [
+          {
+            "node": "Log Briefing Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Cron Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "5e09d581-5967-4ad2-8b10-a3bddb173cd1",
+  "activeVersionId": "5e09d581-5967-4ad2-8b10-a3bddb173cd1",
+  "versionCounter": 8,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-01T20:41:18.863Z",
+      "createdAt": "2026-04-01T20:41:18.863Z",
+      "role": "workflow:owner",
+      "workflowId": "NFhsChTrhIc05uyc",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-01T20:46:09.690Z",
+    "createdAt": "2026-04-01T20:46:09.690Z",
+    "versionId": "5e09d581-5967-4ad2-8b10-a3bddb173cd1",
+    "workflowId": "NFhsChTrhIc05uyc",
+    "nodes": [
+      {
+        "id": "mb-01",
+        "name": "Cron Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "*/30 5-9 * * *"
+              }
+            ]
+          },
+          "timezone": "America/Bogota"
+        }
+      },
+      {
+        "id": "mb-02",
+        "name": "Get Users for Current Window",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          480,
+          300
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.wake_up_time, up.caloric_target, up.protein_target_g,\n       mp.plan_json, mp.total_calories,\n       g.target_weight, g.start_weight,\n       wl.weight_kg AS current_weight\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) wl ON true\nWHERE u.is_active = true\n  AND ABS(EXTRACT(EPOCH FROM (up.wake_up_time::time - LOCALTIME)) / 60) <= 15\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'morning_briefing' AND cl.created_at::date = CURRENT_DATE\n  );",
+          "options": {}
+        }
+      },
+      {
+        "id": "mb-03",
+        "name": "Has Users?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          720,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $input.all().length }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "mb-04",
+        "name": "Build Briefing Message",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          160
+        ],
+        "parameters": {
+          "jsCode": "const plan = $json.plan_json\n  ? (typeof $json.plan_json === 'string' ? JSON.parse($json.plan_json) : $json.plan_json)\n  : null;\n\nconst firstName = $json.first_name;\nconst caloricTarget = $json.caloric_target;\nconst proteinTarget = $json.protein_target_g;\n\nlet mealsText = '';\nif (plan?.meals) {\n  for (const meal of plan.meals) {\n    mealsText += `${meal.meal_label} (${meal.time}): ${meal.name} — *${meal.calories} kcal*\\n`;\n  }\n}\n\nconst currentWeight = $json.current_weight;\nconst targetWeight = $json.target_weight;\nconst startWeight = $json.start_weight;\nlet motivation = '';\nif (currentWeight && targetWeight && startWeight) {\n  const totalToChange = Math.abs(startWeight - targetWeight);\n  const changed = Math.abs(startWeight - currentWeight);\n  const pct = totalToChange > 0 ? Math.round((changed / totalToChange) * 100) : 0;\n  if (pct >= 75) motivation = 'Ya llevas más del 75% de tu meta. ¡La recta final!';\n  else if (pct >= 50) motivation = 'Más de la mitad del camino recorrido. Sigue así.';\n  else if (pct >= 25) motivation = 'Un cuarto de tu meta completado. Cada día cuenta.';\n}\n\nconst greetings = [\n  `Buenos días, ${firstName}!`,\n  `Buen día, ${firstName}!`,\n  `Hey ${firstName}, ¡arrancamos el día!`,\n  `${firstName}, aquí está tu plan de hoy:`,\n  `¡Buenos días! ¿Listo para hoy, ${firstName}?`\n];\nconst greeting = greetings[Math.floor(Math.random() * greetings.length)];\n\nlet message = `${greeting}\\n\\n`;\nif (mealsText) {\n  message += `${mealsText}\\nMeta del día: *${caloricTarget} kcal* | *${proteinTarget}g proteína*`;\n} else {\n  message += `Hoy no tienes plan de comidas generado. Escríbeme y te armo uno rápido.`;\n}\nif (motivation) message += `\\n\\n${motivation}`;\n\nreturn [{ json: { telegramId: $json.telegram_id, userId: $json.user_id, message } }];\n"
+        }
+      },
+      {
+        "id": "mb-05",
+        "name": "Send Briefing",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1200,
+          160
+        ],
+        "continueOnFail": true,
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        },
+        "parameters": {
+          "chatId": "={{ $json.telegramId }}",
+          "text": "={{ $json.message }}",
+          "additionalFields": {
+            "parse_mode": "Markdown",
+            "appendAttribution": false
+          }
+        }
+      },
+      {
+        "id": "mb-06",
+        "name": "Log Briefing Sent",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1440,
+          160
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'morning_briefing', '[proactive]', $2, NOW());",
+          "options": {
+            "queryReplacement": "={ [$('Build Briefing Message').item.json.userId, $('Build Briefing Message').item.json.message] }"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Cron Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Users for Current Window",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Users for Current Window": {
+        "main": [
+          [
+            {
+              "node": "Has Users?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Users?": {
+        "main": [
+          [
+            {
+              "node": "Build Briefing Message",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Build Briefing Message": {
+        "main": [
+          [
+            {
+              "node": "Send Briefing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Briefing": {
+        "main": [
+          [
+            {
+              "node": "Log Briefing Sent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-01T20:46:10.727Z",
+        "id": 283,
+        "workflowId": "NFhsChTrhIc05uyc",
+        "versionId": "5e09d581-5967-4ad2-8b10-a3bddb173cd1",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
+}

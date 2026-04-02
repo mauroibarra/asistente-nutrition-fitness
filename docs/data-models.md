@@ -202,20 +202,20 @@ CREATE INDEX idx_goals_user_active ON goals(user_id) WHERE is_active = true;
 
 ### Tabla: `meal_plans`
 
-Planes de comidas generados por el agente.
+Planes de comidas generados por el agente. **Desde v2, cada registro representa UN día** (`plan_date`). Los planes semanales (v1) quedan como registros legacy.
 
 ```sql
 CREATE TABLE meal_plans (
     id              SERIAL PRIMARY KEY,
     user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    week_number     INTEGER NOT NULL,
-    year            INTEGER NOT NULL,
-    plan_date       DATE,         -- agregado en migración 006: fecha específica del plan diario (NULL = plan semanal legacy)
+    week_number     INTEGER NOT NULL,  -- DEPRECATED en v2: se mantiene por compatibilidad con registros legacy
+    year            INTEGER NOT NULL,  -- DEPRECATED en v2: se mantiene por compatibilidad con registros legacy
+    plan_date       DATE,              -- CAMPO PRINCIPAL v2: fecha del plan diario. NULL = plan semanal legacy pre-v2
     plan_json       JSONB NOT NULL,
     total_calories  DECIMAL(7, 1),
     is_active       BOOLEAN DEFAULT true,
     generated_at    TIMESTAMPTZ DEFAULT NOW(),
-    expires_at      TIMESTAMPTZ,
+    expires_at      TIMESTAMPTZ,       -- no se usa en v2; planes diarios no expiran
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -225,8 +225,16 @@ CREATE INDEX idx_meal_plans_user_date ON meal_plans(user_id, plan_date);  -- mig
 ```
 
 **Campos no obvios**:
-- `plan_date`: Fecha específica del plan diario (sistema prompt v2). Antes los planes eran semanales (`week_number` + `year`); con v2, el `Meal Plan Generator` genera planes por día. `NULL` en registros legacy (planes semanales pre-v2). La query del AI Agent usa `WHERE plan_date = CURRENT_DATE AND is_active = true`.
-- `week_number` / `year`: Mantienen retrocompatibilidad con planes semanales existentes.
+- `plan_date`: **Campo principal en v2.** Fecha específica del plan diario (YYYY-MM-DD). `NULL` en registros legacy (planes semanales pre-v2). Los nuevos planes siempre incluyen `plan_date`. Query v2: `WHERE user_id = $1 AND plan_date = CURRENT_DATE AND is_active = true`.
+- `week_number` / `year`: **Deprecated en v2.** Se mantienen en el schema para compatibilidad con registros legacy. Los nuevos registros generados por el Meal Plan Generator v2 no los usan.
+- `expires_at`: **No se usa en v2.** Los planes diarios no tienen fecha de expiración — cada `plan_date` tiene exactamente un plan activo (`is_active = true`). El workflow desactiva el anterior (`is_active = false`) antes de insertar el nuevo.
+- `plan_json` v2: estructura de **un solo día** con campos `plan_date`, `day_of_week`, `total_calories`, `total_protein_g`, `total_carbs_g`, `total_fat_g`, `meals[]`. Ver sección JSON de ejemplo más adelante.
+
+**Ciclo de vida v2**:
+1. Cron nocturno (9pm) o onboarding: `Meal Plan Generator` genera plan para mañana
+2. `UPDATE meal_plans SET is_active = false WHERE user_id = $1 AND plan_date = $2` — desactiva plan anterior del mismo día
+3. `INSERT INTO meal_plans (user_id, plan_date, plan_json, ...)` — guarda nuevo plan
+4. No hay expiración — el plan permanece activo hasta que se reemplaza por uno nuevo del mismo `plan_date`
 
 ### Tabla: `exercise_plans`
 
@@ -270,26 +278,44 @@ CREATE INDEX idx_weight_logs_user_date ON weight_logs(user_id, logged_at DESC);
 
 ### Tabla: `conversation_logs`
 
-Historial de conversaciones para análisis y debugging.
+Historial de conversaciones para análisis, debugging y deduplicación de workflows proactivos.
 
 ```sql
 CREATE TABLE conversation_logs (
-    id              SERIAL PRIMARY KEY,
-    user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    message_text    TEXT NOT NULL,
-    response_text   TEXT,
-    message_type    VARCHAR(20) DEFAULT 'text',
-    tokens_used     INTEGER,
-    tools_called    TEXT[],
-    processing_ms   INTEGER,
-    created_at      TIMESTAMPTZ DEFAULT NOW()
+    id                 SERIAL PRIMARY KEY,
+    user_id            INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    message_text       TEXT,               -- NULL para mensajes proactivos (el bot inicia)
+    response_text      TEXT,               -- Para mensajes del agente: respuesta generada
+    assistant_response TEXT,               -- Para mensajes proactivos: contenido del mensaje enviado
+    message_type       VARCHAR(30) DEFAULT 'text',
+    tokens_used        INTEGER,
+    tools_called       TEXT[],
+    processing_ms      INTEGER,
+    created_at         TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_conversation_logs_user ON conversation_logs(user_id, created_at DESC);
+CREATE INDEX idx_conversation_logs_type_date ON conversation_logs(user_id, message_type, (created_at::date));
 
 -- Partitioning by month for performance (optional, for high volume)
 -- Consider partitioning this table when it exceeds 1M rows
 ```
+
+#### Valores de `message_type`
+
+| Valor | Fuente | Propósito |
+|-------|--------|-----------|
+| `text` | AI Agent | Interacción normal de texto del usuario |
+| `voice` | AI Agent | Mensaje de voz transcrito |
+| `callback` | AI Agent | Respuesta a botón inline |
+| `morning_briefing` | Morning Briefing (cron) | Plan del día enviado al despertar — dedup: 1 por día por usuario |
+| `meal_reminder` | Meal Reminder Scheduler (cron) | Recordatorio de comida próxima — dedup: 1 por `meal_name` por día |
+| `evening_checkin` | Evening Check-in (cron) | Resumen del día al cierre — dedup: 1 por día por usuario |
+| `weekly_report` | Weekly Report (cron) | Informe semanal — dedup: 1 por domingo por usuario |
+| `silence_check` | Silence Detector (cron) | Mensaje de reactivación — dedup: 1 por día por usuario |
+| `workout_completed` | AI Agent (tool) | El usuario confirmó sesión de ejercicio — usado por Weekly Report para contar sesiones |
+
+**Nota de deduplicación**: los workflows proactivos verifican con `NOT EXISTS (SELECT 1 FROM conversation_logs WHERE user_id = $1 AND message_type = $2 AND created_at::date = CURRENT_DATE)` antes de enviar. El campo `assistant_response` almacena el mensaje enviado para que el Meal Reminder pueda verificar si ya se envió el recordatorio de una comida específica (`LIKE '%' || meal_name || '%'`).
 
 ### Tabla: `admin_users`
 
@@ -622,7 +648,96 @@ erDiagram
 
 ## Estructura JSON de `meal_plans.plan_json`
 
-Ejemplo real de un plan semanal completo para un usuario con objetivo de pérdida de peso, 1800 kcal/día, cultura mexicana:
+> **v2 — Plan Diario**: cada registro representa UN día. La estructura cambió de `{ days: { monday: {meals:[]}, ... } }` (v1 semanal) a `{ plan_date, day_of_week, total_calories, meals: [] }` (v2 diario).
+
+### v2 — Ejemplo plan diario (estructura actual)
+
+Plan para un día, usuario colombiano, objetivo perder grasa, 1800 kcal:
+
+```json
+{
+  "plan_date": "2026-04-01",
+  "day_of_week": "miercoles",
+  "total_calories": 1795,
+  "total_protein_g": 138,
+  "total_carbs_g": 196,
+  "total_fat_g": 59,
+  "meals": [
+    {
+      "meal_type": "breakfast",
+      "meal_label": "Desayuno",
+      "time": "07:30",
+      "name": "Huevos revueltos con arepa y cafe",
+      "calories": 420,
+      "protein_g": 28,
+      "carbs_g": 38,
+      "fat_g": 16,
+      "ingredients": [
+        { "name": "Huevo entero", "quantity": "3 piezas", "grams": 150 },
+        { "name": "Arepa mediana", "quantity": "1 pieza", "grams": 80 },
+        { "name": "Tomate chonto", "quantity": "1/2 pieza", "grams": 60 },
+        { "name": "Cafe negro", "quantity": "1 taza", "grams": 240 }
+      ],
+      "preparation_notes": "Revolver huevos con tomate en sarten. Acompanar con arepa caliente."
+    },
+    {
+      "meal_type": "lunch",
+      "meal_label": "Almuerzo",
+      "time": "12:30",
+      "name": "Pechuga de pollo a la plancha con arroz y ensalada",
+      "calories": 560,
+      "protein_g": 48,
+      "carbs_g": 62,
+      "fat_g": 12,
+      "ingredients": [
+        { "name": "Pechuga de pollo", "quantity": "180g", "grams": 180 },
+        { "name": "Arroz blanco cocido", "quantity": "3/4 taza", "grams": 140 },
+        { "name": "Lechuga", "quantity": "2 tazas", "grams": 80 },
+        { "name": "Tomate", "quantity": "1 pieza", "grams": 100 },
+        { "name": "Limon", "quantity": "1 pieza", "grams": 30 }
+      ],
+      "preparation_notes": "Sazonar el pollo con ajo y comino. Cocinar a la plancha 6 min por lado."
+    },
+    {
+      "meal_type": "snack",
+      "meal_label": "Snack",
+      "time": "16:00",
+      "name": "Yogur griego con frutas",
+      "calories": 215,
+      "protein_g": 20,
+      "carbs_g": 22,
+      "fat_g": 6,
+      "ingredients": [
+        { "name": "Yogur griego natural", "quantity": "1 taza", "grams": 200 },
+        { "name": "Fresas", "quantity": "1/2 taza", "grams": 75 }
+      ],
+      "preparation_notes": "Servir el yogur con fresas picadas."
+    },
+    {
+      "meal_type": "dinner",
+      "meal_label": "Cena",
+      "time": "19:30",
+      "name": "Crema de lentejas con pan integral",
+      "calories": 600,
+      "protein_g": 42,
+      "carbs_g": 74,
+      "fat_g": 25,
+      "ingredients": [
+        { "name": "Lentejas secas", "quantity": "1/2 taza", "grams": 100 },
+        { "name": "Pan integral", "quantity": "2 rebanadas", "grams": 60 },
+        { "name": "Cebolla", "quantity": "1/2 pieza", "grams": 60 },
+        { "name": "Zanahoria", "quantity": "1 pieza", "grams": 80 },
+        { "name": "Aceite de oliva", "quantity": "1 cucharada", "grams": 10 }
+      ],
+      "preparation_notes": "Cocer las lentejas con cebolla y zanahoria. Licuar hasta obtener crema. Sazonar con sal y pimienta."
+    }
+  ]
+}
+```
+
+### v1 — Ejemplo plan semanal (estructura legacy — NO usar en nuevos desarrollos)
+
+Ejemplo de la estructura v1 semanal para un usuario con objetivo de pérdida de peso, 1800 kcal/día, cultura mexicana:
 
 ```json
 {

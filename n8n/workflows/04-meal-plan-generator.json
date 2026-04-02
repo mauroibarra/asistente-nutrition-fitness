@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-28T01:59:08.122Z",
+  "updatedAt": "2026-04-01T20:18:06.714Z",
   "createdAt": "2026-03-27T16:33:02.276Z",
   "id": "KQhP9lQNxCKeOsbJ",
   "name": "FitAI - Meal Plan Generator",
@@ -8,7 +8,7 @@
   "isArchived": false,
   "nodes": [
     {
-      "id": "node-1",
+      "id": "mp-01",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
@@ -16,198 +16,256 @@
         240,
         300
       ],
-      "parameters": {
-        "options": {}
-      }
+      "parameters": {}
     },
     {
-      "id": "node-2",
-      "name": "Get User Profile",
+      "id": "mp-02",
+      "name": "Load User Profile",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
         460,
-        200
+        60
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT up.*, g.goal_type, g.target_weight, u.first_name, u.language_code FROM user_profiles up JOIN users u ON up.user_id = u.id LEFT JOIN goals g ON up.user_id = g.user_id AND g.is_active = true WHERE up.user_id = $1;",
-        "options": {
-          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
-        }
-      },
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT up.*, g.goal_type, g.target_weight_kg AS target_weight, u.first_name\nFROM user_profiles up\nJOIN users u ON up.user_id = u.id\nLEFT JOIN goals g ON up.user_id = g.user_id AND g.is_active = true\nWHERE up.user_id = $1;",
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+        }
       }
     },
     {
-      "id": "node-3",
-      "name": "Get Previous Plan",
+      "id": "mp-03",
+      "name": "Get Recent Meals",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        180
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "alwaysOutputData": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT mp.plan_date, mp.plan_json\nFROM meal_plans mp\nWHERE mp.user_id = $1\n  AND mp.plan_date >= ($2::date - INTERVAL '3 days')\n  AND mp.plan_date < $2::date\nORDER BY mp.plan_date DESC;",
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Execute Workflow Trigger').first().json.planDate] }}"
+        }
+      }
+    },
+    {
+      "id": "mp-04",
+      "name": "Get Yesterday Intake",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "alwaysOutputData": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  dt.calories_consumed,\n  dt.protein_consumed_g,\n  dt.carbs_consumed_g,\n  dt.fat_consumed_g,\n  dt.meals_logged\nFROM daily_targets dt\nWHERE dt.user_id = $1\n  AND dt.target_date = ($2::date - INTERVAL '1 day');",
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Execute Workflow Trigger').first().json.planDate] }}"
+        }
+      }
+    },
+    {
+      "id": "mp-05",
+      "name": "Get Weekly Average",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
         460,
         420
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT plan_json FROM meal_plans WHERE user_id = $1 AND is_active = true ORDER BY generated_at DESC LIMIT 1;",
-        "options": {
-          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
-        }
-      },
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
       },
-      "alwaysOutputData": true
-    },
-    {
-      "id": "node-4",
-      "name": "Build Meal Plan Prompt",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        700,
-        300
-      ],
+      "alwaysOutputData": true,
       "parameters": {
-        "jsCode": "const profile = $('Get User Profile').first().json;\nconst previousPlan = $('Get Previous Plan').first()?.json?.plan_json || null;\n\nconst weekNumber = getWeekNumber(new Date());\nconst year = new Date().getFullYear();\n\nconst restrictions = profile.dietary_restrictions ? (Array.isArray(profile.dietary_restrictions) ? profile.dietary_restrictions.join(', ') : profile.dietary_restrictions) : 'Ninguna';\nconst allergies = profile.food_allergies ? (Array.isArray(profile.food_allergies) ? profile.food_allergies.join(', ') : profile.food_allergies) : 'Ninguna';\nconst dislikes = profile.disliked_foods ? (Array.isArray(profile.disliked_foods) ? profile.disliked_foods.join(', ') : profile.disliked_foods) : 'Ninguno';\n\nconst prevSummary = previousPlan ? 'PLAN DE LA SEMANA ANTERIOR (evita repetir las mismas comidas):\\n' + JSON.stringify(previousPlan).substring(0, 500) : '';\n\nconst prompt = 'Eres un nutriologo experto creando un plan de comidas personalizado.\\n\\nPERFIL DEL USUARIO:\\n- Nombre: ' + profile.first_name + '\\n- Objetivo calorico diario: ' + profile.caloric_target + ' kcal\\n- Macros objetivo: ' + profile.protein_target_g + 'g proteina, ' + profile.carb_target_g + 'g carbohidratos, ' + profile.fat_target_g + 'g grasa\\n- Restricciones dietarias: ' + restrictions + '\\n- Alergias: ' + allergies + '\\n- Alimentos que no le gustan: ' + dislikes + '\\n- Cultura gastronomica: ' + (profile.local_culture || 'mexican') + '\\n- Presupuesto para ingredientes: ' + (profile.budget_level || 'medium') + '\\n- Numero de comidas al dia: ' + profile.meal_count + '\\n- Semana numero: ' + weekNumber + '\\n\\n' + prevSummary + '\\n\\nINSTRUCCIONES:\\n1. Genera un plan de comidas para 7 dias completos (lunes a domingo).\\n2. Cada dia debe incluir ' + profile.meal_count + ' comidas distribuidas a lo largo del dia.\\n3. Los macronutrientes de cada dia deben acercarse lo mas posible a los objetivos (+-5%).\\n4. Las calorias diarias deben estar entre ' + (profile.caloric_target - 50) + ' y ' + (profile.caloric_target + 50) + '.\\n5. NUNCA incluyas alimentos que el usuario no puede comer.\\n6. Usa ingredientes accesibles y comunes en la cultura ' + (profile.local_culture || 'mexican') + '.\\n7. Las preparaciones deben ser realistas: maximo 30 minutos de preparacion.\\n8. Incluye variedad: no repitas la misma proteina mas de 2 veces por semana.\\n\\nFORMATO DE SALIDA: Responde EXCLUSIVAMENTE con JSON valido con la estructura: { \"days\": { \"monday\": { \"meals\": [...] }, ... }, \"daily_totals\": { \"calories\": N, \"protein_g\": N, \"carb_g\": N, \"fat_g\": N }, \"shopping_list\": [...] }. Cada meal debe tener: name, type (breakfast/lunch/dinner/snack), foods (array con name, quantity, unit, calories, protein_g, carb_g, fat_g), total_calories.';\n\nreturn [{\n  json: {\n    prompt,\n    userId: $('Execute Workflow Trigger').first().json.userId,\n    weekNumber,\n    year,\n    profile\n  }\n}];\n\nfunction getWeekNumber(d) {\n  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));\n  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));\n  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));\n  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n}",
-        "options": {}
+        "operation": "executeQuery",
+        "query": "SELECT\n  AVG(calories_consumed) AS avg_calories,\n  AVG(protein_consumed_g) AS avg_protein\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= date_trunc('week', $2::date)\n  AND target_date < $2::date\n  AND meals_logged > 0;",
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Execute Workflow Trigger').first().json.planDate] }}"
+        }
       }
     },
     {
-      "id": "node-6",
-      "name": "Parse and Validate Plan",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1180,
-        300
-      ],
-      "parameters": {
-        "jsCode": "const responseContent = $('Generate Meal Plan').first().json.text || '';\nlet plan;\n\ntry {\n  plan = JSON.parse(responseContent);\n} catch (e) {\n  const jsonMatch = responseContent.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    plan = JSON.parse(jsonMatch[0]);\n  } else {\n    throw new Error('No se pudo parsear el plan de comidas generado por OpenAI');\n  }\n}\n\nif (!plan.days || typeof plan.days !== 'object') {\n  throw new Error('El plan no contiene la estructura de dias esperada');\n}\n\nconst dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];\nfor (const day of dayNames) {\n  if (!plan.days[day] || !plan.days[day].meals) {\n    throw new Error('El plan no contiene datos para ' + day);\n  }\n}\n\nconst totalCalories = dayNames.reduce((sum, day) => {\n  const dayCalories = plan.days[day].meals.reduce((s, meal) => s + (meal.total_calories || 0), 0);\n  return sum + dayCalories;\n}, 0) / 7;\n\nconst prevData = $('Build Meal Plan Prompt').first().json;\n\nreturn [{\n  json: {\n    plan,\n    totalCalories: Math.round(totalCalories),\n    userId: prevData.userId,\n    weekNumber: prevData.weekNumber,\n    year: prevData.year\n  }\n}];",
-        "options": {}
-      }
-    },
-    {
-      "id": "node-7",
-      "name": "Deactivate Old Plan",
+      "id": "mp-06",
+      "name": "Check Workout Day",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1420,
-        300
+        460,
+        540
       ],
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE meal_plans SET is_active = false WHERE user_id = $1 AND is_active = true;",
-        "options": {
-          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
-        }
-      },
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      }
-    },
-    {
-      "id": "node-8",
-      "name": "Save New Plan",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        1660,
-        300
-      ],
+      },
+      "alwaysOutputData": true,
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO meal_plans (user_id, week_number, year, plan_json, total_calories, is_active, generated_at, expires_at) VALUES ($1, $2, $3, $4::jsonb, $5, true, NOW(), NOW() + INTERVAL '7 days') RETURNING id;",
+        "query": "SELECT EXISTS(\n  SELECT 1 FROM exercise_plans\n  WHERE user_id = $1\n    AND is_active = true\n    AND plan_json::jsonb @> jsonb_build_object('day_of_week', to_char($2::date, 'FMDay'))\n) AS has_workout;",
         "options": {
-          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Parse and Validate Plan').first().json.weekNumber, $('Parse and Validate Plan').first().json.year, JSON.stringify($('Parse and Validate Plan').first().json.plan), $('Parse and Validate Plan').first().json.totalCalories] }}"
-        }
-      },
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Execute Workflow Trigger').first().json.planDate] }}"
         }
       }
     },
     {
-      "id": "node-9",
-      "name": "Format for Telegram",
+      "id": "mp-07",
+      "name": "Build Daily Meal Plan Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1900,
+        680,
         300
       ],
       "parameters": {
-        "jsCode": "const prevData = $('Parse and Validate Plan').first().json;\nconst plan = prevData.plan;\nlet formatted = 'Tu plan de comidas para esta semana (Semana ' + prevData.weekNumber + ', ' + prevData.year + '):\\n\\n';\n\nconst dayTranslations = {\n  monday: 'Lunes', tuesday: 'Martes', wednesday: 'Miercoles',\n  thursday: 'Jueves', friday: 'Viernes', saturday: 'Sabado', sunday: 'Domingo'\n};\n\nfor (const [day, data] of Object.entries(plan.days)) {\n  formatted += '*' + dayTranslations[day] + '*\\n';\n  let dayCalories = 0;\n  let dayProtein = 0;\n  for (const meal of data.meals) {\n    const mealLabel = { breakfast: 'Desayuno', lunch: 'Comida', snack: 'Colacion', dinner: 'Cena' }[meal.type] || meal.type;\n    formatted += '- ' + mealLabel + ': ' + meal.name + ' - ' + meal.total_calories + ' kcal\\n';\n    dayCalories += meal.total_calories || 0;\n    dayProtein += meal.foods ? meal.foods.reduce((s, f) => s + (f.protein_g || 0), 0) : 0;\n  }\n  formatted += 'Total: ' + dayCalories + ' kcal | ~' + Math.round(dayProtein) + 'g proteina\\n\\n';\n}\n\nformatted += 'Quieres ver la receta de algun platillo? Solo dime cual.';\n\nreturn [{ json: { formattedPlan: formatted, plan: prevData.plan, totalCalories: prevData.totalCalories } }];",
-        "options": {}
+        "jsCode": "const profile = $('Load User Profile').first().json;\nconst recentPlans = $('Get Recent Meals').all().map(i => i.json).filter(r => r && r.plan_json);\nconst yesterdayRaw = $('Get Yesterday Intake').first()?.json || null;\nconst weeklyAvgRaw = $('Get Weekly Average').first()?.json || null;\nconst hasWorkout = $('Check Workout Day').first()?.json?.has_workout || false;\nconst trigger = $('Execute Workflow Trigger').first().json;\nconst planDate = trigger.planDate;\nconst userId = trigger.userId;\n\n// Recent meals summary (avoid repetition)\nlet recentMeals = '';\nfor (const plan of recentPlans) {\n  const p = typeof plan.plan_json === 'string' ? JSON.parse(plan.plan_json) : plan.plan_json;\n  const mealNames = (p.meals || []).map(m => m.name).join(', ');\n  recentMeals += `${plan.plan_date}: ${mealNames}\\n`;\n}\n\n// Day of week\nconst dayNames = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];\nconst dateObj = new Date(planDate + 'T12:00:00');\nconst dayOfWeek = dayNames[dateObj.getDay()];\nconst isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;\n\n// Yesterday intake (only if user logged meals)\nconst yesterdayIntake = (yesterdayRaw?.meals_logged > 0) ? {\n  calories: yesterdayRaw.calories_consumed,\n  protein: yesterdayRaw.protein_consumed_g\n} : null;\n\n// Weekly average (only if data exists)\nconst weeklyAvg = weeklyAvgRaw?.avg_calories ? {\n  avg_calories: Math.round(weeklyAvgRaw.avg_calories),\n  avg_protein: Math.round(weeklyAvgRaw.avg_protein)\n} : null;\n\nconst restrictions = Array.isArray(profile.dietary_restrictions) ? profile.dietary_restrictions : [];\nconst allergies = Array.isArray(profile.food_allergies) ? profile.food_allergies : [];\nconst dislikes = Array.isArray(profile.disliked_foods) ? profile.disliked_foods : [];\nconst mealCount = profile.meals_per_day || profile.meal_count || 3;\nconst localCulture = profile.local_culture || 'colombian';\nconst budget = profile.budget_level || 'medium';\nconst wakeUpTime = profile.wake_up_time || '07:00';\n\nlet p = `Eres un nutriologo experto creando el plan de comidas de UN DIA para un usuario.\\n\\n`;\np += `PERFIL DEL USUARIO:\\n`;\np += `- Nombre: ${profile.first_name}\\n`;\np += `- Objetivo calorico diario: ${profile.caloric_target} kcal\\n`;\np += `- Macros objetivo: ${profile.protein_target_g}g proteina, ${profile.carb_target_g}g carbohidratos, ${profile.fat_target_g}g grasa\\n`;\np += `- Restricciones dietarias: ${restrictions.length ? restrictions.join(', ') : 'ninguna'}\\n`;\np += `- Alergias: ${allergies.length ? allergies.join(', ') : 'ninguna'}\\n`;\np += `- Alimentos que no le gustan: ${dislikes.length ? dislikes.join(', ') : 'ninguno'}\\n`;\np += `- Cultura gastronomica: ${localCulture}\\n`;\np += `- Presupuesto: ${budget}\\n`;\np += `- Numero de comidas: ${mealCount}\\n`;\np += `- Hora de despertar: ${wakeUpTime}\\n`;\np += `- Dia: ${dayOfWeek} (${planDate})\\n`;\np += `- Es fin de semana: ${isWeekend}\\n`;\np += `- Tiene entrenamiento programado: ${hasWorkout}\\n\\n`;\n\nif (recentMeals) {\n  p += `COMIDAS DE LOS ULTIMOS 3 DIAS (no repitas estos platos):\\n${recentMeals}\\n`;\n}\nif (yesterdayIntake) {\n  p += `INTAKE REAL DE AYER:\\n`;\n  p += `- Calorias consumidas: ${yesterdayIntake.calories} kcal (meta: ${profile.caloric_target})\\n`;\n  p += `- Proteina consumida: ${yesterdayIntake.protein}g (meta: ${profile.protein_target_g})\\n`;\n  if (yesterdayIntake.calories > profile.caloric_target + 200) {\n    p += `NOTA: Ayer se excedio en calorias. Ajusta ligeramente el plan de hoy hacia la parte baja del rango.\\n`;\n  }\n  if (yesterdayIntake.protein < profile.protein_target_g * 0.8) {\n    p += `NOTA: Ayer quedo bajo en proteina. Prioriza fuentes de proteina en las comidas de hoy.\\n`;\n  }\n  p += '\\n';\n}\nif (weeklyAvg) {\n  p += `PROMEDIO SEMANAL ACTUAL:\\n`;\n  p += `- Calorias promedio: ${weeklyAvg.avg_calories} kcal/dia\\n`;\n  p += `- Proteina promedio: ${weeklyAvg.avg_protein}g/dia\\n`;\n  if (weeklyAvg.avg_calories > profile.caloric_target + 100) {\n    p += `NOTA: El promedio semanal esta por encima de la meta. Apunta al limite bajo del rango calorico hoy.\\n`;\n  }\n  p += '\\n';\n}\n\np += `INSTRUCCIONES:\\n`;\np += `1. Genera exactamente ${mealCount} comidas para este dia.\\n`;\np += `2. Las calorias totales del dia deben estar entre ${profile.caloric_target - 50} y ${profile.caloric_target + 50}.\\n`;\np += `3. Los macros deben acercarse a los objetivos (±10%).\\n`;\np += `4. NUNCA incluyas alimentos de las restricciones, alergias o disgustos.\\n`;\np += `5. Usa ingredientes comunes en la cultura ${localCulture}.\\n`;\np += `6. Adapta al presupuesto: low=proteinas economicas (huevo, pollo, atun, leguminosas); medium=pechuga, carne molida, tilapia; high=sin restriccion.\\n`;\np += `7. Distribuye las comidas desde ${wakeUpTime} con intervalos de 3-4 horas.\\n`;\np += `8. Preparacion: maximo 25 minutos${isWeekend ? ' (fin de semana, puede ser mas elaborada)' : ''}.\\n`;\np += `9. NO repitas platos de los ultimos 3 dias.\\n`;\np += `10. Varia el tipo de proteina entre comidas del mismo dia.\\n`;\nif (hasWorkout) {\n  p += `11. El usuario tiene entrenamiento hoy. Incluye snack pre o post-entrenamiento si el numero de comidas lo permite.\\n`;\n}\n\np += `\\nFORMATO DE SALIDA — responde EXCLUSIVAMENTE con JSON valido:\\n`;\np += `{\"plan_date\":\"${planDate}\",\"day_of_week\":\"${dayOfWeek}\",\"total_calories\":<n>,\"total_protein_g\":<n>,\"total_carbs_g\":<n>,\"total_fat_g\":<n>,\"meals\":[{\"meal_type\":\"breakfast|lunch|snack|dinner\",\"meal_label\":\"Desayuno|Almuerzo|Snack|Cena\",\"time\":\"HH:MM\",\"name\":\"<nombre en espanol>\",\"calories\":<n>,\"protein_g\":<n>,\"carbs_g\":<n>,\"fat_g\":<n>,\"ingredients\":[{\"name\":\"<ingrediente>\",\"quantity\":\"<cantidad>\",\"grams\":<n>}],\"preparation_notes\":\"<instrucciones breves>\"}]}`;\n\nreturn [{ json: { prompt: p, userId, planDate, dayOfWeek } }];\n"
       }
     },
     {
-      "id": "node-10",
-      "name": "Return Item",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2140,
-        300
-      ],
-      "parameters": {
-        "jsCode": "return [{\n  json: {\n    formattedPlan: $json.formattedPlan,\n    totalCalories: $json.totalCalories,\n    success: true\n  }\n}];",
-        "options": {}
-      }
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $json.prompt }}"
-      },
-      "id": "meal-chain-llm",
-      "name": "Generate Meal Plan",
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.5,
-      "position": [
-        940,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "gpt-4o-mini",
-          "mode": "list",
-          "cachedResultName": "gpt-4o-mini"
-        },
-        "options": {
-          "responseFormat": "json_object"
-        }
-      },
-      "id": "meal-lm-node",
+      "id": "mp-08",
       "name": "OpenAI Meal Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.3,
+      "typeVersion": 1,
       "position": [
-        940,
-        160
+        900,
+        500
       ],
       "credentials": {
         "openAiApi": {
           "id": "NOJoPVNWDXiywRgw",
           "name": "OpenAi account"
         }
+      },
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "temperature": 0.85,
+          "maxTokens": 2048,
+          "responseFormat": "json_object"
+        }
+      }
+    },
+    {
+      "id": "mp-09",
+      "name": "Generate Meal Plan",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessage",
+              "message": "Eres un nutriologo experto. Responde SOLO con JSON valido, sin texto adicional."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mp-10",
+      "name": "Parse and Validate Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const response = $('Generate Meal Plan').first().json.text || '';\nlet plan;\n\ntry {\n  plan = JSON.parse(response);\n} catch (e) {\n  const jsonMatch = response.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    plan = JSON.parse(jsonMatch[0]);\n  } else {\n    throw new Error('No se pudo parsear el plan diario generado por OpenAI');\n  }\n}\n\n// Validate daily plan structure (v2)\nif (!plan.meals || !Array.isArray(plan.meals)) {\n  throw new Error('El plan no contiene la estructura de meals esperada');\n}\nif (plan.meals.length < 3) {\n  throw new Error('El plan tiene menos de 3 comidas');\n}\n\nconst buildData = $('Build Daily Meal Plan Prompt').first().json;\nplan.plan_date = buildData.planDate;\nplan.day_of_week = buildData.dayOfWeek;\n\nconst totalCalories = plan.total_calories ||\n  plan.meals.reduce((sum, m) => sum + (m.calories || 0), 0);\nconst totalProtein = plan.total_protein_g ||\n  plan.meals.reduce((sum, m) => sum + (m.protein_g || 0), 0);\n\nreturn [{\n  json: {\n    plan,\n    totalCalories: Math.round(totalCalories),\n    totalProtein: Math.round(totalProtein),\n    userId: buildData.userId,\n    planDate: buildData.planDate\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "mp-11",
+      "name": "Deactivate Previous Plan for Same Date",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1340,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE meal_plans\nSET is_active = false\nWHERE user_id = $1\n  AND plan_date = $2::date\n  AND is_active = true;",
+        "options": {
+          "queryReplacement": "={{ [$('Parse and Validate Plan').first().json.userId, $('Parse and Validate Plan').first().json.planDate] }}"
+        }
+      }
+    },
+    {
+      "id": "mp-12",
+      "name": "Save New Daily Plan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1560,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meal_plans (user_id, plan_date, plan_json, total_calories, is_active, generated_at)\nVALUES ($1, $2::date, $3, $4, true, NOW())\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [$('Parse and Validate Plan').first().json.userId, $('Parse and Validate Plan').first().json.planDate, JSON.stringify($('Parse and Validate Plan').first().json.plan), $('Parse and Validate Plan').first().json.totalCalories] }}"
+        }
+      }
+    },
+    {
+      "id": "mp-13",
+      "name": "Return Plan to Caller",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const plan = $('Parse and Validate Plan').first().json.plan;\nconst meals = plan.meals || [];\n\nlet formatted = `Plan de comidas para ${plan.day_of_week} (${plan.plan_date}):\\n\\n`;\nfor (const meal of meals) {\n  formatted += `${meal.meal_label} (${meal.time}): ${meal.name} — *${meal.calories} kcal*, ${meal.protein_g}g proteina\\n`;\n}\nformatted += `\\nTotal del dia: *${plan.total_calories} kcal* | *${plan.total_protein_g}g* proteina`;\n\nreturn [{\n  json: {\n    formattedPlan: formatted,\n    plan,\n    totalCalories: plan.total_calories,\n    totalProtein: plan.total_protein_g,\n    planDate: plan.plan_date,\n    success: true\n  }\n}];\n"
       }
     }
   ],
@@ -216,46 +274,105 @@
       "main": [
         [
           {
-            "node": "Get User Profile",
+            "node": "Load User Profile",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Get Previous Plan",
+            "node": "Get Recent Meals",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Yesterday Intake",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Weekly Average",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Workout Day",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get User Profile": {
+    "Load User Profile": {
       "main": [
         [
           {
-            "node": "Build Meal Plan Prompt",
+            "node": "Build Daily Meal Plan Prompt",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Previous Plan": {
+    "Get Recent Meals": {
       "main": [
         [
           {
-            "node": "Build Meal Plan Prompt",
+            "node": "Build Daily Meal Plan Prompt",
             "type": "main",
-            "index": 1
+            "index": 0
           }
         ]
       ]
     },
-    "Build Meal Plan Prompt": {
+    "Get Yesterday Intake": {
+      "main": [
+        [
+          {
+            "node": "Build Daily Meal Plan Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Weekly Average": {
+      "main": [
+        [
+          {
+            "node": "Build Daily Meal Plan Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Workout Day": {
+      "main": [
+        [
+          {
+            "node": "Build Daily Meal Plan Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Daily Meal Plan Prompt": {
       "main": [
         [
           {
             "node": "Generate Meal Plan",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Meal Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Meal Plan",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -276,52 +393,30 @@
       "main": [
         [
           {
-            "node": "Deactivate Old Plan",
+            "node": "Deactivate Previous Plan for Same Date",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Deactivate Old Plan": {
+    "Deactivate Previous Plan for Same Date": {
       "main": [
         [
           {
-            "node": "Save New Plan",
+            "node": "Save New Daily Plan",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Save New Plan": {
+    "Save New Daily Plan": {
       "main": [
         [
           {
-            "node": "Format for Telegram",
+            "node": "Return Plan to Caller",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format for Telegram": {
-      "main": [
-        [
-          {
-            "node": "Return Item",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI Meal Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Generate Meal Plan",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -336,9 +431,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "656724bf-7349-4c65-b165-9335f9953a79",
-  "activeVersionId": "656724bf-7349-4c65-b165-9335f9953a79",
-  "versionCounter": 26,
+  "versionId": "14969a00-4067-4e22-8e61-af8583ee90f3",
+  "activeVersionId": "14969a00-4067-4e22-8e61-af8583ee90f3",
+  "versionCounter": 31,
   "triggerCount": 0,
   "shared": [
     {
@@ -361,13 +456,13 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-28T01:59:08.123Z",
-    "createdAt": "2026-03-28T01:59:08.123Z",
-    "versionId": "656724bf-7349-4c65-b165-9335f9953a79",
+    "updatedAt": "2026-04-01T20:18:06.720Z",
+    "createdAt": "2026-04-01T20:18:06.720Z",
+    "versionId": "14969a00-4067-4e22-8e61-af8583ee90f3",
     "workflowId": "KQhP9lQNxCKeOsbJ",
     "nodes": [
       {
-        "id": "node-1",
+        "id": "mp-01",
         "name": "Execute Workflow Trigger",
         "type": "n8n-nodes-base.executeWorkflowTrigger",
         "typeVersion": 1,
@@ -375,198 +470,256 @@
           240,
           300
         ],
-        "parameters": {
-          "options": {}
-        }
+        "parameters": {}
       },
       {
-        "id": "node-2",
-        "name": "Get User Profile",
+        "id": "mp-02",
+        "name": "Load User Profile",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
           460,
-          200
+          60
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT up.*, g.goal_type, g.target_weight, u.first_name, u.language_code FROM user_profiles up JOIN users u ON up.user_id = u.id LEFT JOIN goals g ON up.user_id = g.user_id AND g.is_active = true WHERE up.user_id = $1;",
-          "options": {
-            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
-          }
-        },
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT up.*, g.goal_type, g.target_weight_kg AS target_weight, u.first_name\nFROM user_profiles up\nJOIN users u ON up.user_id = u.id\nLEFT JOIN goals g ON up.user_id = g.user_id AND g.is_active = true\nWHERE up.user_id = $1;",
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+          }
         }
       },
       {
-        "id": "node-3",
-        "name": "Get Previous Plan",
+        "id": "mp-03",
+        "name": "Get Recent Meals",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          180
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "alwaysOutputData": true,
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT mp.plan_date, mp.plan_json\nFROM meal_plans mp\nWHERE mp.user_id = $1\n  AND mp.plan_date >= ($2::date - INTERVAL '3 days')\n  AND mp.plan_date < $2::date\nORDER BY mp.plan_date DESC;",
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Execute Workflow Trigger').first().json.planDate] }}"
+          }
+        }
+      },
+      {
+        "id": "mp-04",
+        "name": "Get Yesterday Intake",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "alwaysOutputData": true,
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  dt.calories_consumed,\n  dt.protein_consumed_g,\n  dt.carbs_consumed_g,\n  dt.fat_consumed_g,\n  dt.meals_logged\nFROM daily_targets dt\nWHERE dt.user_id = $1\n  AND dt.target_date = ($2::date - INTERVAL '1 day');",
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Execute Workflow Trigger').first().json.planDate] }}"
+          }
+        }
+      },
+      {
+        "id": "mp-05",
+        "name": "Get Weekly Average",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
           460,
           420
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT plan_json FROM meal_plans WHERE user_id = $1 AND is_active = true ORDER BY generated_at DESC LIMIT 1;",
-          "options": {
-            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
-          }
-        },
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
         },
-        "alwaysOutputData": true
-      },
-      {
-        "id": "node-4",
-        "name": "Build Meal Plan Prompt",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          700,
-          300
-        ],
+        "alwaysOutputData": true,
         "parameters": {
-          "jsCode": "const profile = $('Get User Profile').first().json;\nconst previousPlan = $('Get Previous Plan').first()?.json?.plan_json || null;\n\nconst weekNumber = getWeekNumber(new Date());\nconst year = new Date().getFullYear();\n\nconst restrictions = profile.dietary_restrictions ? (Array.isArray(profile.dietary_restrictions) ? profile.dietary_restrictions.join(', ') : profile.dietary_restrictions) : 'Ninguna';\nconst allergies = profile.food_allergies ? (Array.isArray(profile.food_allergies) ? profile.food_allergies.join(', ') : profile.food_allergies) : 'Ninguna';\nconst dislikes = profile.disliked_foods ? (Array.isArray(profile.disliked_foods) ? profile.disliked_foods.join(', ') : profile.disliked_foods) : 'Ninguno';\n\nconst prevSummary = previousPlan ? 'PLAN DE LA SEMANA ANTERIOR (evita repetir las mismas comidas):\\n' + JSON.stringify(previousPlan).substring(0, 500) : '';\n\nconst prompt = 'Eres un nutriologo experto creando un plan de comidas personalizado.\\n\\nPERFIL DEL USUARIO:\\n- Nombre: ' + profile.first_name + '\\n- Objetivo calorico diario: ' + profile.caloric_target + ' kcal\\n- Macros objetivo: ' + profile.protein_target_g + 'g proteina, ' + profile.carb_target_g + 'g carbohidratos, ' + profile.fat_target_g + 'g grasa\\n- Restricciones dietarias: ' + restrictions + '\\n- Alergias: ' + allergies + '\\n- Alimentos que no le gustan: ' + dislikes + '\\n- Cultura gastronomica: ' + (profile.local_culture || 'mexican') + '\\n- Presupuesto para ingredientes: ' + (profile.budget_level || 'medium') + '\\n- Numero de comidas al dia: ' + profile.meal_count + '\\n- Semana numero: ' + weekNumber + '\\n\\n' + prevSummary + '\\n\\nINSTRUCCIONES:\\n1. Genera un plan de comidas para 7 dias completos (lunes a domingo).\\n2. Cada dia debe incluir ' + profile.meal_count + ' comidas distribuidas a lo largo del dia.\\n3. Los macronutrientes de cada dia deben acercarse lo mas posible a los objetivos (+-5%).\\n4. Las calorias diarias deben estar entre ' + (profile.caloric_target - 50) + ' y ' + (profile.caloric_target + 50) + '.\\n5. NUNCA incluyas alimentos que el usuario no puede comer.\\n6. Usa ingredientes accesibles y comunes en la cultura ' + (profile.local_culture || 'mexican') + '.\\n7. Las preparaciones deben ser realistas: maximo 30 minutos de preparacion.\\n8. Incluye variedad: no repitas la misma proteina mas de 2 veces por semana.\\n\\nFORMATO DE SALIDA: Responde EXCLUSIVAMENTE con JSON valido con la estructura: { \"days\": { \"monday\": { \"meals\": [...] }, ... }, \"daily_totals\": { \"calories\": N, \"protein_g\": N, \"carb_g\": N, \"fat_g\": N }, \"shopping_list\": [...] }. Cada meal debe tener: name, type (breakfast/lunch/dinner/snack), foods (array con name, quantity, unit, calories, protein_g, carb_g, fat_g), total_calories.';\n\nreturn [{\n  json: {\n    prompt,\n    userId: $('Execute Workflow Trigger').first().json.userId,\n    weekNumber,\n    year,\n    profile\n  }\n}];\n\nfunction getWeekNumber(d) {\n  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));\n  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));\n  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));\n  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);\n}",
-          "options": {}
+          "operation": "executeQuery",
+          "query": "SELECT\n  AVG(calories_consumed) AS avg_calories,\n  AVG(protein_consumed_g) AS avg_protein\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= date_trunc('week', $2::date)\n  AND target_date < $2::date\n  AND meals_logged > 0;",
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Execute Workflow Trigger').first().json.planDate] }}"
+          }
         }
       },
       {
-        "id": "node-6",
-        "name": "Parse and Validate Plan",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1180,
-          300
-        ],
-        "parameters": {
-          "jsCode": "const responseContent = $('Generate Meal Plan').first().json.text || '';\nlet plan;\n\ntry {\n  plan = JSON.parse(responseContent);\n} catch (e) {\n  const jsonMatch = responseContent.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    plan = JSON.parse(jsonMatch[0]);\n  } else {\n    throw new Error('No se pudo parsear el plan de comidas generado por OpenAI');\n  }\n}\n\nif (!plan.days || typeof plan.days !== 'object') {\n  throw new Error('El plan no contiene la estructura de dias esperada');\n}\n\nconst dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];\nfor (const day of dayNames) {\n  if (!plan.days[day] || !plan.days[day].meals) {\n    throw new Error('El plan no contiene datos para ' + day);\n  }\n}\n\nconst totalCalories = dayNames.reduce((sum, day) => {\n  const dayCalories = plan.days[day].meals.reduce((s, meal) => s + (meal.total_calories || 0), 0);\n  return sum + dayCalories;\n}, 0) / 7;\n\nconst prevData = $('Build Meal Plan Prompt').first().json;\n\nreturn [{\n  json: {\n    plan,\n    totalCalories: Math.round(totalCalories),\n    userId: prevData.userId,\n    weekNumber: prevData.weekNumber,\n    year: prevData.year\n  }\n}];",
-          "options": {}
-        }
-      },
-      {
-        "id": "node-7",
-        "name": "Deactivate Old Plan",
+        "id": "mp-06",
+        "name": "Check Workout Day",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1420,
-          300
+          460,
+          540
         ],
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "UPDATE meal_plans SET is_active = false WHERE user_id = $1 AND is_active = true;",
-          "options": {
-            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
-          }
-        },
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        }
-      },
-      {
-        "id": "node-8",
-        "name": "Save New Plan",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          1660,
-          300
-        ],
+        },
+        "alwaysOutputData": true,
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO meal_plans (user_id, week_number, year, plan_json, total_calories, is_active, generated_at, expires_at) VALUES ($1, $2, $3, $4::jsonb, $5, true, NOW(), NOW() + INTERVAL '7 days') RETURNING id;",
+          "query": "SELECT EXISTS(\n  SELECT 1 FROM exercise_plans\n  WHERE user_id = $1\n    AND is_active = true\n    AND plan_json::jsonb @> jsonb_build_object('day_of_week', to_char($2::date, 'FMDay'))\n) AS has_workout;",
           "options": {
-            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Parse and Validate Plan').first().json.weekNumber, $('Parse and Validate Plan').first().json.year, JSON.stringify($('Parse and Validate Plan').first().json.plan), $('Parse and Validate Plan').first().json.totalCalories] }}"
-          }
-        },
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId, $('Execute Workflow Trigger').first().json.planDate] }}"
           }
         }
       },
       {
-        "id": "node-9",
-        "name": "Format for Telegram",
+        "id": "mp-07",
+        "name": "Build Daily Meal Plan Prompt",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1900,
+          680,
           300
         ],
         "parameters": {
-          "jsCode": "const prevData = $('Parse and Validate Plan').first().json;\nconst plan = prevData.plan;\nlet formatted = 'Tu plan de comidas para esta semana (Semana ' + prevData.weekNumber + ', ' + prevData.year + '):\\n\\n';\n\nconst dayTranslations = {\n  monday: 'Lunes', tuesday: 'Martes', wednesday: 'Miercoles',\n  thursday: 'Jueves', friday: 'Viernes', saturday: 'Sabado', sunday: 'Domingo'\n};\n\nfor (const [day, data] of Object.entries(plan.days)) {\n  formatted += '*' + dayTranslations[day] + '*\\n';\n  let dayCalories = 0;\n  let dayProtein = 0;\n  for (const meal of data.meals) {\n    const mealLabel = { breakfast: 'Desayuno', lunch: 'Comida', snack: 'Colacion', dinner: 'Cena' }[meal.type] || meal.type;\n    formatted += '- ' + mealLabel + ': ' + meal.name + ' - ' + meal.total_calories + ' kcal\\n';\n    dayCalories += meal.total_calories || 0;\n    dayProtein += meal.foods ? meal.foods.reduce((s, f) => s + (f.protein_g || 0), 0) : 0;\n  }\n  formatted += 'Total: ' + dayCalories + ' kcal | ~' + Math.round(dayProtein) + 'g proteina\\n\\n';\n}\n\nformatted += 'Quieres ver la receta de algun platillo? Solo dime cual.';\n\nreturn [{ json: { formattedPlan: formatted, plan: prevData.plan, totalCalories: prevData.totalCalories } }];",
-          "options": {}
+          "jsCode": "const profile = $('Load User Profile').first().json;\nconst recentPlans = $('Get Recent Meals').all().map(i => i.json).filter(r => r && r.plan_json);\nconst yesterdayRaw = $('Get Yesterday Intake').first()?.json || null;\nconst weeklyAvgRaw = $('Get Weekly Average').first()?.json || null;\nconst hasWorkout = $('Check Workout Day').first()?.json?.has_workout || false;\nconst trigger = $('Execute Workflow Trigger').first().json;\nconst planDate = trigger.planDate;\nconst userId = trigger.userId;\n\n// Recent meals summary (avoid repetition)\nlet recentMeals = '';\nfor (const plan of recentPlans) {\n  const p = typeof plan.plan_json === 'string' ? JSON.parse(plan.plan_json) : plan.plan_json;\n  const mealNames = (p.meals || []).map(m => m.name).join(', ');\n  recentMeals += `${plan.plan_date}: ${mealNames}\\n`;\n}\n\n// Day of week\nconst dayNames = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];\nconst dateObj = new Date(planDate + 'T12:00:00');\nconst dayOfWeek = dayNames[dateObj.getDay()];\nconst isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;\n\n// Yesterday intake (only if user logged meals)\nconst yesterdayIntake = (yesterdayRaw?.meals_logged > 0) ? {\n  calories: yesterdayRaw.calories_consumed,\n  protein: yesterdayRaw.protein_consumed_g\n} : null;\n\n// Weekly average (only if data exists)\nconst weeklyAvg = weeklyAvgRaw?.avg_calories ? {\n  avg_calories: Math.round(weeklyAvgRaw.avg_calories),\n  avg_protein: Math.round(weeklyAvgRaw.avg_protein)\n} : null;\n\nconst restrictions = Array.isArray(profile.dietary_restrictions) ? profile.dietary_restrictions : [];\nconst allergies = Array.isArray(profile.food_allergies) ? profile.food_allergies : [];\nconst dislikes = Array.isArray(profile.disliked_foods) ? profile.disliked_foods : [];\nconst mealCount = profile.meals_per_day || profile.meal_count || 3;\nconst localCulture = profile.local_culture || 'colombian';\nconst budget = profile.budget_level || 'medium';\nconst wakeUpTime = profile.wake_up_time || '07:00';\n\nlet p = `Eres un nutriologo experto creando el plan de comidas de UN DIA para un usuario.\\n\\n`;\np += `PERFIL DEL USUARIO:\\n`;\np += `- Nombre: ${profile.first_name}\\n`;\np += `- Objetivo calorico diario: ${profile.caloric_target} kcal\\n`;\np += `- Macros objetivo: ${profile.protein_target_g}g proteina, ${profile.carb_target_g}g carbohidratos, ${profile.fat_target_g}g grasa\\n`;\np += `- Restricciones dietarias: ${restrictions.length ? restrictions.join(', ') : 'ninguna'}\\n`;\np += `- Alergias: ${allergies.length ? allergies.join(', ') : 'ninguna'}\\n`;\np += `- Alimentos que no le gustan: ${dislikes.length ? dislikes.join(', ') : 'ninguno'}\\n`;\np += `- Cultura gastronomica: ${localCulture}\\n`;\np += `- Presupuesto: ${budget}\\n`;\np += `- Numero de comidas: ${mealCount}\\n`;\np += `- Hora de despertar: ${wakeUpTime}\\n`;\np += `- Dia: ${dayOfWeek} (${planDate})\\n`;\np += `- Es fin de semana: ${isWeekend}\\n`;\np += `- Tiene entrenamiento programado: ${hasWorkout}\\n\\n`;\n\nif (recentMeals) {\n  p += `COMIDAS DE LOS ULTIMOS 3 DIAS (no repitas estos platos):\\n${recentMeals}\\n`;\n}\nif (yesterdayIntake) {\n  p += `INTAKE REAL DE AYER:\\n`;\n  p += `- Calorias consumidas: ${yesterdayIntake.calories} kcal (meta: ${profile.caloric_target})\\n`;\n  p += `- Proteina consumida: ${yesterdayIntake.protein}g (meta: ${profile.protein_target_g})\\n`;\n  if (yesterdayIntake.calories > profile.caloric_target + 200) {\n    p += `NOTA: Ayer se excedio en calorias. Ajusta ligeramente el plan de hoy hacia la parte baja del rango.\\n`;\n  }\n  if (yesterdayIntake.protein < profile.protein_target_g * 0.8) {\n    p += `NOTA: Ayer quedo bajo en proteina. Prioriza fuentes de proteina en las comidas de hoy.\\n`;\n  }\n  p += '\\n';\n}\nif (weeklyAvg) {\n  p += `PROMEDIO SEMANAL ACTUAL:\\n`;\n  p += `- Calorias promedio: ${weeklyAvg.avg_calories} kcal/dia\\n`;\n  p += `- Proteina promedio: ${weeklyAvg.avg_protein}g/dia\\n`;\n  if (weeklyAvg.avg_calories > profile.caloric_target + 100) {\n    p += `NOTA: El promedio semanal esta por encima de la meta. Apunta al limite bajo del rango calorico hoy.\\n`;\n  }\n  p += '\\n';\n}\n\np += `INSTRUCCIONES:\\n`;\np += `1. Genera exactamente ${mealCount} comidas para este dia.\\n`;\np += `2. Las calorias totales del dia deben estar entre ${profile.caloric_target - 50} y ${profile.caloric_target + 50}.\\n`;\np += `3. Los macros deben acercarse a los objetivos (±10%).\\n`;\np += `4. NUNCA incluyas alimentos de las restricciones, alergias o disgustos.\\n`;\np += `5. Usa ingredientes comunes en la cultura ${localCulture}.\\n`;\np += `6. Adapta al presupuesto: low=proteinas economicas (huevo, pollo, atun, leguminosas); medium=pechuga, carne molida, tilapia; high=sin restriccion.\\n`;\np += `7. Distribuye las comidas desde ${wakeUpTime} con intervalos de 3-4 horas.\\n`;\np += `8. Preparacion: maximo 25 minutos${isWeekend ? ' (fin de semana, puede ser mas elaborada)' : ''}.\\n`;\np += `9. NO repitas platos de los ultimos 3 dias.\\n`;\np += `10. Varia el tipo de proteina entre comidas del mismo dia.\\n`;\nif (hasWorkout) {\n  p += `11. El usuario tiene entrenamiento hoy. Incluye snack pre o post-entrenamiento si el numero de comidas lo permite.\\n`;\n}\n\np += `\\nFORMATO DE SALIDA — responde EXCLUSIVAMENTE con JSON valido:\\n`;\np += `{\"plan_date\":\"${planDate}\",\"day_of_week\":\"${dayOfWeek}\",\"total_calories\":<n>,\"total_protein_g\":<n>,\"total_carbs_g\":<n>,\"total_fat_g\":<n>,\"meals\":[{\"meal_type\":\"breakfast|lunch|snack|dinner\",\"meal_label\":\"Desayuno|Almuerzo|Snack|Cena\",\"time\":\"HH:MM\",\"name\":\"<nombre en espanol>\",\"calories\":<n>,\"protein_g\":<n>,\"carbs_g\":<n>,\"fat_g\":<n>,\"ingredients\":[{\"name\":\"<ingrediente>\",\"quantity\":\"<cantidad>\",\"grams\":<n>}],\"preparation_notes\":\"<instrucciones breves>\"}]}`;\n\nreturn [{ json: { prompt: p, userId, planDate, dayOfWeek } }];\n"
         }
       },
       {
-        "id": "node-10",
-        "name": "Return Item",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          2140,
-          300
-        ],
-        "parameters": {
-          "jsCode": "return [{\n  json: {\n    formattedPlan: $json.formattedPlan,\n    totalCalories: $json.totalCalories,\n    success: true\n  }\n}];",
-          "options": {}
-        }
-      },
-      {
-        "parameters": {
-          "promptType": "define",
-          "text": "={{ $json.prompt }}"
-        },
-        "id": "meal-chain-llm",
-        "name": "Generate Meal Plan",
-        "type": "@n8n/n8n-nodes-langchain.chainLlm",
-        "typeVersion": 1.5,
-        "position": [
-          940,
-          300
-        ]
-      },
-      {
-        "parameters": {
-          "model": {
-            "__rl": true,
-            "value": "gpt-4o-mini",
-            "mode": "list",
-            "cachedResultName": "gpt-4o-mini"
-          },
-          "options": {
-            "responseFormat": "json_object"
-          }
-        },
-        "id": "meal-lm-node",
+        "id": "mp-08",
         "name": "OpenAI Meal Model",
         "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-        "typeVersion": 1.3,
+        "typeVersion": 1,
         "position": [
-          940,
-          160
+          900,
+          500
         ],
         "credentials": {
           "openAiApi": {
             "id": "NOJoPVNWDXiywRgw",
             "name": "OpenAi account"
           }
+        },
+        "parameters": {
+          "model": "gpt-4o",
+          "options": {
+            "temperature": 0.85,
+            "maxTokens": 2048,
+            "responseFormat": "json_object"
+          }
+        }
+      },
+      {
+        "id": "mp-09",
+        "name": "Generate Meal Plan",
+        "type": "@n8n/n8n-nodes-langchain.chainLlm",
+        "typeVersion": 1.4,
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.prompt }}",
+          "messages": {
+            "messageValues": [
+              {
+                "type": "SystemMessage",
+                "message": "Eres un nutriologo experto. Responde SOLO con JSON valido, sin texto adicional."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "mp-10",
+        "name": "Parse and Validate Plan",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const response = $('Generate Meal Plan').first().json.text || '';\nlet plan;\n\ntry {\n  plan = JSON.parse(response);\n} catch (e) {\n  const jsonMatch = response.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    plan = JSON.parse(jsonMatch[0]);\n  } else {\n    throw new Error('No se pudo parsear el plan diario generado por OpenAI');\n  }\n}\n\n// Validate daily plan structure (v2)\nif (!plan.meals || !Array.isArray(plan.meals)) {\n  throw new Error('El plan no contiene la estructura de meals esperada');\n}\nif (plan.meals.length < 3) {\n  throw new Error('El plan tiene menos de 3 comidas');\n}\n\nconst buildData = $('Build Daily Meal Plan Prompt').first().json;\nplan.plan_date = buildData.planDate;\nplan.day_of_week = buildData.dayOfWeek;\n\nconst totalCalories = plan.total_calories ||\n  plan.meals.reduce((sum, m) => sum + (m.calories || 0), 0);\nconst totalProtein = plan.total_protein_g ||\n  plan.meals.reduce((sum, m) => sum + (m.protein_g || 0), 0);\n\nreturn [{\n  json: {\n    plan,\n    totalCalories: Math.round(totalCalories),\n    totalProtein: Math.round(totalProtein),\n    userId: buildData.userId,\n    planDate: buildData.planDate\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "mp-11",
+        "name": "Deactivate Previous Plan for Same Date",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1340,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE meal_plans\nSET is_active = false\nWHERE user_id = $1\n  AND plan_date = $2::date\n  AND is_active = true;",
+          "options": {
+            "queryReplacement": "={{ [$('Parse and Validate Plan').first().json.userId, $('Parse and Validate Plan').first().json.planDate] }}"
+          }
+        }
+      },
+      {
+        "id": "mp-12",
+        "name": "Save New Daily Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1560,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO meal_plans (user_id, plan_date, plan_json, total_calories, is_active, generated_at)\nVALUES ($1, $2::date, $3, $4, true, NOW())\nRETURNING id;",
+          "options": {
+            "queryReplacement": "={{ [$('Parse and Validate Plan').first().json.userId, $('Parse and Validate Plan').first().json.planDate, JSON.stringify($('Parse and Validate Plan').first().json.plan), $('Parse and Validate Plan').first().json.totalCalories] }}"
+          }
+        }
+      },
+      {
+        "id": "mp-13",
+        "name": "Return Plan to Caller",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1780,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const plan = $('Parse and Validate Plan').first().json.plan;\nconst meals = plan.meals || [];\n\nlet formatted = `Plan de comidas para ${plan.day_of_week} (${plan.plan_date}):\\n\\n`;\nfor (const meal of meals) {\n  formatted += `${meal.meal_label} (${meal.time}): ${meal.name} — *${meal.calories} kcal*, ${meal.protein_g}g proteina\\n`;\n}\nformatted += `\\nTotal del dia: *${plan.total_calories} kcal* | *${plan.total_protein_g}g* proteina`;\n\nreturn [{\n  json: {\n    formattedPlan: formatted,\n    plan,\n    totalCalories: plan.total_calories,\n    totalProtein: plan.total_protein_g,\n    planDate: plan.plan_date,\n    success: true\n  }\n}];\n"
         }
       }
     ],
@@ -575,46 +728,105 @@
         "main": [
           [
             {
-              "node": "Get User Profile",
+              "node": "Load User Profile",
               "type": "main",
               "index": 0
             },
             {
-              "node": "Get Previous Plan",
+              "node": "Get Recent Meals",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get Yesterday Intake",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get Weekly Average",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Check Workout Day",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Get User Profile": {
+      "Load User Profile": {
         "main": [
           [
             {
-              "node": "Build Meal Plan Prompt",
+              "node": "Build Daily Meal Plan Prompt",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Get Previous Plan": {
+      "Get Recent Meals": {
         "main": [
           [
             {
-              "node": "Build Meal Plan Prompt",
+              "node": "Build Daily Meal Plan Prompt",
               "type": "main",
-              "index": 1
+              "index": 0
             }
           ]
         ]
       },
-      "Build Meal Plan Prompt": {
+      "Get Yesterday Intake": {
+        "main": [
+          [
+            {
+              "node": "Build Daily Meal Plan Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Weekly Average": {
+        "main": [
+          [
+            {
+              "node": "Build Daily Meal Plan Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Workout Day": {
+        "main": [
+          [
+            {
+              "node": "Build Daily Meal Plan Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Daily Meal Plan Prompt": {
         "main": [
           [
             {
               "node": "Generate Meal Plan",
               "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Meal Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Generate Meal Plan",
+              "type": "ai_languageModel",
               "index": 0
             }
           ]
@@ -635,52 +847,30 @@
         "main": [
           [
             {
-              "node": "Deactivate Old Plan",
+              "node": "Deactivate Previous Plan for Same Date",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Deactivate Old Plan": {
+      "Deactivate Previous Plan for Same Date": {
         "main": [
           [
             {
-              "node": "Save New Plan",
+              "node": "Save New Daily Plan",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Save New Plan": {
+      "Save New Daily Plan": {
         "main": [
           [
             {
-              "node": "Format for Telegram",
+              "node": "Return Plan to Caller",
               "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Format for Telegram": {
-        "main": [
-          [
-            {
-              "node": "Return Item",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "OpenAI Meal Model": {
-        "ai_languageModel": [
-          [
-            {
-              "node": "Generate Meal Plan",
-              "type": "ai_languageModel",
               "index": 0
             }
           ]
@@ -693,19 +883,11 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-28T01:59:08.149Z",
-        "id": 98,
+        "createdAt": "2026-04-01T20:18:07.813Z",
+        "id": 266,
         "workflowId": "KQhP9lQNxCKeOsbJ",
-        "versionId": "656724bf-7349-4c65-b165-9335f9953a79",
+        "versionId": "14969a00-4067-4e22-8e61-af8583ee90f3",
         "event": "activated",
-        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
-      },
-      {
-        "createdAt": "2026-03-28T01:59:08.140Z",
-        "id": 97,
-        "workflowId": "KQhP9lQNxCKeOsbJ",
-        "versionId": "656724bf-7349-4c65-b165-9335f9953a79",
-        "event": "deactivated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
     ]

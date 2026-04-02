@@ -1,14 +1,14 @@
 {
-  "updatedAt": "2026-04-01T20:46:08.033Z",
-  "createdAt": "2026-03-27T16:33:56.395Z",
-  "id": "SntGuE97yl9efvo5",
-  "name": "FitAI - Meal Reminder Scheduler",
+  "updatedAt": "2026-04-01T20:46:14.559Z",
+  "createdAt": "2026-04-01T20:41:23.657Z",
+  "id": "ytuz6H8cdBm8oyTx",
+  "name": "FitAI - Silence Detector",
   "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
     {
-      "id": "mr-01",
+      "id": "sd-01",
       "name": "Cron Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
@@ -21,7 +21,7 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "*/15 7-21 * * *"
+              "expression": "0 18 * * *"
             }
           ]
         },
@@ -29,8 +29,8 @@
       }
     },
     {
-      "id": "mr-02",
-      "name": "Get Users with Upcoming Meal",
+      "id": "sd-02",
+      "name": "Get Silent Users",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
@@ -38,7 +38,6 @@
         300
       ],
       "alwaysOutputData": true,
-      "continueOnFail": true,
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
@@ -47,12 +46,12 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH user_meals AS (\n  SELECT u.id AS user_id, u.telegram_id, u.first_name,\n         up.caloric_target, up.protein_target_g,\n         mp.plan_json,\n         dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n         m.meal_type, m.meal_name, m.meal_time, m.meal_calories, m.meal_protein\n  FROM users u\n  JOIN memberships mb ON u.id = mb.user_id AND mb.status = 'active' AND mb.expires_at > NOW()\n  JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\n  JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true\n  LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE\n  CROSS JOIN LATERAL jsonb_array_elements(mp.plan_json::jsonb -> 'meals') AS meal_item\n  CROSS JOIN LATERAL (\n    SELECT\n      meal_item ->> 'meal_type' AS meal_type,\n      meal_item ->> 'name' AS meal_name,\n      (meal_item ->> 'time')::time AS meal_time,\n      (meal_item ->> 'calories')::int AS meal_calories,\n      (meal_item ->> 'protein_g')::int AS meal_protein\n  ) m\n  WHERE u.is_active = true\n    AND m.meal_time BETWEEN LOCALTIME AND LOCALTIME + INTERVAL '15 minutes'\n    AND NOT EXISTS (\n      SELECT 1 FROM conversation_logs cl\n      WHERE cl.user_id = u.id\n        AND cl.message_type = 'meal_reminder'\n        AND cl.assistant_response LIKE '%' || m.meal_name || '%'\n        AND cl.created_at::date = CURRENT_DATE\n    )\n)\nSELECT * FROM user_meals;",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       last_interaction.last_at,\n       EXTRACT(EPOCH FROM (NOW() - last_interaction.last_at)) / 3600 AS hours_silent\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nCROSS JOIN LATERAL (\n  SELECT MAX(created_at) AS last_at FROM conversation_logs WHERE user_id = u.id\n) last_interaction\nWHERE u.is_active = true\n  AND last_interaction.last_at < NOW() - INTERVAL '24 hours'\n  AND last_interaction.last_at > NOW() - INTERVAL '72 hours'\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'silence_check' AND cl.created_at::date = CURRENT_DATE\n  );",
         "options": {}
       }
     },
     {
-      "id": "mr-03",
+      "id": "sd-03",
       "name": "Has Users?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -83,8 +82,8 @@
       }
     },
     {
-      "id": "mr-04",
-      "name": "Build Reminder Message",
+      "id": "sd-04",
+      "name": "Build Silence Message",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -92,12 +91,12 @@
         160
       ],
       "parameters": {
-        "jsCode": "const caloriesConsumed = $json.calories_consumed || 0;\nconst proteinConsumed = $json.protein_consumed_g || 0;\nconst caloriesRemaining = $json.caloric_target - caloriesConsumed;\nconst proteinRemaining = $json.protein_target_g - proteinConsumed;\nconst mealsLogged = $json.meals_logged || 0;\n\nconst mealLabels = { breakfast: 'desayuno', lunch: 'almuerzo', snack: 'snack', dinner: 'cena' };\nconst mealLabel = mealLabels[$json.meal_type] || $json.meal_type;\n\nlet balanceText = '';\nif (mealsLogged > 0) {\n  balanceText = `\\nLlevas *${caloriesConsumed} de ${$json.caloric_target} kcal* y *${proteinConsumed} de ${$json.protein_target_g}g proteína*.`;\n}\n\nconst message = `${$json.first_name}, es hora de tu ${mealLabel}: *${$json.meal_name}* — *${$json.meal_calories} kcal*, ${$json.meal_protein}g proteína.${balanceText}\\n\\nCuando termines de comer, dime qué comiste y llevo la cuenta.`;\n\nreturn [{ json: { telegramId: $json.telegram_id, userId: $json.user_id, mealName: $json.meal_name, message } }];\n"
+        "jsCode": "const firstName = $json.first_name;\nconst hoursSilent = Math.round($json.hours_silent);\n\nconst messages = [\n  `Oye ${firstName}, ¿todo bien? Llevas un rato sin reportar y quería ver cómo vas.`,\n  `${firstName}, ¿cómo andas? Si se te complicó el plan ayer no pasa nada, pero cuéntame para ajustar.`,\n  `Hey ${firstName}, solo quería saber cómo estás. Si necesitas cambiar algo del plan, dime.`,\n  `${firstName}, aquí estoy pendiente. Cualquier cosa que necesites, escríbeme.`\n];\n\nconst message = messages[Math.floor(Math.random() * messages.length)];\n\nreturn [{ json: { telegramId: $json.telegram_id, userId: $json.user_id, message } }];\n"
       }
     },
     {
-      "id": "mr-05",
-      "name": "Send Reminder",
+      "id": "sd-05",
+      "name": "Send Message",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
@@ -121,8 +120,8 @@
       }
     },
     {
-      "id": "mr-06",
-      "name": "Log Reminder Sent",
+      "id": "sd-06",
+      "name": "Log Silence Check",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
@@ -137,9 +136,9 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'meal_reminder', '[proactive]', $2, NOW());",
+        "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'silence_check', '[proactive]', $2, NOW());",
         "options": {
-          "queryReplacement": "={ [$('Build Reminder Message').item.json.userId, $('Build Reminder Message').item.json.message] }"
+          "queryReplacement": "={ [$('Build Silence Message').item.json.userId, $('Build Silence Message').item.json.message] }"
         }
       }
     }
@@ -149,14 +148,14 @@
       "main": [
         [
           {
-            "node": "Get Users with Upcoming Meal",
+            "node": "Get Silent Users",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get Users with Upcoming Meal": {
+    "Get Silent Users": {
       "main": [
         [
           {
@@ -171,7 +170,7 @@
       "main": [
         [
           {
-            "node": "Build Reminder Message",
+            "node": "Build Silence Message",
             "type": "main",
             "index": 0
           }
@@ -179,22 +178,22 @@
         []
       ]
     },
-    "Build Reminder Message": {
+    "Build Silence Message": {
       "main": [
         [
           {
-            "node": "Send Reminder",
+            "node": "Send Message",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Send Reminder": {
+    "Send Message": {
       "main": [
         [
           {
-            "node": "Log Reminder Sent",
+            "node": "Log Silence Check",
             "type": "main",
             "index": 0
           }
@@ -204,30 +203,27 @@
   },
   "settings": {
     "executionOrder": "v1",
+    "timezone": "America/Bogota",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false,
-    "timezone": "America/Bogota"
+    "availableInMCP": false
   },
   "staticData": {
-    "node:Schedule Trigger": {
-      "recurrenceRules": []
-    },
     "node:Cron Trigger": {
       "recurrenceRules": []
     }
   },
   "meta": null,
-  "pinData": {},
-  "versionId": "cb605318-b607-43c7-adb9-de16df8f4843",
-  "activeVersionId": "cb605318-b607-43c7-adb9-de16df8f4843",
-  "versionCounter": 37,
+  "pinData": null,
+  "versionId": "0e4af1c9-ae90-4a1d-b2bc-13b572c1ec15",
+  "activeVersionId": "0e4af1c9-ae90-4a1d-b2bc-13b572c1ec15",
+  "versionCounter": 8,
   "triggerCount": 1,
   "shared": [
     {
-      "updatedAt": "2026-03-27T16:33:56.402Z",
-      "createdAt": "2026-03-27T16:33:56.402Z",
+      "updatedAt": "2026-04-01T20:41:23.659Z",
+      "createdAt": "2026-04-01T20:41:23.659Z",
       "role": "workflow:owner",
-      "workflowId": "SntGuE97yl9efvo5",
+      "workflowId": "ytuz6H8cdBm8oyTx",
       "projectId": "GE3JULxyP9D4KS9G",
       "project": {
         "updatedAt": "2026-03-12T16:58:26.122Z",
@@ -243,13 +239,13 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-01T20:46:08.034Z",
-    "createdAt": "2026-04-01T20:46:08.034Z",
-    "versionId": "cb605318-b607-43c7-adb9-de16df8f4843",
-    "workflowId": "SntGuE97yl9efvo5",
+    "updatedAt": "2026-04-01T20:46:14.560Z",
+    "createdAt": "2026-04-01T20:46:14.560Z",
+    "versionId": "0e4af1c9-ae90-4a1d-b2bc-13b572c1ec15",
+    "workflowId": "ytuz6H8cdBm8oyTx",
     "nodes": [
       {
-        "id": "mr-01",
+        "id": "sd-01",
         "name": "Cron Trigger",
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.1,
@@ -262,7 +258,7 @@
             "interval": [
               {
                 "field": "cronExpression",
-                "expression": "*/15 7-21 * * *"
+                "expression": "0 18 * * *"
               }
             ]
           },
@@ -270,8 +266,8 @@
         }
       },
       {
-        "id": "mr-02",
-        "name": "Get Users with Upcoming Meal",
+        "id": "sd-02",
+        "name": "Get Silent Users",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
@@ -279,7 +275,6 @@
           300
         ],
         "alwaysOutputData": true,
-        "continueOnFail": true,
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
@@ -288,12 +283,12 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "WITH user_meals AS (\n  SELECT u.id AS user_id, u.telegram_id, u.first_name,\n         up.caloric_target, up.protein_target_g,\n         mp.plan_json,\n         dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n         m.meal_type, m.meal_name, m.meal_time, m.meal_calories, m.meal_protein\n  FROM users u\n  JOIN memberships mb ON u.id = mb.user_id AND mb.status = 'active' AND mb.expires_at > NOW()\n  JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\n  JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true\n  LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE\n  CROSS JOIN LATERAL jsonb_array_elements(mp.plan_json::jsonb -> 'meals') AS meal_item\n  CROSS JOIN LATERAL (\n    SELECT\n      meal_item ->> 'meal_type' AS meal_type,\n      meal_item ->> 'name' AS meal_name,\n      (meal_item ->> 'time')::time AS meal_time,\n      (meal_item ->> 'calories')::int AS meal_calories,\n      (meal_item ->> 'protein_g')::int AS meal_protein\n  ) m\n  WHERE u.is_active = true\n    AND m.meal_time BETWEEN LOCALTIME AND LOCALTIME + INTERVAL '15 minutes'\n    AND NOT EXISTS (\n      SELECT 1 FROM conversation_logs cl\n      WHERE cl.user_id = u.id\n        AND cl.message_type = 'meal_reminder'\n        AND cl.assistant_response LIKE '%' || m.meal_name || '%'\n        AND cl.created_at::date = CURRENT_DATE\n    )\n)\nSELECT * FROM user_meals;",
+          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       last_interaction.last_at,\n       EXTRACT(EPOCH FROM (NOW() - last_interaction.last_at)) / 3600 AS hours_silent\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nCROSS JOIN LATERAL (\n  SELECT MAX(created_at) AS last_at FROM conversation_logs WHERE user_id = u.id\n) last_interaction\nWHERE u.is_active = true\n  AND last_interaction.last_at < NOW() - INTERVAL '24 hours'\n  AND last_interaction.last_at > NOW() - INTERVAL '72 hours'\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'silence_check' AND cl.created_at::date = CURRENT_DATE\n  );",
           "options": {}
         }
       },
       {
-        "id": "mr-03",
+        "id": "sd-03",
         "name": "Has Users?",
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
@@ -324,8 +319,8 @@
         }
       },
       {
-        "id": "mr-04",
-        "name": "Build Reminder Message",
+        "id": "sd-04",
+        "name": "Build Silence Message",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
@@ -333,12 +328,12 @@
           160
         ],
         "parameters": {
-          "jsCode": "const caloriesConsumed = $json.calories_consumed || 0;\nconst proteinConsumed = $json.protein_consumed_g || 0;\nconst caloriesRemaining = $json.caloric_target - caloriesConsumed;\nconst proteinRemaining = $json.protein_target_g - proteinConsumed;\nconst mealsLogged = $json.meals_logged || 0;\n\nconst mealLabels = { breakfast: 'desayuno', lunch: 'almuerzo', snack: 'snack', dinner: 'cena' };\nconst mealLabel = mealLabels[$json.meal_type] || $json.meal_type;\n\nlet balanceText = '';\nif (mealsLogged > 0) {\n  balanceText = `\\nLlevas *${caloriesConsumed} de ${$json.caloric_target} kcal* y *${proteinConsumed} de ${$json.protein_target_g}g proteína*.`;\n}\n\nconst message = `${$json.first_name}, es hora de tu ${mealLabel}: *${$json.meal_name}* — *${$json.meal_calories} kcal*, ${$json.meal_protein}g proteína.${balanceText}\\n\\nCuando termines de comer, dime qué comiste y llevo la cuenta.`;\n\nreturn [{ json: { telegramId: $json.telegram_id, userId: $json.user_id, mealName: $json.meal_name, message } }];\n"
+          "jsCode": "const firstName = $json.first_name;\nconst hoursSilent = Math.round($json.hours_silent);\n\nconst messages = [\n  `Oye ${firstName}, ¿todo bien? Llevas un rato sin reportar y quería ver cómo vas.`,\n  `${firstName}, ¿cómo andas? Si se te complicó el plan ayer no pasa nada, pero cuéntame para ajustar.`,\n  `Hey ${firstName}, solo quería saber cómo estás. Si necesitas cambiar algo del plan, dime.`,\n  `${firstName}, aquí estoy pendiente. Cualquier cosa que necesites, escríbeme.`\n];\n\nconst message = messages[Math.floor(Math.random() * messages.length)];\n\nreturn [{ json: { telegramId: $json.telegram_id, userId: $json.user_id, message } }];\n"
         }
       },
       {
-        "id": "mr-05",
-        "name": "Send Reminder",
+        "id": "sd-05",
+        "name": "Send Message",
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
@@ -362,8 +357,8 @@
         }
       },
       {
-        "id": "mr-06",
-        "name": "Log Reminder Sent",
+        "id": "sd-06",
+        "name": "Log Silence Check",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
@@ -378,9 +373,9 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'meal_reminder', '[proactive]', $2, NOW());",
+          "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'silence_check', '[proactive]', $2, NOW());",
           "options": {
-            "queryReplacement": "={ [$('Build Reminder Message').item.json.userId, $('Build Reminder Message').item.json.message] }"
+            "queryReplacement": "={ [$('Build Silence Message').item.json.userId, $('Build Silence Message').item.json.message] }"
           }
         }
       }
@@ -390,14 +385,14 @@
         "main": [
           [
             {
-              "node": "Get Users with Upcoming Meal",
+              "node": "Get Silent Users",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Get Users with Upcoming Meal": {
+      "Get Silent Users": {
         "main": [
           [
             {
@@ -412,7 +407,7 @@
         "main": [
           [
             {
-              "node": "Build Reminder Message",
+              "node": "Build Silence Message",
               "type": "main",
               "index": 0
             }
@@ -420,22 +415,22 @@
           []
         ]
       },
-      "Build Reminder Message": {
+      "Build Silence Message": {
         "main": [
           [
             {
-              "node": "Send Reminder",
+              "node": "Send Message",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Send Reminder": {
+      "Send Message": {
         "main": [
           [
             {
-              "node": "Log Reminder Sent",
+              "node": "Log Silence Check",
               "type": "main",
               "index": 0
             }
@@ -449,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-01T20:46:09.101Z",
-        "id": 281,
-        "workflowId": "SntGuE97yl9efvo5",
-        "versionId": "cb605318-b607-43c7-adb9-de16df8f4843",
+        "createdAt": "2026-04-01T20:46:15.607Z",
+        "id": 289,
+        "workflowId": "ytuz6H8cdBm8oyTx",
+        "versionId": "0e4af1c9-ae90-4a1d-b2bc-13b572c1ec15",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

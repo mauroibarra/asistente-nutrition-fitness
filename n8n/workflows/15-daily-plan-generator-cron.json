@@ -1,0 +1,520 @@
+{
+  "updatedAt": "2026-04-01T20:30:04.261Z",
+  "createdAt": "2026-04-01T20:25:42.453Z",
+  "id": "xILhDSQy0ZP40jjt",
+  "name": "FitAI - Daily Plan Generator Cron",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "dp-01",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 21 * * *"
+            }
+          ]
+        },
+        "timezone": "America/Bogota"
+      }
+    },
+    {
+      "id": "dp-02",
+      "name": "Get Active Users Without Tomorrow Plan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        480,
+        300
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  u.id AS user_id,\n  u.telegram_id,\n  u.first_name,\n  up.wake_up_time,\n  up.caloric_target,\n  up.protein_target_g,\n  up.carb_target_g,\n  up.fat_target_g\nFROM users u\nJOIN memberships m\n  ON u.id = m.user_id\n  AND m.status = 'active'\n  AND m.expires_at > NOW()\nJOIN user_profiles up\n  ON u.id = up.user_id\n  AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp\n  ON u.id = mp.user_id\n  AND mp.plan_date = CURRENT_DATE + 1\n  AND mp.is_active = true\nWHERE mp.id IS NULL\nORDER BY u.id;",
+        "options": {}
+      }
+    },
+    {
+      "id": "dp-03",
+      "name": "Loop Over Users",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "dp-04",
+      "name": "Generate Plan for User",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        160
+      ],
+      "continueOnFail": true,
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "KQhP9lQNxCKeOsbJ",
+          "mode": "id"
+        },
+        "mode": "each",
+        "options": {},
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "fields": {
+          "values": [
+            {
+              "name": "userId",
+              "type": "numberValue",
+              "numberValue": "={{ $json.user_id }}"
+            },
+            {
+              "name": "planDate",
+              "type": "stringValue",
+              "stringValue": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); })() }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dp-05",
+      "name": "Create Tomorrow Daily Targets",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1200,
+        160
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n)\nSELECT\n  up.user_id,\n  CURRENT_DATE + 1,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  0, 0, 0, 0\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO NOTHING;",
+        "options": {
+          "queryReplacement": "={{ [$('Loop Over Users').item.json.user_id] }}"
+        }
+      }
+    },
+    {
+      "id": "dp-06",
+      "name": "Wait 1 Second",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        160
+      ],
+      "webhookId": "dp-wait-1s",
+      "parameters": {
+        "unit": "seconds",
+        "amount": 1,
+        "resume": "timeInterval"
+      }
+    },
+    {
+      "id": "dp-07",
+      "name": "Log Completion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        440
+      ],
+      "parameters": {
+        "jsCode": "const totalProcessed = $input.all().length;\nconst now = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\nconst planDate = (() => {\n  const d = new Date();\n  d.setDate(d.getDate() + 1);\n  return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n})();\n\nreturn [{ json: {\n  message: `Daily Plan Generator Cron completado`,\n  date: now,\n  planDate,\n  plansAttempted: totalProcessed\n}}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Users Without Tomorrow Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Users Without Tomorrow Plan": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Users": {
+      "main": [
+        [
+          {
+            "node": "Generate Plan for User",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Plan for User": {
+      "main": [
+        [
+          {
+            "node": "Create Tomorrow Daily Targets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Tomorrow Daily Targets": {
+      "main": [
+        [
+          {
+            "node": "Wait 1 Second",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1 Second": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Cron Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "db11cbe1-903a-4b25-afb5-f7882bc85bfb",
+  "activeVersionId": "db11cbe1-903a-4b25-afb5-f7882bc85bfb",
+  "versionCounter": 8,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-01T20:25:42.463Z",
+      "createdAt": "2026-04-01T20:25:42.463Z",
+      "role": "workflow:owner",
+      "workflowId": "xILhDSQy0ZP40jjt",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-01T20:30:04.263Z",
+    "createdAt": "2026-04-01T20:30:04.263Z",
+    "versionId": "db11cbe1-903a-4b25-afb5-f7882bc85bfb",
+    "workflowId": "xILhDSQy0ZP40jjt",
+    "nodes": [
+      {
+        "id": "dp-01",
+        "name": "Cron Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 21 * * *"
+              }
+            ]
+          },
+          "timezone": "America/Bogota"
+        }
+      },
+      {
+        "id": "dp-02",
+        "name": "Get Active Users Without Tomorrow Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          480,
+          300
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  u.id AS user_id,\n  u.telegram_id,\n  u.first_name,\n  up.wake_up_time,\n  up.caloric_target,\n  up.protein_target_g,\n  up.carb_target_g,\n  up.fat_target_g\nFROM users u\nJOIN memberships m\n  ON u.id = m.user_id\n  AND m.status = 'active'\n  AND m.expires_at > NOW()\nJOIN user_profiles up\n  ON u.id = up.user_id\n  AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp\n  ON u.id = mp.user_id\n  AND mp.plan_date = CURRENT_DATE + 1\n  AND mp.is_active = true\nWHERE mp.id IS NULL\nORDER BY u.id;",
+          "options": {}
+        }
+      },
+      {
+        "id": "dp-03",
+        "name": "Loop Over Users",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          720,
+          300
+        ],
+        "parameters": {
+          "batchSize": 1,
+          "options": {}
+        }
+      },
+      {
+        "id": "dp-04",
+        "name": "Generate Plan for User",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          960,
+          160
+        ],
+        "continueOnFail": true,
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "KQhP9lQNxCKeOsbJ",
+            "mode": "id"
+          },
+          "mode": "each",
+          "options": {},
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": []
+          },
+          "fields": {
+            "values": [
+              {
+                "name": "userId",
+                "type": "numberValue",
+                "numberValue": "={{ $json.user_id }}"
+              },
+              {
+                "name": "planDate",
+                "type": "stringValue",
+                "stringValue": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); })() }}"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "dp-05",
+        "name": "Create Tomorrow Daily Targets",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1200,
+          160
+        ],
+        "continueOnFail": true,
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n)\nSELECT\n  up.user_id,\n  CURRENT_DATE + 1,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  0, 0, 0, 0\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO NOTHING;",
+          "options": {
+            "queryReplacement": "={{ [$('Loop Over Users').item.json.user_id] }}"
+          }
+        }
+      },
+      {
+        "id": "dp-06",
+        "name": "Wait 1 Second",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1440,
+          160
+        ],
+        "webhookId": "dp-wait-1s",
+        "parameters": {
+          "unit": "seconds",
+          "amount": 1,
+          "resume": "timeInterval"
+        }
+      },
+      {
+        "id": "dp-07",
+        "name": "Log Completion",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          440
+        ],
+        "parameters": {
+          "jsCode": "const totalProcessed = $input.all().length;\nconst now = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\nconst planDate = (() => {\n  const d = new Date();\n  d.setDate(d.getDate() + 1);\n  return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n})();\n\nreturn [{ json: {\n  message: `Daily Plan Generator Cron completado`,\n  date: now,\n  planDate,\n  plansAttempted: totalProcessed\n}}];\n"
+        }
+      }
+    ],
+    "connections": {
+      "Cron Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Active Users Without Tomorrow Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Active Users Without Tomorrow Plan": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Users",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Users": {
+        "main": [
+          [
+            {
+              "node": "Generate Plan for User",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Log Completion",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Plan for User": {
+        "main": [
+          [
+            {
+              "node": "Create Tomorrow Daily Targets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Tomorrow Daily Targets": {
+        "main": [
+          [
+            {
+              "node": "Wait 1 Second",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 1 Second": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Users",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-01T20:30:05.363Z",
+        "id": 271,
+        "workflowId": "xILhDSQy0ZP40jjt",
+        "versionId": "db11cbe1-903a-4b25-afb5-f7882bc85bfb",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
+}

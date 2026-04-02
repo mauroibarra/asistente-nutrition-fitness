@@ -1224,15 +1224,164 @@ Se ejecuta cuando un usuario nuevo inicia el bot con `/start`:
 }
 ```
 
-#### Obtener Plan de Nutricion Activo
+#### Obtener Plan de Nutricion del Dia (v2 — plan diario por fecha)
 
 ```json
 {
-  "node": "Postgres - Get Meal Plan",
+  "node": "Postgres - Get Today Meal Plan",
   "type": "n8n-nodes-base.postgres",
   "parameters": {
     "operation": "executeQuery",
-    "query": "SELECT mp.id, mp.plan_name, mp.description, mp.daily_calories, mp.protein_g, mp.carbs_g, mp.fat_g, mp.meals_json, mp.start_date, mp.end_date, mp.created_at FROM meal_plans mp WHERE mp.user_id = $1 AND mp.is_active = true AND mp.end_date >= CURRENT_DATE ORDER BY mp.created_at DESC LIMIT 1;",
+    "query": "SELECT mp.id, mp.plan_date, mp.plan_json, mp.total_calories, mp.generated_at FROM meal_plans mp WHERE mp.user_id = $1 AND mp.plan_date = CURRENT_DATE AND mp.is_active = true LIMIT 1;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+#### Meal Plan Generator v2 — Queries de Contexto (paralelas)
+
+Contexto para generación de plan diario (ver `docs/n8n-flows.md` sección 4):
+
+```json
+{
+  "node": "Postgres - Get Recent Meals",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT mp.plan_date, mp.plan_json FROM meal_plans mp WHERE mp.user_id = $1 AND mp.plan_date >= ($2::date - INTERVAL '3 days') AND mp.plan_date < $2::date ORDER BY mp.plan_date DESC;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }},={{ $json.planDate }}",
+      "alwaysOutputData": true
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+```json
+{
+  "node": "Postgres - Get Yesterday Intake",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT dt.calories_consumed, dt.protein_consumed_g, dt.carbs_consumed_g, dt.fat_consumed_g, dt.meals_logged FROM daily_targets dt WHERE dt.user_id = $1 AND dt.target_date = ($2::date - INTERVAL '1 day');",
+    "options": {
+      "queryReplacement": "={{ $json.userId }},={{ $json.planDate }}",
+      "alwaysOutputData": true
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+```json
+{
+  "node": "Postgres - Get Weekly Average",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT AVG(calories_consumed) AS avg_calories, AVG(protein_consumed_g) AS avg_protein FROM daily_targets WHERE user_id = $1 AND target_date >= date_trunc('week', $2::date) AND target_date < $2::date AND meals_logged > 0;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }},={{ $json.planDate }}",
+      "alwaysOutputData": true
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+```json
+{
+  "node": "Postgres - Check Workout Day",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT EXISTS(SELECT 1 FROM exercise_plans WHERE user_id = $1 AND is_active = true AND plan_json::jsonb @> jsonb_build_object('day_of_week', to_char($2::date, 'FMDay'))) AS has_workout;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }},={{ $json.planDate }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+#### Guardar Plan Diario (v2)
+
+```json
+{
+  "node": "Postgres - Save New Daily Plan",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "INSERT INTO meal_plans (user_id, plan_date, plan_json, total_calories, is_active, generated_at) VALUES ($1, $2::date, $3, $4, true, NOW()) RETURNING id;",
+    "options": {
+      "queryReplacement": "={{ $json.userId }},={{ $json.planDate }},={{ JSON.stringify($json.plan) }},={{ $json.totalCalories }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+#### Daily Plan Generator Cron — Usuarios sin plan para mañana
+
+```json
+{
+  "node": "Postgres - Get Active Users Without Tomorrow Plan",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name, up.wake_up_time, up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g FROM users u JOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW() JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true LEFT JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE + 1 AND mp.is_active = true WHERE mp.id IS NULL ORDER BY u.id;",
+    "options": {
+      "alwaysOutputData": true
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+```json
+{
+  "node": "Postgres - Create Tomorrow Daily Targets (Cron)",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "INSERT INTO daily_targets (user_id, target_date, caloric_target, protein_target_g, carb_target_g, fat_target_g, calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g) SELECT up.user_id, (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day', up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g, 0, 0, 0, 0 FROM user_profiles up WHERE up.user_id = $1 ON CONFLICT (user_id, target_date) DO NOTHING;",
+    "options": {
+      "queryReplacement": "={{ $json.user_id }}"
+    }
+  },
+  "credentials": {
+    "postgres": "FitAI PostgreSQL"
+  }
+}
+```
+
+#### Obtener Plan de Nutricion Activo (v1 legacy — deprecated)
+
+```json
+{
+  "node": "Postgres - Get Meal Plan (LEGACY v1)",
+  "type": "n8n-nodes-base.postgres",
+  "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT mp.id, mp.plan_json, mp.total_calories, mp.generated_at FROM meal_plans mp WHERE mp.user_id = $1 AND mp.is_active = true ORDER BY mp.generated_at DESC LIMIT 1;",
     "options": {
       "queryReplacement": "={{ $json.user_id }}"
     }
@@ -1434,6 +1583,182 @@ FROM conversation_logs cl
 WHERE cl.created_at >= NOW() - INTERVAL '30 days'
 GROUP BY DATE(cl.created_at)
 ORDER BY date DESC;
+```
+
+#### Get Users for Morning Briefing (Morning Briefing Cron)
+
+Busca usuarios cuyo `wake_up_time` coincide con la ventana actual (±15 min) y que aún no han recibido el briefing del día.
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       up.wake_up_time, up.caloric_target, up.protein_target_g,
+       mp.plan_json, mp.total_calories,
+       g.target_weight, g.start_weight,
+       wl.weight_kg AS current_weight
+FROM users u
+JOIN memberships m ON u.id = m.user_id
+  AND m.status = 'active' AND m.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true
+LEFT JOIN meal_plans mp ON u.id = mp.user_id
+  AND mp.plan_date = CURRENT_DATE AND mp.is_active = true
+LEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true
+LEFT JOIN LATERAL (
+  SELECT weight_kg FROM weight_logs
+  WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1
+) wl ON true
+WHERE u.is_active = true
+  AND ABS(EXTRACT(EPOCH FROM (up.wake_up_time::time - LOCALTIME)) / 60) <= 15
+  AND NOT EXISTS (
+    SELECT 1 FROM conversation_logs cl
+    WHERE cl.user_id = u.id
+      AND cl.message_type = 'morning_briefing'
+      AND cl.created_at::date = CURRENT_DATE
+  );
+```
+
+#### Get Users with Upcoming Meal (Meal Reminder Cron)
+
+Descompone `plan_json` con `jsonb_array_elements` para encontrar comidas en los próximos 15 minutos. Dedup por nombre de comida vía `conversation_logs`.
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       up.caloric_target, up.protein_target_g,
+       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,
+       m.meal_type, m.meal_name, m.meal_time, m.meal_calories, m.meal_protein
+FROM users u
+JOIN memberships mb ON u.id = mb.user_id AND mb.status = 'active' AND mb.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true
+JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true
+LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE
+CROSS JOIN LATERAL jsonb_array_elements(mp.plan_json::jsonb -> 'meals') AS meal_item
+CROSS JOIN LATERAL (
+  SELECT
+    meal_item ->> 'meal_type' AS meal_type,
+    meal_item ->> 'name' AS meal_name,
+    (meal_item ->> 'time')::time AS meal_time,
+    (meal_item ->> 'calories')::int AS meal_calories,
+    (meal_item ->> 'protein_g')::int AS meal_protein
+) m
+WHERE u.is_active = true
+  AND m.meal_time BETWEEN LOCALTIME AND LOCALTIME + INTERVAL '15 minutes'
+  AND NOT EXISTS (
+    SELECT 1 FROM conversation_logs cl
+    WHERE cl.user_id = u.id
+      AND cl.message_type = 'meal_reminder'
+      AND cl.assistant_response LIKE '%' || m.meal_name || '%'
+      AND cl.created_at::date = CURRENT_DATE
+  );
+```
+
+#### Get Users for Evening Check-in (Evening Check-in Cron)
+
+Determina la hora de envío basándose en `wake_up_time`. Incluye resumen de `daily_targets` del día.
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       up.caloric_target, up.protein_target_g, up.wake_up_time,
+       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,
+       dt.plan_adherence_pct
+FROM users u
+JOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true
+LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE
+WHERE u.is_active = true
+  AND EXTRACT(HOUR FROM LOCALTIME) =
+    CASE
+      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 6 THEN 20
+      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 8 THEN 21
+      ELSE 22
+    END
+  AND NOT EXISTS (
+    SELECT 1 FROM conversation_logs cl
+    WHERE cl.user_id = u.id
+      AND cl.message_type = 'evening_checkin'
+      AND cl.created_at::date = CURRENT_DATE
+  );
+```
+
+#### Get Active Users with Weekly Data (Weekly Report Cron)
+
+Query con múltiples `LATERAL JOINs` para obtener peso actual, peso anterior, promedios semanales y sesiones de ejercicio en una sola query.
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       up.caloric_target, up.protein_target_g, up.height_cm,
+       g.goal_type, g.target_weight, g.start_weight,
+       w_current.weight_kg AS current_weight,
+       w_prev.weight_kg AS previous_weight,
+       weekly.avg_calories, weekly.avg_protein, weekly.days_tracked, weekly.avg_adherence,
+       workouts.completed AS workouts_completed,
+       up.training_days_per_week
+FROM users u
+JOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true
+LEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true
+LEFT JOIN LATERAL (
+  SELECT weight_kg, logged_at FROM weight_logs
+  WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1
+) w_current ON true
+LEFT JOIN LATERAL (
+  SELECT weight_kg FROM weight_logs
+  WHERE user_id = u.id AND logged_at < CURRENT_DATE - INTERVAL '5 days'
+  ORDER BY logged_at DESC LIMIT 1
+) w_prev ON true
+LEFT JOIN LATERAL (
+  SELECT
+    ROUND(AVG(calories_consumed)) AS avg_calories,
+    ROUND(AVG(protein_consumed_g)) AS avg_protein,
+    COUNT(*) FILTER (WHERE meals_logged > 0) AS days_tracked,
+    ROUND(AVG(plan_adherence_pct)) AS avg_adherence
+  FROM daily_targets
+  WHERE user_id = u.id
+    AND target_date >= CURRENT_DATE - INTERVAL '7 days'
+    AND target_date < CURRENT_DATE
+) weekly ON true
+LEFT JOIN LATERAL (
+  SELECT COUNT(*) AS completed FROM conversation_logs
+  WHERE user_id = u.id
+    AND message_type = 'workout_completed'
+    AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+) workouts ON true
+WHERE u.is_active = true;
+```
+
+#### Get Silent Users (Silence Detector Cron)
+
+Detecta usuarios en la ventana 24h–72h de silencio que no han recibido `silence_check` hoy.
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       last_interaction.last_at,
+       EXTRACT(EPOCH FROM (NOW() - last_interaction.last_at)) / 3600 AS hours_silent
+FROM users u
+JOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true
+CROSS JOIN LATERAL (
+  SELECT MAX(created_at) AS last_at FROM conversation_logs WHERE user_id = u.id
+) last_interaction
+WHERE u.is_active = true
+  AND last_interaction.last_at < NOW() - INTERVAL '24 hours'
+  AND last_interaction.last_at > NOW() - INTERVAL '72 hours'
+  AND NOT EXISTS (
+    SELECT 1 FROM conversation_logs cl
+    WHERE cl.user_id = u.id
+      AND cl.message_type = 'silence_check'
+      AND cl.created_at::date = CURRENT_DATE
+  );
+```
+
+#### Log Proactive Message Sent (todos los workflows proactivos)
+
+Query común para todos los workflows proactivos. El `message_type` varía según el workflow.
+
+```sql
+INSERT INTO conversation_logs (user_id, message_type, assistant_response, created_at)
+VALUES ($1, $2, $3, NOW());
+-- $1: user_id (integer)
+-- $2: message_type ('morning_briefing' | 'meal_reminder' | 'evening_checkin' | 'weekly_report' | 'silence_check')
+-- $3: texto del mensaje enviado
 ```
 
 ---

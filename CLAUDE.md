@@ -147,7 +147,7 @@ Mapa de IDs → archivos del repo:
 | `fI5u4rs3iXPfeXFl` | `n8n/workflows/01-telegram-webhook-handler.json` |
 | `CCkMv75zwDDoj513` | `n8n/workflows/02-process-text-message.json` |
 | `Gr7BeeNHBx6ZtQGS` | `n8n/workflows/02-main-ai-agent.json` |
-| `Mjmz7R3aFfuLGCs3` | `n8n/workflows/03-onboarding-flow.json` |
+| `yiUgnJ6gCoaIFVXe` | `n8n/workflows/03-onboarding-flow.json` |
 | `KQhP9lQNxCKeOsbJ` | `n8n/workflows/04-meal-plan-generator.json` |
 | `SntGuE97yl9efvo5` | `n8n/workflows/05-meal-reminder-scheduler.json` |
 | `tkSAHhjJnO4nTFsM` | `n8n/workflows/06-weight-update-requester.json` |
@@ -156,6 +156,13 @@ Mapa de IDs → archivos del repo:
 | `vAqqjXg2IE1ldgg3` | `n8n/workflows/09-rag-personal-indexer.json` |
 | `I4Q4C6SOPY2fnK3W` | `n8n/workflows/10-membership-alert.json` |
 | `3uXT5ld76uIUCENn` | `n8n/workflows/11-knowledge-base-indexer.json` |
+| `DQsnzXQWMSqJxigL` | `n8n/workflows/13-log-food-intake.json` |
+| `J2y4wKYEugHe4Mkg` | `n8n/workflows/14-get-daily-status.json` |
+| `xILhDSQy0ZP40jjt` | `n8n/workflows/15-daily-plan-generator-cron.json` |
+| `NFhsChTrhIc05uyc` | `n8n/workflows/16-morning-briefing.json` |
+| `ErIUGcIkS5Rim65L` | `n8n/workflows/17-evening-checkin.json` |
+| `gsIQcXRlMznc3uJ8` | `n8n/workflows/18-weekly-report.json` |
+| `ytuz6H8cdBm8oyTx` | `n8n/workflows/19-silence-detector.json` |
 
 ### Importar/Exportar Workflows de n8n (CLI)
 

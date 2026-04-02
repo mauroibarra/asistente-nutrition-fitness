@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-27T22:59:46.194Z",
+  "updatedAt": "2026-03-30T16:26:45.181Z",
   "createdAt": "2026-03-27T16:33:48.593Z",
   "id": "bhJ8qqZXr68Id3pH",
   "name": "FitAI - Progress Calculator",
@@ -215,9 +215,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "b34f882d-876c-4cbc-9e0f-8719a9a29a2f",
-  "activeVersionId": "b34f882d-876c-4cbc-9e0f-8719a9a29a2f",
-  "versionCounter": 20,
+  "versionId": "fff498ed-94e9-4f97-9380-6f422e91dc43",
+  "activeVersionId": "fff498ed-94e9-4f97-9380-6f422e91dc43",
+  "versionCounter": 25,
   "triggerCount": 0,
   "shared": [
     {
@@ -240,9 +240,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-27T22:59:46.196Z",
-    "createdAt": "2026-03-27T22:59:46.196Z",
-    "versionId": "b34f882d-876c-4cbc-9e0f-8719a9a29a2f",
+    "updatedAt": "2026-03-30T16:26:45.181Z",
+    "createdAt": "2026-03-30T16:26:45.181Z",
+    "versionId": "fff498ed-94e9-4f97-9380-6f422e91dc43",
     "workflowId": "bhJ8qqZXr68Id3pH",
     "nodes": [
       {
@@ -356,7 +356,8 @@
           "chatId": "={{ $json.chatId }}",
           "text": "={{ $json.message }}",
           "additionalFields": {
-            "parse_mode": "Markdown"
+            "parse_mode": "Markdown",
+            "appendAttribution": false
           }
         },
         "id": "node-w7-7",
@@ -450,19 +451,11 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-27T22:59:46.265Z",
-        "id": 52,
+        "createdAt": "2026-03-30T16:26:45.742Z",
+        "id": 168,
         "workflowId": "bhJ8qqZXr68Id3pH",
-        "versionId": "b34f882d-876c-4cbc-9e0f-8719a9a29a2f",
+        "versionId": "fff498ed-94e9-4f97-9380-6f422e91dc43",
         "event": "activated",
-        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
-      },
-      {
-        "createdAt": "2026-03-27T22:59:46.256Z",
-        "id": 51,
-        "workflowId": "bhJ8qqZXr68Id3pH",
-        "versionId": "b34f882d-876c-4cbc-9e0f-8719a9a29a2f",
-        "event": "deactivated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
     ]

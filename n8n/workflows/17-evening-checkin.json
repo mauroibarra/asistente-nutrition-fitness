@@ -1,0 +1,456 @@
+{
+  "updatedAt": "2026-04-01T20:46:11.313Z",
+  "createdAt": "2026-04-01T20:41:20.487Z",
+  "id": "ErIUGcIkS5Rim65L",
+  "name": "FitAI - Evening Check-in",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "ev-01",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 20-22 * * *"
+            }
+          ]
+        },
+        "timezone": "America/Bogota"
+      }
+    },
+    {
+      "id": "ev-02",
+      "name": "Get Users for Check-in",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        480,
+        300
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.wake_up_time,\n       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n       dt.plan_adherence_pct\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE\nWHERE u.is_active = true\n  AND EXTRACT(HOUR FROM LOCALTIME) =\n    CASE\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 6 THEN 20\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 8 THEN 21\n      ELSE 22\n    END\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'evening_checkin' AND cl.created_at::date = CURRENT_DATE\n  );",
+        "options": {}
+      }
+    },
+    {
+      "id": "ev-03",
+      "name": "Has Users?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "ev-04",
+      "name": "Build Check-in Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        160
+      ],
+      "parameters": {
+        "jsCode": "const firstName = $json.first_name;\nconst caloriesConsumed = $json.calories_consumed || 0;\nconst proteinConsumed = $json.protein_consumed_g || 0;\nconst caloricTarget = $json.caloric_target;\nconst proteinTarget = $json.protein_target_g;\nconst mealsLogged = $json.meals_logged || 0;\n\nlet message = '';\nif (mealsLogged === 0) {\n  const phrases = [\n    `Oye ${firstName}, ¿cómo te fue hoy? No me reportaste nada y quería saber si todo está bien.`,\n    `${firstName}, ¿qué tal tu día? No alcanzo a ver qué comiste hoy. Si se te complicó el plan, no pasa nada — mañana retomamos.`,\n    `Hey ${firstName}, ¿cómo estuvo el día? Si comiste fuera de plan o se te fue el tiempo, está bien. Solo cuéntame cómo te fue.`\n  ];\n  message = phrases[Math.floor(Math.random() * phrases.length)];\n} else {\n  const caloriePct = Math.round((caloriesConsumed / caloricTarget) * 100);\n  const proteinPct = Math.round((proteinConsumed / proteinTarget) * 100);\n  let assessment = '';\n  if (caloriePct >= 85 && caloriePct <= 115 && proteinPct >= 80) assessment = 'Día sólido, cumpliste la meta.';\n  else if (caloriePct < 85) assessment = 'Te faltaron calorías hoy. Intenta no saltarte comidas mañana.';\n  else if (caloriePct > 115) assessment = 'Hoy te pasaste un poco de calorías. No pasa nada, mañana compensamos ligeramente.';\n  else if (proteinPct < 80) assessment = 'Te faltó proteína hoy. Intenta incluir más pollo, huevos o legumbres mañana.';\n\n  message = `${firstName}, resumen del día:\\n\\nCalorías: *${caloriesConsumed} de ${caloricTarget} kcal* (${caloriePct}%)\\nProteína: *${proteinConsumed} de ${proteinTarget}g* (${proteinPct}%)\\nComidas reportadas: ${mealsLogged}\\n\\n${assessment} Descansa bien, mañana te mando el plan temprano.`;\n}\n\nreturn [{ json: { telegramId: $json.telegram_id, userId: $json.user_id, message } }];\n"
+      }
+    },
+    {
+      "id": "ev-05",
+      "name": "Send Check-in",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        160
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $json.telegramId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "ev-06",
+      "name": "Log Check-in",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1440,
+        160
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'evening_checkin', '[proactive]', $2, NOW());",
+        "options": {
+          "queryReplacement": "={ [$('Build Check-in Message').item.json.userId, $('Build Check-in Message').item.json.message] }"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Users for Check-in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Users for Check-in": {
+      "main": [
+        [
+          {
+            "node": "Has Users?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Users?": {
+      "main": [
+        [
+          {
+            "node": "Build Check-in Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Check-in Message": {
+      "main": [
+        [
+          {
+            "node": "Send Check-in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Check-in": {
+      "main": [
+        [
+          {
+            "node": "Log Check-in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Cron Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "96750652-1c8d-42a1-b090-6f7182838c2c",
+  "activeVersionId": "96750652-1c8d-42a1-b090-6f7182838c2c",
+  "versionCounter": 8,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-01T20:41:20.490Z",
+      "createdAt": "2026-04-01T20:41:20.490Z",
+      "role": "workflow:owner",
+      "workflowId": "ErIUGcIkS5Rim65L",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-01T20:46:11.314Z",
+    "createdAt": "2026-04-01T20:46:11.314Z",
+    "versionId": "96750652-1c8d-42a1-b090-6f7182838c2c",
+    "workflowId": "ErIUGcIkS5Rim65L",
+    "nodes": [
+      {
+        "id": "ev-01",
+        "name": "Cron Trigger",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 20-22 * * *"
+              }
+            ]
+          },
+          "timezone": "America/Bogota"
+        }
+      },
+      {
+        "id": "ev-02",
+        "name": "Get Users for Check-in",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          480,
+          300
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.wake_up_time,\n       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n       dt.plan_adherence_pct\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE\nWHERE u.is_active = true\n  AND EXTRACT(HOUR FROM LOCALTIME) =\n    CASE\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 6 THEN 20\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 8 THEN 21\n      ELSE 22\n    END\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'evening_checkin' AND cl.created_at::date = CURRENT_DATE\n  );",
+          "options": {}
+        }
+      },
+      {
+        "id": "ev-03",
+        "name": "Has Users?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          720,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "c1",
+                "leftValue": "={{ $input.all().length }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "ev-04",
+        "name": "Build Check-in Message",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          160
+        ],
+        "parameters": {
+          "jsCode": "const firstName = $json.first_name;\nconst caloriesConsumed = $json.calories_consumed || 0;\nconst proteinConsumed = $json.protein_consumed_g || 0;\nconst caloricTarget = $json.caloric_target;\nconst proteinTarget = $json.protein_target_g;\nconst mealsLogged = $json.meals_logged || 0;\n\nlet message = '';\nif (mealsLogged === 0) {\n  const phrases = [\n    `Oye ${firstName}, ¿cómo te fue hoy? No me reportaste nada y quería saber si todo está bien.`,\n    `${firstName}, ¿qué tal tu día? No alcanzo a ver qué comiste hoy. Si se te complicó el plan, no pasa nada — mañana retomamos.`,\n    `Hey ${firstName}, ¿cómo estuvo el día? Si comiste fuera de plan o se te fue el tiempo, está bien. Solo cuéntame cómo te fue.`\n  ];\n  message = phrases[Math.floor(Math.random() * phrases.length)];\n} else {\n  const caloriePct = Math.round((caloriesConsumed / caloricTarget) * 100);\n  const proteinPct = Math.round((proteinConsumed / proteinTarget) * 100);\n  let assessment = '';\n  if (caloriePct >= 85 && caloriePct <= 115 && proteinPct >= 80) assessment = 'Día sólido, cumpliste la meta.';\n  else if (caloriePct < 85) assessment = 'Te faltaron calorías hoy. Intenta no saltarte comidas mañana.';\n  else if (caloriePct > 115) assessment = 'Hoy te pasaste un poco de calorías. No pasa nada, mañana compensamos ligeramente.';\n  else if (proteinPct < 80) assessment = 'Te faltó proteína hoy. Intenta incluir más pollo, huevos o legumbres mañana.';\n\n  message = `${firstName}, resumen del día:\\n\\nCalorías: *${caloriesConsumed} de ${caloricTarget} kcal* (${caloriePct}%)\\nProteína: *${proteinConsumed} de ${proteinTarget}g* (${proteinPct}%)\\nComidas reportadas: ${mealsLogged}\\n\\n${assessment} Descansa bien, mañana te mando el plan temprano.`;\n}\n\nreturn [{ json: { telegramId: $json.telegram_id, userId: $json.user_id, message } }];\n"
+        }
+      },
+      {
+        "id": "ev-05",
+        "name": "Send Check-in",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1200,
+          160
+        ],
+        "continueOnFail": true,
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        },
+        "parameters": {
+          "chatId": "={{ $json.telegramId }}",
+          "text": "={{ $json.message }}",
+          "additionalFields": {
+            "parse_mode": "Markdown",
+            "appendAttribution": false
+          }
+        }
+      },
+      {
+        "id": "ev-06",
+        "name": "Log Check-in",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          1440,
+          160
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'evening_checkin', '[proactive]', $2, NOW());",
+          "options": {
+            "queryReplacement": "={ [$('Build Check-in Message').item.json.userId, $('Build Check-in Message').item.json.message] }"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Cron Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Users for Check-in",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Users for Check-in": {
+        "main": [
+          [
+            {
+              "node": "Has Users?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Users?": {
+        "main": [
+          [
+            {
+              "node": "Build Check-in Message",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Build Check-in Message": {
+        "main": [
+          [
+            {
+              "node": "Send Check-in",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Check-in": {
+        "main": [
+          [
+            {
+              "node": "Log Check-in",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-01T20:46:12.364Z",
+        "id": 285,
+        "workflowId": "ErIUGcIkS5Rim65L",
+        "versionId": "96750652-1c8d-42a1-b090-6f7182838c2c",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
+}

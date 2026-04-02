@@ -1,0 +1,369 @@
+{
+  "updatedAt": "2026-04-01T19:51:40.142Z",
+  "createdAt": "2026-04-01T19:51:40.142Z",
+  "id": "J2y4wKYEugHe4Mkg",
+  "name": "FitAI - Get Daily Status",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "gs-01",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "gs-02",
+      "name": "Get Daily Targets",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        160
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "alwaysOutputData": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  dt.caloric_target,\n  dt.protein_target_g,\n  dt.carb_target_g,\n  dt.fat_target_g,\n  COALESCE(dt.calories_consumed, 0) AS calories_consumed,\n  COALESCE(dt.protein_consumed_g, 0) AS protein_consumed,\n  COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed,\n  COALESCE(dt.fat_consumed_g, 0) AS fat_consumed,\n  COALESCE(dt.meals_logged, 0) AS meals_logged,\n  dt.plan_adherence_pct\nFROM daily_targets dt\nWHERE dt.user_id = $1 AND dt.target_date = CURRENT_DATE;",
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+        }
+      }
+    },
+    {
+      "id": "gs-03",
+      "name": "Get Today Meals",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "alwaysOutputData": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE\nORDER BY logged_at ASC;",
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+        }
+      }
+    },
+    {
+      "id": "gs-04",
+      "name": "Get Today Plan",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        460,
+        440
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "alwaysOutputData": true,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT plan_json\nFROM meal_plans\nWHERE user_id = $1 AND is_active = true\nAND plan_date = CURRENT_DATE;",
+        "options": {
+          "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+        }
+      }
+    },
+    {
+      "id": "gs-05",
+      "name": "Build Status Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const targets = $('Get Daily Targets').first()?.json || null;\nconst meals = $('Get Today Meals').all().map(item => item.json).filter(m => m && m.meal_type);\nconst planRow = $('Get Today Plan').first()?.json || null;\n\nconst plan = planRow?.plan_json\n  ? (typeof planRow.plan_json === 'string' ? JSON.parse(planRow.plan_json) : planRow.plan_json)\n  : null;\n\nconst reportedTypes = meals.map(m => m.meal_type);\nconst pendingMeals = plan?.meals\n  ? plan.meals.filter(m => !reportedTypes.includes(m.meal_type))\n      .map(m => ({ tipo: m.meal_type, nombre: m.name, calorias: m.calories, proteina_g: m.protein_g, hora: m.time }))\n  : [];\n\nreturn [{\n  json: {\n    fecha: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),\n    calorias: {\n      consumidas: targets?.calories_consumed || 0,\n      meta: targets?.caloric_target || null,\n      restantes: targets ? targets.caloric_target - targets.calories_consumed : null\n    },\n    proteina: {\n      consumida_g: targets?.protein_consumed || 0,\n      meta_g: targets?.protein_target_g || null,\n      restante_g: targets ? targets.protein_target_g - targets.protein_consumed : null\n    },\n    comidas_reportadas: meals.map(m => ({\n      tipo: m.meal_type,\n      descripcion: m.description,\n      calorias: m.estimated_calories,\n      proteina_g: m.estimated_protein_g\n    })),\n    comidas_pendientes_del_plan: pendingMeals\n  }\n}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Daily Targets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Today Meals",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Today Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Daily Targets": {
+      "main": [
+        [
+          {
+            "node": "Build Status Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today Meals": {
+      "main": [
+        [
+          {
+            "node": "Build Status Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today Plan": {
+      "main": [
+        [
+          {
+            "node": "Build Status Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "7d9e5dfb-af34-48e1-b155-f891442e019d",
+  "activeVersionId": "7d9e5dfb-af34-48e1-b155-f891442e019d",
+  "versionCounter": 3,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-01T19:51:40.144Z",
+      "createdAt": "2026-04-01T19:51:40.144Z",
+      "role": "workflow:owner",
+      "workflowId": "J2y4wKYEugHe4Mkg",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-01T19:51:40.149Z",
+    "createdAt": "2026-04-01T19:51:40.149Z",
+    "versionId": "7d9e5dfb-af34-48e1-b155-f891442e019d",
+    "workflowId": "J2y4wKYEugHe4Mkg",
+    "nodes": [
+      {
+        "id": "gs-01",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "gs-02",
+        "name": "Get Daily Targets",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          160
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "alwaysOutputData": true,
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  dt.caloric_target,\n  dt.protein_target_g,\n  dt.carb_target_g,\n  dt.fat_target_g,\n  COALESCE(dt.calories_consumed, 0) AS calories_consumed,\n  COALESCE(dt.protein_consumed_g, 0) AS protein_consumed,\n  COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed,\n  COALESCE(dt.fat_consumed_g, 0) AS fat_consumed,\n  COALESCE(dt.meals_logged, 0) AS meals_logged,\n  dt.plan_adherence_pct\nFROM daily_targets dt\nWHERE dt.user_id = $1 AND dt.target_date = CURRENT_DATE;",
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+          }
+        }
+      },
+      {
+        "id": "gs-03",
+        "name": "Get Today Meals",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "alwaysOutputData": true,
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE\nORDER BY logged_at ASC;",
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+          }
+        }
+      },
+      {
+        "id": "gs-04",
+        "name": "Get Today Plan",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          460,
+          440
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "alwaysOutputData": true,
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT plan_json\nFROM meal_plans\nWHERE user_id = $1 AND is_active = true\nAND plan_date = CURRENT_DATE;",
+          "options": {
+            "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
+          }
+        }
+      },
+      {
+        "id": "gs-05",
+        "name": "Build Status Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const targets = $('Get Daily Targets').first()?.json || null;\nconst meals = $('Get Today Meals').all().map(item => item.json).filter(m => m && m.meal_type);\nconst planRow = $('Get Today Plan').first()?.json || null;\n\nconst plan = planRow?.plan_json\n  ? (typeof planRow.plan_json === 'string' ? JSON.parse(planRow.plan_json) : planRow.plan_json)\n  : null;\n\nconst reportedTypes = meals.map(m => m.meal_type);\nconst pendingMeals = plan?.meals\n  ? plan.meals.filter(m => !reportedTypes.includes(m.meal_type))\n      .map(m => ({ tipo: m.meal_type, nombre: m.name, calorias: m.calories, proteina_g: m.protein_g, hora: m.time }))\n  : [];\n\nreturn [{\n  json: {\n    fecha: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),\n    calorias: {\n      consumidas: targets?.calories_consumed || 0,\n      meta: targets?.caloric_target || null,\n      restantes: targets ? targets.caloric_target - targets.calories_consumed : null\n    },\n    proteina: {\n      consumida_g: targets?.protein_consumed || 0,\n      meta_g: targets?.protein_target_g || null,\n      restante_g: targets ? targets.protein_target_g - targets.protein_consumed : null\n    },\n    comidas_reportadas: meals.map(m => ({\n      tipo: m.meal_type,\n      descripcion: m.description,\n      calorias: m.estimated_calories,\n      proteina_g: m.estimated_protein_g\n    })),\n    comidas_pendientes_del_plan: pendingMeals\n  }\n}];\n"
+        }
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Daily Targets",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get Today Meals",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get Today Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Daily Targets": {
+        "main": [
+          [
+            {
+              "node": "Build Status Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Today Meals": {
+        "main": [
+          [
+            {
+              "node": "Build Status Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Today Plan": {
+        "main": [
+          [
+            {
+              "node": "Build Status Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-01T19:51:41.213Z",
+        "id": 257,
+        "workflowId": "J2y4wKYEugHe4Mkg",
+        "versionId": "7d9e5dfb-af34-48e1-b155-f891442e019d",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
+}

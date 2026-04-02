@@ -1,38 +1,52 @@
 {
-  "updatedAt": "2026-03-27T16:35:06.408Z",
-  "createdAt": "2026-03-27T16:35:06.408Z",
-  "id": "Mjmz7R3aFfuLGCs3",
+  "updatedAt": "2026-04-01T20:02:43.200Z",
+  "createdAt": "2026-04-01T20:02:43.200Z",
+  "id": "yiUgnJ6gCoaIFVXe",
   "name": "FitAI - Onboarding Flow",
   "description": null,
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {},
-      "id": "c1d2e3f4-0001-4000-8000-000000000001",
+      "id": "ob-01",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
       "position": [
-        0,
-        0
-      ]
+        240,
+        300
+      ],
+      "parameters": {}
     },
     {
-      "parameters": {
-        "operation": "get",
-        "key": "=onboarding:{{ $json.telegramId }}"
-      },
-      "id": "c1d2e3f4-0002-4000-8000-000000000002",
+      "id": "ob-02",
       "name": "Get Onboarding State",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        250,
-        0
-      ]
+        460,
+        300
+      ],
+      "credentials": {
+        "redis": {
+          "id": "UGH5aP9zo2YPdm6x",
+          "name": "Redis account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "get",
+        "key": "=onboarding:{{ $json.telegramId }}"
+      }
     },
     {
+      "id": "ob-03",
+      "name": "Initialize or Resume?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -53,60 +67,79 @@
           ],
           "combinator": "and"
         }
-      },
-      "id": "c1d2e3f4-0003-4000-8000-000000000003",
-      "name": "Initialize or Resume?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        500,
-        0
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const firstName = $('Execute Workflow Trigger').first().json.firstName;\n\nconst state = {\n  step: 0,\n  data: {},\n  lastUpdated: new Date().toISOString()\n};\n\nreturn [{\n  json: {\n    state,\n    isValid: true,\n    isComplete: false,\n    responseMessage: `¡Hola ${firstName}! Bienvenido/a a FitAI.\\n\\nSoy tu asistente personal de nutrición y fitness. Para poder ayudarte de la mejor manera, necesito conocerte un poco.\\n\\nVamos a empezar con unas preguntas rápidas (toma unos 3 minutos).\\n\\n¿Cuál es tu género biológico? Esto me ayuda a calcular tus necesidades calóricas con precisión.\\n\\n1️⃣ Masculino\\n2️⃣ Femenino`\n  }\n}];"
-      },
-      "id": "c1d2e3f4-0004-4000-8000-000000000004",
+      "id": "ob-04",
       "name": "Initialize Onboarding",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        750,
-        -150
-      ]
+        900,
+        160
+      ],
+      "parameters": {
+        "jsCode": "const telegramId = $('Execute Workflow Trigger').first().json.telegramId;\nconst now = new Date().toISOString();\n\nconst state = {\n  telegram_id: telegramId,\n  step: 'ask_name',\n  block: 1,\n  started_at: now,\n  updated_at: now,\n  data: {\n    first_name: null, gender: null, age: null,\n    height_cm: null, weight_kg: null,\n    goal_type: null, target_weight: null,\n    dietary_restrictions: [], food_allergies: [],\n    disliked_foods: [], budget_level: null, meals_per_day: null,\n    fitness_level: null, equipment: null,\n    training_days_per_week: null, injuries: null,\n    wake_up_time: null, activity_level: null\n  },\n  temp: {}\n};\n\nreturn [{\n  json: {\n    state,\n    isNewUser: true,\n    responseMessage: 'Hola! Soy tu coach de nutricion y fitness. Voy a acompanarte en todo el proceso para que llegues a tu meta.\\n\\nAntes de armar tu plan necesito conocerte. Son unas preguntas rapidas, como 3 minutos.\\n\\nComo te llamo?',\n    replyMarkup: null\n  }\n}];\n"
+      }
     },
     {
+      "id": "ob-05",
+      "name": "Parse Onboarding State",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        440
+      ],
       "parameters": {
-        "jsCode": "const stateRaw = $('Get Onboarding State').first().json.value;\nconst state = typeof stateRaw === 'string' ? JSON.parse(stateRaw) : stateRaw;\nconst userText = $('Execute Workflow Trigger').first().json.text ? $('Execute Workflow Trigger').first().json.text.trim() : '';\n\nconst step = state.step;\nlet isValid = false;\nlet errorMessage = '';\nlet fieldName = '';\nlet fieldValue = null;\nlet nextQuestion = '';\n\nswitch (step) {\n  case 0: // gender\n    fieldName = 'gender';\n    if (['1', 'masculino', 'hombre', 'male'].includes(userText.toLowerCase())) {\n      fieldValue = 'male'; isValid = true;\n    } else if (['2', 'femenino', 'mujer', 'female'].includes(userText.toLowerCase())) {\n      fieldValue = 'female'; isValid = true;\n    } else {\n      errorMessage = 'Por favor responde con 1 (Masculino) o 2 (Femenino).';\n    }\n    if (isValid) nextQuestion = '¿Cuántos años tienes?';\n    break;\n\n  case 1: // age\n    fieldName = 'age';\n    const age = parseInt(userText);\n    if (!isNaN(age) && age >= 14 && age <= 100) {\n      fieldValue = age; isValid = true;\n      nextQuestion = '¿Cuánto mides? (en centímetros, ej: 170)';\n    } else {\n      errorMessage = 'Por favor ingresa una edad válida entre 14 y 100 años.';\n    }\n    break;\n\n  case 2: // height_cm\n    fieldName = 'height_cm';\n    const height = parseFloat(userText.replace(',', '.'));\n    if (!isNaN(height) && height >= 100 && height <= 250) {\n      fieldValue = height; isValid = true;\n      nextQuestion = '¿Cuánto pesas actualmente? (en kilogramos, ej: 75.5)';\n    } else {\n      errorMessage = 'Por favor ingresa una estatura válida entre 100 y 250 cm.';\n    }\n    break;\n\n  case 3: // weight_kg\n    fieldName = 'weight_kg';\n    const weight = parseFloat(userText.replace(',', '.'));\n    if (!isNaN(weight) && weight >= 30 && weight <= 300) {\n      fieldValue = weight; isValid = true;\n      nextQuestion = '¿Cuál es tu nivel de actividad física?\\n\\n1️⃣ Sedentario (trabajo de oficina, poco ejercicio)\\n2️⃣ Ligeramente activo (ejercicio 1-3 días/semana)\\n3️⃣ Moderadamente activo (ejercicio 3-5 días/semana)\\n4️⃣ Muy activo (ejercicio 6-7 días/semana)\\n5️⃣ Extra activo (atleta o trabajo muy físico)';\n    } else {\n      errorMessage = 'Por favor ingresa un peso válido entre 30 y 300 kg.';\n    }\n    break;\n\n  case 4: // activity_level\n    fieldName = 'activity_level';\n    const activityMap = {'1':'sedentary','2':'lightly_active','3':'moderately_active','4':'very_active','5':'extra_active'};\n    if (activityMap[userText]) {\n      fieldValue = activityMap[userText]; isValid = true;\n      nextQuestion = '¿Cuál es tu nivel de experiencia con el ejercicio?\\n\\n1️⃣ Principiante (menos de 6 meses)\\n2️⃣ Intermedio (6 meses a 2 años)\\n3️⃣ Avanzado (más de 2 años)';\n    } else {\n      errorMessage = 'Por favor responde con un número del 1 al 5.';\n    }\n    break;\n\n  case 5: // fitness_level\n    fieldName = 'fitness_level';\n    const fitnessMap = {'1':'beginner','2':'intermediate','3':'advanced'};\n    if (fitnessMap[userText]) {\n      fieldValue = fitnessMap[userText]; isValid = true;\n      nextQuestion = '¿Cuál es tu objetivo principal?\\n\\n1️⃣ Perder peso\\n2️⃣ Ganar músculo\\n3️⃣ Mantener peso\\n4️⃣ Recomposición corporal';\n    } else {\n      errorMessage = 'Por favor responde con 1, 2 o 3.';\n    }\n    break;\n\n  case 6: // goal\n    fieldName = 'goal';\n    const goalMap = {'1':'lose_weight','2':'gain_muscle','3':'maintain','4':'recomposition'};\n    if (goalMap[userText]) {\n      fieldValue = goalMap[userText]; isValid = true;\n      if (goalMap[userText] === 'lose_weight' || goalMap[userText] === 'gain_muscle') {\n        nextQuestion = '¿Cuál es tu peso objetivo? (en kg, ej: 70)\\nSi no tienes un número específico, escribe \"no sé\".';\n      } else {\n        nextQuestion = '¿Tienes alguna restricción dietética? (ej: vegetariano, vegano, sin gluten)\\nSi no tienes ninguna, escribe \"ninguna\".';\n        state.step = 7; // will become 8 after increment\n      }\n    } else {\n      errorMessage = 'Por favor responde con un número del 1 al 4.';\n    }\n    break;\n\n  case 7: // target_weight\n    fieldName = 'target_weight';\n    const targetW = parseFloat(userText.replace(',', '.'));\n    if (!isNaN(targetW) && targetW >= 30 && targetW <= 300) {\n      fieldValue = targetW; isValid = true;\n    } else if (['no se', 'no sé', 'skip', 'ninguno'].includes(userText.toLowerCase())) {\n      fieldValue = null; isValid = true;\n    } else {\n      errorMessage = 'Por favor ingresa un peso objetivo válido o escribe \"no sé\".';\n    }\n    if (isValid) nextQuestion = '¿Tienes alguna restricción dietética? (ej: vegetariano, vegano, sin gluten)\\nSi no tienes ninguna, escribe \"ninguna\".';\n    break;\n\n  case 8: // dietary_restrictions\n    fieldName = 'dietary_restrictions';\n    fieldValue = userText; isValid = true;\n    nextQuestion = '¿Tienes alguna alergia alimentaria?\\nSi no tienes ninguna, escribe \"ninguna\".';\n    break;\n\n  case 9: // food_allergies\n    fieldName = 'food_allergies';\n    fieldValue = userText; isValid = true;\n    nextQuestion = '¿Hay alimentos que no te gusten o que prefieras evitar?\\nSi no hay ninguno, escribe \"ninguno\".';\n    break;\n\n  case 10: // disliked_foods\n    fieldName = 'disliked_foods';\n    fieldValue = userText; isValid = true;\n    nextQuestion = '¿Tienes alguna lesión o limitación física que deba considerar?\\nSi no tienes ninguna, escribe \"ninguna\".';\n    break;\n\n  case 11: // injuries\n    fieldName = 'injuries';\n    fieldValue = userText; isValid = true;\n    nextQuestion = '¿Con qué equipamiento de ejercicio cuentas? (ej: pesas, bandas, gym, nada)\\nEscribe lo que tengas disponible.';\n    break;\n\n  case 12: // available_equipment\n    fieldName = 'available_equipment';\n    fieldValue = userText; isValid = true;\n    nextQuestion = '¿Cuántos días a la semana puedes entrenar? (número del 1 al 7)';\n    break;\n\n  case 13: // training_days_per_week\n    fieldName = 'training_days_per_week';\n    const days = parseInt(userText);\n    if (!isNaN(days) && days >= 1 && days <= 7) {\n      fieldValue = days; isValid = true;\n      nextQuestion = '¿Cuántas comidas al día prefieres hacer? (número del 2 al 6)';\n    } else {\n      errorMessage = 'Por favor ingresa un número del 1 al 7.';\n    }\n    break;\n\n  case 14: // meal_count\n    fieldName = 'meal_count';\n    const meals = parseInt(userText);\n    if (!isNaN(meals) && meals >= 2 && meals <= 6) {\n      fieldValue = meals; isValid = true;\n      nextQuestion = '¿Cuál es tu presupuesto para ingredientes y comida?\\n\\n1️⃣ Bajo (económico, ingredientes básicos)\\n2️⃣ Medio (variado, ingredientes normales)\\n3️⃣ Alto (sin restricciones, ingredientes premium)';\n    } else {\n      errorMessage = 'Por favor ingresa un número del 2 al 6.';\n    }\n    break;\n\n  case 15: // budget_level\n    fieldName = 'budget_level';\n    const budgetMap = {'1':'low','2':'medium','3':'high'};\n    if (budgetMap[userText]) {\n      fieldValue = budgetMap[userText]; isValid = true;\n      nextQuestion = '¡Perfecto! Ya tengo toda la información que necesito.\\n\\nAquí está un resumen de tu perfil. Escribe \"confirmar\" para continuar o \"corregir\" si necesitas cambiar algo.';\n    } else {\n      errorMessage = 'Por favor responde con 1, 2 o 3.';\n    }\n    break;\n\n  case 16: // confirmation\n    if (['confirmar', 'si', 'sí', 'ok', 'confirm'].includes(userText.toLowerCase())) {\n      isValid = true;\n      nextQuestion = '¡Excelente! Tu perfil está listo. Ahora voy a calcular tus necesidades calóricas y crear tu plan personalizado. ¡Un momento!';\n    } else {\n      errorMessage = 'Escribe \"confirmar\" para guardar tu perfil o dime qué datos deseas corregir.';\n    }\n    break;\n\n  default:\n    isValid = true;\n    nextQuestion = '';\n}\n\nif (isValid && fieldName) {\n  state.data[fieldName] = fieldValue;\n  state.step = state.step + 1;\n  state.lastUpdated = new Date().toISOString();\n}\n\nconst isComplete = state.step > 16;\n\nreturn [{\n  json: {\n    state,\n    isValid,\n    isComplete,\n    responseMessage: isValid ? nextQuestion : errorMessage\n  }\n}];"
-      },
-      "id": "c1d2e3f4-0005-4000-8000-000000000005",
+        "jsCode": "const stateStr = $('Get Onboarding State').first().json.value;\nconst state = typeof stateStr === 'string' ? JSON.parse(stateStr) : stateStr;\nconst userText = ($('Execute Workflow Trigger').first().json.text || '').trim();\nconst callbackData = $('Execute Workflow Trigger').first().json.callbackData || null;\n\nreturn [{\n  json: {\n    state,\n    userText,\n    callbackData,\n    currentStep: state.step,\n    currentBlock: state.block\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "ob-06",
       "name": "Validate and Process Step",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        750,
-        150
-      ]
+        1120,
+        440
+      ],
+      "parameters": {
+        "jsCode": "const { state, userText, callbackData } = $json;\nconst input = callbackData || userText;\nconst step = state.step;\nlet isValid = false;\nlet errorMessage = '';\nlet nextStep = step;\nlet nextBlock = state.block;\nlet responseMessage = '';\nlet replyMarkup = null;\n\nswitch (step) {\n  case 'ask_name': {\n    const name = input.trim();\n    if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s\\-]{2,40}$/.test(name)) {\n      state.data.first_name = name;\n      nextStep = 'ask_gender'; nextBlock = 1; isValid = true;\n      responseMessage = `${name}, mucho gusto. Necesito unos datos fisicos basicos para calcular tus requerimientos. Empezamos:\\n\\nGenero biologico?`;\n      replyMarkup = { inline_keyboard: [[{ text: 'Hombre', callback_data: 'male' }, { text: 'Mujer', callback_data: 'female' }]] };\n    } else {\n      errorMessage = 'Solo necesito tu nombre (letras, entre 2 y 40 caracteres).';\n    }\n    break;\n  }\n  case 'ask_gender': {\n    if (['male','female'].includes(input)) {\n      state.data.gender = input;\n      nextStep = 'ask_age'; isValid = true;\n      responseMessage = 'Edad?';\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu genero.';\n    }\n    break;\n  }\n  case 'ask_age': {\n    const age = parseInt(input);\n    if (!isNaN(age) && age >= 14 && age <= 100) {\n      state.data.age = age;\n      nextStep = 'ask_height'; isValid = true;\n      responseMessage = 'Estatura en cm? (ej: 170)';\n    } else {\n      errorMessage = 'Necesito un numero entre 14 y 100.';\n    }\n    break;\n  }\n  case 'ask_height': {\n    const h = parseFloat(input.replace(',', '.'));\n    if (!isNaN(h) && h >= 100 && h <= 250) {\n      state.data.height_cm = h;\n      nextStep = 'ask_weight'; isValid = true;\n      responseMessage = 'Y peso actual en kg? (ej: 80)';\n    } else {\n      errorMessage = 'Necesito la estatura en centimetros (entre 100 y 250). Ej: 170';\n    }\n    break;\n  }\n  case 'ask_weight': {\n    const w = parseFloat(input.replace(',', '.'));\n    if (!isNaN(w) && w >= 30 && w <= 300) {\n      state.data.weight_kg = w;\n      nextStep = 'ask_goal'; nextBlock = 2; isValid = true;\n      responseMessage = 'Listo, ahora lo mas importante: que quieres lograr?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Perder grasa', callback_data: 'lose_fat' }, { text: 'Ganar musculo', callback_data: 'gain_muscle' }],\n        [{ text: 'Mantener peso', callback_data: 'maintain' }, { text: 'Recomposicion corporal', callback_data: 'recomposition' }]\n      ]};\n    } else {\n      errorMessage = 'Necesito el peso en kilos (entre 30 y 300). Ej: 75';\n    }\n    break;\n  }\n  case 'ask_goal': {\n    const validGoals = ['lose_fat','gain_muscle','maintain','recomposition'];\n    if (validGoals.includes(input)) {\n      state.data.goal_type = input;\n      isValid = true;\n      if (input === 'lose_fat' || input === 'gain_muscle') {\n        nextStep = 'ask_target_weight';\n        responseMessage = 'A cuanto quieres llegar? (peso meta en kg)';\n      } else {\n        state.data.target_weight = null;\n        nextStep = 'ask_dietary_restrictions_known'; nextBlock = 3;\n        responseMessage = 'Va. Ahora unas preguntas sobre como comes.\\n\\nTienes alguna restriccion dietaria o alergia alimentaria?';\n        replyMarkup = { inline_keyboard: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] };\n      }\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu objetivo.';\n    }\n    break;\n  }\n  case 'ask_target_weight': {\n    const tw = parseFloat(input.replace(',', '.'));\n    const currentW = state.data.weight_kg;\n    const isLoseFat = state.data.goal_type === 'lose_fat';\n    const isGainMuscle = state.data.goal_type === 'gain_muscle';\n    if (!isNaN(tw) && tw >= 30 && tw <= 300 &&\n        (!isLoseFat || tw < currentW) && (!isGainMuscle || tw > currentW)) {\n      state.data.target_weight = tw;\n      nextStep = 'ask_dietary_restrictions_known'; nextBlock = 3; isValid = true;\n      responseMessage = 'Va. Ahora unas preguntas sobre como comes.\\n\\nTienes alguna restriccion dietaria o alergia alimentaria?';\n      replyMarkup = { inline_keyboard: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] };\n    } else {\n      errorMessage = isLoseFat\n        ? `El peso meta debe ser menor a tu peso actual (${currentW} kg).`\n        : `El peso meta debe ser mayor a tu peso actual (${currentW} kg).`;\n    }\n    break;\n  }\n  case 'ask_dietary_restrictions_known': {\n    if (input === 'no') {\n      state.data.dietary_restrictions = [];\n      state.data.food_allergies = [];\n      nextStep = 'ask_disliked_foods'; isValid = true;\n      responseMessage = 'Hay alimentos que no te gusten? Escribelos o pon \"no\" si comes de todo.';\n    } else if (input === 'yes') {\n      nextStep = 'ask_dietary_input'; isValid = true;\n      responseMessage = 'Escribe todo junto: restricciones (vegetariano, vegano, sin gluten, etc.) y alergias (mani, mariscos, etc.) separadas por comas.';\n    } else {\n      errorMessage = 'Usa los botones para responder.';\n    }\n    break;\n  }\n  case 'ask_dietary_input': {\n    if (input.length >= 2 && input.length <= 500) {\n      const RESTRICTIONS = ['vegetariano','vegano','vegan','vegetarian','sin gluten','gluten','sin lactosa','lactosa','kosher','halal','celiac'];\n      const items = input.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);\n      const restrictions = items.filter(i => RESTRICTIONS.some(r => i.includes(r)));\n      const allergies = items.filter(i => !RESTRICTIONS.some(r => i.includes(r)));\n      state.data.dietary_restrictions = restrictions;\n      state.data.food_allergies = allergies;\n      nextStep = 'ask_disliked_foods'; isValid = true;\n      responseMessage = 'Hay alimentos que no te gusten? Escribelos o pon \"no\" si comes de todo.';\n    } else {\n      errorMessage = 'Escribe tus restricciones y/o alergias separadas por comas.';\n    }\n    break;\n  }\n  case 'ask_disliked_foods': {\n    const noFoods = ['no','ninguno','nada','ninguna','nope'];\n    state.data.disliked_foods = noFoods.includes(input.toLowerCase()) ? [] : input.split(',').map(s => s.trim()).filter(Boolean);\n    nextStep = 'ask_budget'; isValid = true;\n    responseMessage = 'Ok. Y tu presupuesto para ingredientes?';\n    replyMarkup = { inline_keyboard: [[\n      { text: 'Economico', callback_data: 'low' },\n      { text: 'Moderado', callback_data: 'medium' },\n      { text: 'Sin limite', callback_data: 'high' }\n    ]]};\n    break;\n  }\n  case 'ask_budget': {\n    if (['low','medium','high'].includes(input)) {\n      state.data.budget_level = input;\n      nextStep = 'ask_meals'; isValid = true;\n      responseMessage = 'Cuantas comidas al dia prefieres?';\n      replyMarkup = { inline_keyboard: [[\n        { text: '3', callback_data: '3' },\n        { text: '4', callback_data: '4' },\n        { text: '5', callback_data: '5' }\n      ]]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu presupuesto.';\n    }\n    break;\n  }\n  case 'ask_meals': {\n    const meals = parseInt(input);\n    if ([3,4,5].includes(meals)) {\n      state.data.meals_per_day = meals;\n      nextStep = 'ask_fitness_level'; nextBlock = 4; isValid = true;\n      responseMessage = 'Bien, ahora el tema del ejercicio.\\n\\nComo describirias tu experiencia entrenando?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Principiante (< 6 meses)', callback_data: 'beginner' }],\n        [{ text: 'Intermedio (6 meses - 2 anos)', callback_data: 'intermediate' }],\n        [{ text: 'Avanzado (2+ anos)', callback_data: 'advanced' }]\n      ]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar el numero de comidas.';\n    }\n    break;\n  }\n  case 'ask_fitness_level': {\n    if (['beginner','intermediate','advanced'].includes(input)) {\n      state.data.fitness_level = input;\n      nextStep = 'ask_equipment'; isValid = true;\n      responseMessage = 'Donde entrenas o planeas entrenar?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Casa sin equipo', callback_data: 'bodyweight' }],\n        [{ text: 'Casa con mancuernas/bandas', callback_data: 'home_basic' }],\n        [{ text: 'Gimnasio', callback_data: 'full_gym' }]\n      ]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu nivel.';\n    }\n    break;\n  }\n  case 'ask_equipment': {\n    if (['bodyweight','home_basic','full_gym'].includes(input)) {\n      state.data.equipment = input;\n      nextStep = 'ask_training_days'; isValid = true;\n      responseMessage = 'Cuantos dias a la semana puedes entrenar?';\n      replyMarkup = { inline_keyboard: [[\n        { text: '2', callback_data: '2' },\n        { text: '3', callback_data: '3' },\n        { text: '4', callback_data: '4' },\n        { text: '5', callback_data: '5' },\n        { text: '6', callback_data: '6' }\n      ]]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar donde entrenas.';\n    }\n    break;\n  }\n  case 'ask_training_days': {\n    const days = parseInt(input);\n    if (days >= 2 && days <= 6) {\n      state.data.training_days_per_week = days;\n      nextStep = 'ask_injuries'; isValid = true;\n      responseMessage = 'Alguna lesion o condicion fisica que deba saber?';\n      replyMarkup = { inline_keyboard: [[\n        { text: 'No, estoy bien', callback_data: 'no' },\n        { text: 'Si, tengo', callback_data: 'yes' }\n      ]]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar los dias.';\n    }\n    break;\n  }\n  case 'ask_injuries': {\n    if (input === 'no') {\n      state.data.injuries = null;\n      nextStep = 'ask_wake_time'; nextBlock = 5; isValid = true;\n      responseMessage = 'Casi terminamos. Solo necesito saber tus horarios.\\n\\nA que hora te despiertas normalmente?';\n      replyMarkup = { inline_keyboard: [[\n        { text: '5:00', callback_data: '05:00' },\n        { text: '6:00', callback_data: '06:00' },\n        { text: '7:00', callback_data: '07:00' },\n        { text: '8:00', callback_data: '08:00' },\n        { text: '9:00', callback_data: '09:00' },\n        { text: 'Otra', callback_data: 'custom' }\n      ]]};\n    } else if (input === 'yes') {\n      nextStep = 'ask_injuries_input'; isValid = true;\n      responseMessage = 'Describela brevemente.';\n    } else {\n      errorMessage = 'Usa los botones para responder.';\n    }\n    break;\n  }\n  case 'ask_injuries_input': {\n    if (input.length >= 3 && input.length <= 500) {\n      state.data.injuries = input;\n      nextStep = 'ask_wake_time'; nextBlock = 5; isValid = true;\n      responseMessage = 'Casi terminamos. Solo necesito saber tus horarios.\\n\\nA que hora te despiertas normalmente?';\n      replyMarkup = { inline_keyboard: [[\n        { text: '5:00', callback_data: '05:00' },\n        { text: '6:00', callback_data: '06:00' },\n        { text: '7:00', callback_data: '07:00' },\n        { text: '8:00', callback_data: '08:00' },\n        { text: '9:00', callback_data: '09:00' },\n        { text: 'Otra', callback_data: 'custom' }\n      ]]};\n    } else {\n      errorMessage = 'Describela brevemente (minimo 3 caracteres).';\n    }\n    break;\n  }\n  case 'ask_wake_time': {\n    if (input === 'custom') {\n      nextStep = 'ask_wake_time_custom'; isValid = true;\n      responseMessage = 'Escribe la hora en formato HH:MM (ej: 06:30)';\n    } else if (/^\\d{2}:\\d{2}$/.test(input)) {\n      state.data.wake_up_time = input;\n      nextStep = 'ask_activity_level'; isValid = true;\n      responseMessage = 'Fuera del ejercicio, como es tu dia a dia?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Sentado casi todo el dia', callback_data: 'sedentary' }],\n        [{ text: 'Camino algo, tareas ligeras', callback_data: 'lightly_active' }],\n        [{ text: 'De pie bastante, camino mucho', callback_data: 'moderately_active' }],\n        [{ text: 'Trabajo fisico pesado', callback_data: 'very_active' }]\n      ]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar la hora.';\n    }\n    break;\n  }\n  case 'ask_wake_time_custom': {\n    if (/^\\d{1,2}:\\d{2}$/.test(input)) {\n      state.data.wake_up_time = input.padStart(5, '0');\n      nextStep = 'ask_activity_level'; isValid = true;\n      responseMessage = 'Fuera del ejercicio, como es tu dia a dia?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Sentado casi todo el dia', callback_data: 'sedentary' }],\n        [{ text: 'Camino algo, tareas ligeras', callback_data: 'lightly_active' }],\n        [{ text: 'De pie bastante, camino mucho', callback_data: 'moderately_active' }],\n        [{ text: 'Trabajo fisico pesado', callback_data: 'very_active' }]\n      ]};\n    } else {\n      errorMessage = 'Escribe la hora en formato HH:MM (ej: 06:30)';\n    }\n    break;\n  }\n  case 'ask_activity_level': {\n    const validLevels = ['sedentary','lightly_active','moderately_active','very_active'];\n    if (validLevels.includes(input)) {\n      state.data.activity_level = input;\n      nextStep = 'confirm_profile'; nextBlock = null; isValid = true;\n      const d = state.data;\n      const goalDisplay = { lose_fat: 'Perder grasa', gain_muscle: 'Ganar musculo', maintain: 'Mantener peso', recomposition: 'Recomposicion' }[d.goal_type];\n      const targetLine = d.target_weight ? ` → meta: ${d.target_weight} kg` : '';\n      responseMessage = `Listo, ${d.first_name}. Confirmo los datos clave:\\n\\n${d.age} anos, ${d.height_cm} cm, ${d.weight_kg} kg\\nObjetivo: ${goalDisplay}${targetLine}\\n${d.training_days_per_week} dias de ejercicio, ${d.meals_per_day} comidas al dia\\n\\nTodo bien o quieres corregir algo?`;\n      replyMarkup = { inline_keyboard: [[\n        { text: 'Todo bien, dale', callback_data: 'confirm' },\n        { text: 'Quiero corregir algo', callback_data: 'correct' }\n      ]]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu nivel de actividad.';\n    }\n    break;\n  }\n  case 'confirm_profile': {\n    if (input === 'confirm') {\n      nextStep = 'calculate_and_complete'; isValid = true;\n      responseMessage = '';\n    } else if (input === 'correct') {\n      nextStep = 'correct_block'; isValid = true;\n      responseMessage = 'Que quieres cambiar?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Datos fisicos', callback_data: 'block_1' }, { text: 'Objetivo', callback_data: 'block_2' }],\n        [{ text: 'Alimentacion', callback_data: 'block_3' }, { text: 'Ejercicio', callback_data: 'block_4' }],\n        [{ text: 'Horarios', callback_data: 'block_5' }]\n      ]};\n    } else {\n      errorMessage = 'Usa los botones para confirmar o corregir.';\n    }\n    break;\n  }\n  case 'correct_block': {\n    const blockMap = { block_1: 'ask_gender', block_2: 'ask_goal', block_3: 'ask_dietary_restrictions_known', block_4: 'ask_fitness_level', block_5: 'ask_wake_time' };\n    const blockNum = { block_1: 1, block_2: 2, block_3: 3, block_4: 4, block_5: 5 };\n    if (blockMap[input]) {\n      nextStep = blockMap[input]; nextBlock = blockNum[input]; isValid = true;\n      const blockMessages = {\n        block_1: { msg: 'Genero biologico?', kb: [[{ text: 'Hombre', callback_data: 'male' }, { text: 'Mujer', callback_data: 'female' }]] },\n        block_2: { msg: 'Que quieres lograr?', kb: [[{ text: 'Perder grasa', callback_data: 'lose_fat' }, { text: 'Ganar musculo', callback_data: 'gain_muscle' }],[{ text: 'Mantener peso', callback_data: 'maintain' }, { text: 'Recomposicion corporal', callback_data: 'recomposition' }]] },\n        block_3: { msg: 'Tienes alguna restriccion dietaria o alergia alimentaria?', kb: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] },\n        block_4: { msg: 'Como describirias tu experiencia entrenando?', kb: [[{ text: 'Principiante', callback_data: 'beginner' }],[{ text: 'Intermedio', callback_data: 'intermediate' }],[{ text: 'Avanzado', callback_data: 'advanced' }]] },\n        block_5: { msg: 'A que hora te despiertas normalmente?', kb: [[{ text: '5:00', callback_data: '05:00' },{ text: '6:00', callback_data: '06:00' },{ text: '7:00', callback_data: '07:00' },{ text: '8:00', callback_data: '08:00' },{ text: '9:00', callback_data: '09:00' },{ text: 'Otra', callback_data: 'custom' }]] }\n      };\n      responseMessage = blockMessages[input].msg;\n      replyMarkup = { inline_keyboard: blockMessages[input].kb };\n    } else {\n      errorMessage = 'Usa los botones para seleccionar el bloque.';\n    }\n    break;\n  }\n  default:\n    isValid = true;\n    responseMessage = '';\n}\n\nif (isValid) {\n  state.step = nextStep;\n  state.block = nextBlock || state.block;\n  state.updated_at = new Date().toISOString();\n}\n\nconst isComplete = nextStep === 'calculate_and_complete';\n\nreturn [{\n  json: {\n    state,\n    isValid,\n    isComplete,\n    responseMessage: isValid ? responseMessage : errorMessage,\n    replyMarkup\n  }\n}];\n"
+      }
     },
     {
+      "id": "ob-07",
+      "name": "Save Onboarding State",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        300
+      ],
+      "credentials": {
+        "redis": {
+          "id": "UGH5aP9zo2YPdm6x",
+          "name": "Redis account Fitia"
+        }
+      },
       "parameters": {
         "operation": "set",
         "key": "=onboarding:{{ $('Execute Workflow Trigger').item.json.telegramId }}",
         "value": "={{ JSON.stringify($json.state) }}",
         "expire": true,
-        "ttl": 86400
-      },
-      "id": "c1d2e3f4-0006-4000-8000-000000000006",
-      "name": "Save Onboarding State",
-      "type": "n8n-nodes-base.redis",
-      "typeVersion": 1,
-      "position": [
-        1000,
-        0
-      ]
+        "ttl": 172800
+      }
     },
     {
+      "id": "ob-08",
+      "name": "Is Onboarding Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ],
       "parameters": {
         "conditions": {
           "options": {
@@ -127,95 +160,283 @@
           ],
           "combinator": "and"
         }
-      },
-      "id": "c1d2e3f4-0007-4000-8000-000000000007",
-      "name": "Is Onboarding Complete?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        1250,
-        0
-      ]
+      }
     },
     {
+      "id": "ob-09",
+      "name": "Send Question",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1780,
+        460
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      },
       "parameters": {
         "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
         "text": "={{ $json.responseMessage }}",
         "additionalFields": {
           "parse_mode": "Markdown",
-          "appendAttribution": false
+          "appendAttribution": false,
+          "reply_markup": "={{ $json.replyMarkup ? JSON.stringify($json.replyMarkup) : undefined }}"
         }
-      },
-      "id": "c1d2e3f4-0008-4000-8000-000000000008",
-      "name": "Send Question",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1500,
-        150
-      ]
+      }
     },
     {
-      "parameters": {
-        "jsCode": "const data = $json.state.data;\n\n// Mifflin-St Jeor Equation\nlet bmr;\nif (data.gender === 'male') {\n  bmr = (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) + 5;\n} else {\n  bmr = (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) - 161;\n}\n\n// Activity multipliers\nconst activityMultipliers = {\n  'sedentary': 1.2,\n  'lightly_active': 1.375,\n  'moderately_active': 1.55,\n  'very_active': 1.725,\n  'extra_active': 1.9\n};\n\nconst tdee = bmr * (activityMultipliers[data.activity_level] || 1.2);\n\n// Caloric target based on goal\nlet caloricTarget;\nswitch (data.goal) {\n  case 'lose_weight': caloricTarget = tdee - 500; break;\n  case 'gain_muscle': caloricTarget = tdee + 300; break;\n  case 'maintain': caloricTarget = tdee; break;\n  case 'recomposition': caloricTarget = tdee - 100; break;\n  default: caloricTarget = tdee;\n}\n\n// Macronutrient targets\nconst proteinTarget = data.weight_kg * (data.goal === 'gain_muscle' ? 2.2 : 1.8);\nconst fatTarget = (caloricTarget * 0.25) / 9;\nconst carbTarget = (caloricTarget - (proteinTarget * 4) - (fatTarget * 9)) / 4;\n\nconst trigger = $('Execute Workflow Trigger').first().json;\n\nreturn [{\n  json: {\n    ...data,\n    bmr: Math.round(bmr * 100) / 100,\n    tdee: Math.round(tdee * 100) / 100,\n    caloric_target: Math.round(caloricTarget * 100) / 100,\n    protein_target_g: Math.round(proteinTarget * 10) / 10,\n    carb_target_g: Math.round(carbTarget * 10) / 10,\n    fat_target_g: Math.round(fatTarget * 10) / 10,\n    userId: trigger.userId,\n    telegramId: trigger.telegramId,\n    chatId: trigger.chatId,\n    firstName: trigger.firstName\n  }\n}];"
-      },
-      "id": "c1d2e3f4-0009-4000-8000-000000000009",
+      "id": "ob-10",
       "name": "Calculate Metrics",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1500,
-        0
-      ]
+        1780,
+        140
+      ],
+      "parameters": {
+        "jsCode": "const data = $json.state.data;\n\n// BMI\nconst bmi = data.weight_kg / Math.pow(data.height_cm / 100, 2);\nconst bmiCategory = bmi < 18.5 ? 'bajo peso' : bmi < 25 ? 'peso normal' : bmi < 30 ? 'sobrepeso' : 'obesidad';\n\n// BMR — Mifflin-St Jeor\nconst bmr = data.gender === 'male'\n  ? (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) + 5\n  : (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) - 161;\n\n// TDEE — v2: 4 levels\nconst activityMultipliers = { sedentary: 1.2, lightly_active: 1.375, moderately_active: 1.55, very_active: 1.725 };\nconst tdee = bmr * (activityMultipliers[data.activity_level] || 1.2);\n\n// Caloric target — v2: % of TDEE\nconst caloricTargetRaw = { lose_fat: tdee * 0.80, gain_muscle: tdee * 1.10, maintain: tdee * 1.0, recomposition: tdee * 0.95 }[data.goal_type];\nconst minCalories = data.gender === 'female' ? 1200 : 1500;\nconst caloricTarget = Math.max(Math.round(caloricTargetRaw), minCalories);\n\n// Macros\nconst proteinMultiplier = data.goal_type === 'gain_muscle' ? 2.2 : data.goal_type === 'recomposition' ? 2.0 : 1.8;\nconst proteinTarget = Math.round(data.weight_kg * proteinMultiplier);\nconst fatTarget = Math.round((caloricTarget * 0.25) / 9);\nconst carbTarget = Math.round((caloricTarget - (proteinTarget * 4) - (fatTarget * 9)) / 4);\n\nconst deficit = data.goal_type === 'lose_fat' ? Math.round(tdee - caloricTarget) : null;\nconst surplus = data.goal_type === 'gain_muscle' ? Math.round(caloricTarget - tdee) : null;\n\nlet estimatedWeeks = null;\nif (data.target_weight) {\n  const weightDiff = Math.abs(data.weight_kg - data.target_weight);\n  const weeklyRateKg = data.goal_type === 'lose_fat' ? 0.5 : 0.25;\n  estimatedWeeks = Math.ceil(weightDiff / weeklyRateKg);\n}\n\nconst goalDisplay = { lose_fat: 'Perder grasa', gain_muscle: 'Ganar musculo', maintain: 'Mantener peso', recomposition: 'Recomposicion corporal' }[data.goal_type];\nconst goalExplanations = {\n  lose_fat: 'Para bajar de peso de forma sostenible, la clave es mantener un deficit calorico moderado sin pasar hambre.',\n  gain_muscle: 'Para ganar musculo necesitas comer un poco mas de lo que gastas y asegurar suficiente proteina.',\n  maintain: 'Para mantener tu peso, el enfoque es equilibrar lo que comes con lo que gastas.',\n  recomposition: 'La recomposicion es ganar musculo mientras pierdes grasa — el proceso mas lento pero mas transformador.'\n};\n\nconst trigger = $('Execute Workflow Trigger').first().json;\n\nreturn [{\n  json: {\n    ...data,\n    bmi: Math.round(bmi * 10) / 10,\n    bmi_category: bmiCategory,\n    bmr: Math.round(bmr),\n    tdee: Math.round(tdee),\n    caloric_target: caloricTarget,\n    protein_target_g: proteinTarget,\n    carb_target_g: carbTarget,\n    fat_target_g: fatTarget,\n    deficit,\n    surplus,\n    estimated_weeks: estimatedWeeks,\n    goal_display: goalDisplay,\n    goal_explanation: goalExplanations[data.goal_type],\n    userId: trigger.userId,\n    telegramId: trigger.telegramId,\n    chatId: trigger.chatId\n  }\n}];\n"
+      }
     },
     {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO user_profiles (\n  user_id, gender, age, height_cm, weight_kg,\n  activity_level, fitness_level, goal,\n  dietary_restrictions, food_allergies, disliked_foods,\n  injuries, available_equipment, training_days_per_week,\n  meal_count, budget_level,\n  onboarding_completed, onboarding_completed_at,\n  bmr, tdee, caloric_target,\n  protein_target_g, carb_target_g, fat_target_g\n) VALUES (\n  $1, $2, $3, $4, $5,\n  $6, $7, $8,\n  $9, $10, $11,\n  $12, $13, $14,\n  $15, $16,\n  true, NOW(),\n  $17, $18, $19,\n  $20, $21, $22\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n  gender = EXCLUDED.gender,\n  age = EXCLUDED.age,\n  height_cm = EXCLUDED.height_cm,\n  weight_kg = EXCLUDED.weight_kg,\n  activity_level = EXCLUDED.activity_level,\n  fitness_level = EXCLUDED.fitness_level,\n  goal = EXCLUDED.goal,\n  dietary_restrictions = EXCLUDED.dietary_restrictions,\n  food_allergies = EXCLUDED.food_allergies,\n  disliked_foods = EXCLUDED.disliked_foods,\n  injuries = EXCLUDED.injuries,\n  available_equipment = EXCLUDED.available_equipment,\n  training_days_per_week = EXCLUDED.training_days_per_week,\n  meal_count = EXCLUDED.meal_count,\n  budget_level = EXCLUDED.budget_level,\n  onboarding_completed = true,\n  onboarding_completed_at = NOW(),\n  bmr = EXCLUDED.bmr,\n  tdee = EXCLUDED.tdee,\n  caloric_target = EXCLUDED.caloric_target,\n  protein_target_g = EXCLUDED.protein_target_g,\n  carb_target_g = EXCLUDED.carb_target_g,\n  fat_target_g = EXCLUDED.fat_target_g;",
-        "additionalFields": {
-          "queryParams": "={{ [\n  $json.userId,\n  $json.gender,\n  $json.age,\n  $json.height_cm,\n  $json.weight_kg,\n  $json.activity_level,\n  $json.fitness_level,\n  $json.goal,\n  $json.dietary_restrictions || 'ninguna',\n  $json.food_allergies || 'ninguna',\n  $json.disliked_foods || 'ninguno',\n  $json.injuries || 'ninguna',\n  $json.available_equipment || 'ninguno',\n  $json.training_days_per_week,\n  $json.meal_count,\n  $json.budget_level || 'medium',\n  $json.bmr,\n  $json.tdee,\n  $json.caloric_target,\n  $json.protein_target_g,\n  $json.carb_target_g,\n  $json.fat_target_g\n] }}"
-        }
-      },
-      "id": "c1d2e3f4-0010-4000-8000-000000000010",
+      "id": "ob-11",
       "name": "Save User Profile",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1750,
-        0
-      ]
+        2000,
+        -20
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO user_profiles (\n  user_id, gender, age, height_cm, weight_kg,\n  activity_level, fitness_level, goal,\n  dietary_restrictions, food_allergies, disliked_foods,\n  injuries, available_equipment, training_days_per_week,\n  wake_up_time, meals_per_day, budget_level,\n  onboarding_completed, onboarding_completed_at,\n  bmr, tdee, caloric_target,\n  protein_target_g, carb_target_g, fat_target_g\n) VALUES (\n  $1, $2, $3, $4, $5,\n  $6, $7, $8,\n  $9, $10, $11,\n  $12, $13, $14,\n  $15, $16, $17,\n  true, NOW(),\n  $18, $19, $20,\n  $21, $22, $23\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n  gender = EXCLUDED.gender, age = EXCLUDED.age,\n  height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg,\n  activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level,\n  goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions,\n  food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods,\n  injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment,\n  training_days_per_week = EXCLUDED.training_days_per_week,\n  wake_up_time = EXCLUDED.wake_up_time, meals_per_day = EXCLUDED.meals_per_day,\n  budget_level = EXCLUDED.budget_level, onboarding_completed = true,\n  onboarding_completed_at = NOW(),\n  bmr = EXCLUDED.bmr, tdee = EXCLUDED.tdee, caloric_target = EXCLUDED.caloric_target,\n  protein_target_g = EXCLUDED.protein_target_g, carb_target_g = EXCLUDED.carb_target_g,\n  fat_target_g = EXCLUDED.fat_target_g;",
+        "options": {
+          "queryReplacement": "={{ [$json.userId, $json.gender, $json.age, $json.height_cm, $json.weight_kg, $json.activity_level, $json.fitness_level, $json.goal_type, JSON.stringify($json.dietary_restrictions || []), JSON.stringify($json.food_allergies || []), JSON.stringify($json.disliked_foods || []), $json.injuries || null, $json.equipment || 'none', $json.training_days_per_week, $json.wake_up_time || '07:00', $json.meals_per_day || 3, $json.budget_level || 'medium', $json.bmr, $json.tdee, $json.caloric_target, $json.protein_target_g, $json.carb_target_g, $json.fat_target_g] }}"
+        }
+      }
     },
     {
-      "parameters": {
-        "operation": "delete",
-        "key": "=onboarding:{{ $('Execute Workflow Trigger').item.json.telegramId }}"
+      "id": "ob-12",
+      "name": "Save Initial Goal",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2000,
+        140
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
       },
-      "id": "c1d2e3f4-0011-4000-8000-000000000011",
-      "name": "Clear Onboarding State",
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO goals (user_id, goal_type, target_weight_kg, start_weight_kg, start_date, is_active)\nVALUES ($1, $2, $3, $4, CURRENT_DATE, true)\nON CONFLICT (user_id) DO UPDATE SET\n  goal_type = EXCLUDED.goal_type,\n  target_weight_kg = EXCLUDED.target_weight_kg,\n  start_weight_kg = EXCLUDED.start_weight_kg,\n  start_date = EXCLUDED.start_date,\n  is_active = true;",
+        "options": {
+          "queryReplacement": "={{ [$json.userId, $json.goal_type, $json.target_weight || null, $json.weight_kg] }}"
+        }
+      }
+    },
+    {
+      "id": "ob-13",
+      "name": "Save Initial Weight Log",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2000,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO weight_logs (user_id, weight_kg, notes, logged_at)\nVALUES ($1, $2, 'Peso inicial - onboarding', CURRENT_DATE)\nON CONFLICT DO NOTHING;",
+        "options": {
+          "queryReplacement": "={{ [$json.userId, $json.weight_kg] }}"
+        }
+      }
+    },
+    {
+      "id": "ob-14",
+      "name": "Create Tomorrow Daily Targets",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2000,
+        460
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n) VALUES (\n  $1,\n  (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day',\n  $2, $3, $4, $5,\n  0, 0, 0, 0\n)\nON CONFLICT (user_id, target_date) DO NOTHING;",
+        "options": {
+          "queryReplacement": "={{ [$json.userId, $json.caloric_target, $json.protein_target_g, $json.carb_target_g, $json.fat_target_g] }}"
+        }
+      }
+    },
+    {
+      "id": "ob-15",
+      "name": "Generate First Meal Plan",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        2220,
+        300
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "KQhP9lQNxCKeOsbJ",
+          "mode": "id"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        },
+        "fields": {
+          "values": [
+            {
+              "name": "userId",
+              "type": "numberValue",
+              "numberValue": "={{ $('Calculate Metrics').item.json.userId }}"
+            },
+            {
+              "name": "planDate",
+              "type": "stringValue",
+              "stringValue": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); })() }}"
+            },
+            {
+              "name": "chatId",
+              "type": "numberValue",
+              "numberValue": "={{ $('Calculate Metrics').item.json.chatId }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ob-16",
+      "name": "Delete Onboarding State",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2000,
-        0
-      ]
+        2440,
+        300
+      ],
+      "credentials": {
+        "redis": {
+          "id": "UGH5aP9zo2YPdm6x",
+          "name": "Redis account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "delete",
+        "key": "=onboarding:{{ $('Execute Workflow Trigger').item.json.telegramId }}"
+      }
     },
     {
+      "id": "ob-17",
+      "name": "Index Onboarding Summary",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        2660,
+        300
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "vAqqjXg2IE1ldgg3",
+          "mode": "id"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        },
+        "fields": {
+          "values": [
+            {
+              "name": "userId",
+              "type": "numberValue",
+              "numberValue": "={{ $('Calculate Metrics').item.json.userId }}"
+            },
+            {
+              "name": "contentType",
+              "type": "stringValue",
+              "stringValue": "onboarding_summary"
+            },
+            {
+              "name": "content",
+              "type": "stringValue",
+              "stringValue": "={{ (() => { const d = $('Calculate Metrics').item.json; return `${d.first_name}, ${d.gender === 'male' ? 'hombre' : 'mujer'}, ${d.age} anos, ${d.height_cm}cm, ${d.weight_kg}kg. Objetivo: ${d.goal_type}${d.target_weight ? ', meta ' + d.target_weight + 'kg' : ''}. Alimentacion: ${JSON.stringify(d.dietary_restrictions || [])}, presupuesto ${d.budget_level}, ${d.meals_per_day} comidas/dia. Ejercicio: nivel ${d.fitness_level}, ${d.equipment}, ${d.training_days_per_week} dias/semana. Horario: se despierta a las ${d.wake_up_time}. Actividad diaria: ${d.activity_level}. Metricas: TDEE ${d.tdee} kcal, objetivo ${d.caloric_target} kcal/dia, proteina ${d.protein_target_g}g/dia. Onboarding completado: ${new Date().toISOString().split('T')[0]}.`; })() }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ob-18",
+      "name": "Send Metrics Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2880,
+        140
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      },
       "parameters": {
         "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
-        "text": "¡Tu perfil está completo! 🎉\n\nAquí están tus métricas calculadas:\n📊 BMR: {{ $('Calculate Metrics').item.json.bmr }} kcal/día\n🔥 TDEE: {{ $('Calculate Metrics').item.json.tdee }} kcal/día\n🎯 Objetivo calórico: {{ $('Calculate Metrics').item.json.caloric_target }} kcal/día\n💪 Proteína: {{ $('Calculate Metrics').item.json.protein_target_g }}g\n🍞 Carbohidratos: {{ $('Calculate Metrics').item.json.carb_target_g }}g\n🥑 Grasas: {{ $('Calculate Metrics').item.json.fat_target_g }}g\n\nYa puedes comenzar a usar FitAI. ¡Pregúntame lo que necesites sobre nutrición y fitness!",
+        "text": "={{ (() => { const d = $('Calculate Metrics').item.json; const goalLines = { lose_fat: `Vamos a trabajar con *${d.caloric_target} kcal* diarias — un deficit de *${d.deficit} kcal* que te permite perder grasa sin perder musculo. Tu meta de proteina diaria: *${d.protein_target_g}g*.`, gain_muscle: `Vamos a trabajar con *${d.caloric_target} kcal* diarias — un superavit controlado de *${d.surplus} kcal* para ganar musculo limpio. Tu meta de proteina diaria: *${d.protein_target_g}g*.`, maintain: `Vamos a mantener tus *${d.caloric_target} kcal* diarias con un enfoque en *${d.protein_target_g}g de proteina* para mantener tu composicion corporal.`, recomposition: `Vamos a trabajar con *${d.caloric_target} kcal* diarias y *${d.protein_target_g}g de proteina* — la clave para recomposicion es entrenamiento de fuerza + proteina alta.` }; const weeksLine = d.target_weight && d.estimated_weeks ? ` Para llegar a *${d.target_weight} kg*, a un ritmo saludable estamos hablando de unas *${d.estimated_weeks} semanas*.` : ''; return `${d.first_name}, ya tengo todo.\\n\\nTu cuerpo gasta unas *${d.tdee} kcal* al dia. ${d.goal_explanation}\\n\\n${goalLines[d.goal_type]}\\n\\nTu IMC hoy: *${d.bmi}* (${d.bmi_category}).${weeksLine}`; })() }}",
         "additionalFields": {
           "parse_mode": "Markdown",
           "appendAttribution": false
         }
-      },
-      "id": "c1d2e3f4-0012-4000-8000-000000000012",
-      "name": "Send Completion Message",
+      }
+    },
+    {
+      "id": "ob-19",
+      "name": "Send Welcome Message",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2250,
-        0
-      ]
+        3100,
+        140
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1duS64x2hsrz3moJ",
+          "name": "Telegram account fitia"
+        }
+      },
+      "parameters": {
+        "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
+        "text": "Ya te prepare tu plan de comidas para manana. Te lo mando temprano junto con tu meta del dia.\n\nAsi va a funcionar: cada manana te envio tu plan con las comidas y calorias. Durante el dia me vas contando que comiste y yo llevo la cuenta de como vas. En la noche hacemos un check rapido. Y cada semana te mando tu resumen de progreso con numeros reales.\n\nDescansa bien, que manana arrancamos 💪",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      }
     }
   ],
   "connections": {
@@ -252,7 +473,7 @@
         ],
         [
           {
-            "node": "Validate and Process Step",
+            "node": "Parse Onboarding State",
             "type": "main",
             "index": 0
           }
@@ -264,6 +485,17 @@
         [
           {
             "node": "Save Onboarding State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Onboarding State": {
+      "main": [
+        [
+          {
+            "node": "Validate and Process Step",
             "type": "main",
             "index": 0
           }
@@ -317,6 +549,21 @@
             "node": "Save User Profile",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Save Initial Goal",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Initial Weight Log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Tomorrow Daily Targets",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -325,18 +572,84 @@
       "main": [
         [
           {
-            "node": "Clear Onboarding State",
+            "node": "Generate First Meal Plan",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Clear Onboarding State": {
+    "Save Initial Goal": {
       "main": [
         [
           {
-            "node": "Send Completion Message",
+            "node": "Generate First Meal Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Initial Weight Log": {
+      "main": [
+        [
+          {
+            "node": "Generate First Meal Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Tomorrow Daily Targets": {
+      "main": [
+        [
+          {
+            "node": "Generate First Meal Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate First Meal Plan": {
+      "main": [
+        [
+          {
+            "node": "Delete Onboarding State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Onboarding State": {
+      "main": [
+        [
+          {
+            "node": "Index Onboarding Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Index Onboarding Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Metrics Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Metrics Message": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Message",
             "type": "main",
             "index": 0
           }
@@ -352,16 +665,16 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "40de874f-7c51-4177-b5fe-b5d295d6d513",
-  "activeVersionId": null,
-  "versionCounter": 1,
+  "versionId": "b704318a-831a-4e3c-a538-2c2c816cb121",
+  "activeVersionId": "b704318a-831a-4e3c-a538-2c2c816cb121",
+  "versionCounter": 3,
   "triggerCount": 0,
   "shared": [
     {
-      "updatedAt": "2026-03-27T16:35:06.411Z",
-      "createdAt": "2026-03-27T16:35:06.411Z",
+      "updatedAt": "2026-04-01T20:02:43.206Z",
+      "createdAt": "2026-04-01T20:02:43.206Z",
       "role": "workflow:owner",
-      "workflowId": "Mjmz7R3aFfuLGCs3",
+      "workflowId": "yiUgnJ6gCoaIFVXe",
       "projectId": "GE3JULxyP9D4KS9G",
       "project": {
         "updatedAt": "2026-03-12T16:58:26.122Z",
@@ -376,5 +689,675 @@
     }
   ],
   "tags": [],
-  "activeVersion": null
+  "activeVersion": {
+    "updatedAt": "2026-04-01T20:02:43.213Z",
+    "createdAt": "2026-04-01T20:02:43.213Z",
+    "versionId": "b704318a-831a-4e3c-a538-2c2c816cb121",
+    "workflowId": "yiUgnJ6gCoaIFVXe",
+    "nodes": [
+      {
+        "id": "ob-01",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "ob-02",
+        "name": "Get Onboarding State",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          460,
+          300
+        ],
+        "credentials": {
+          "redis": {
+            "id": "UGH5aP9zo2YPdm6x",
+            "name": "Redis account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "get",
+          "key": "=onboarding:{{ $json.telegramId }}"
+        }
+      },
+      {
+        "id": "ob-03",
+        "name": "Initialize or Resume?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          680,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "cond-isnew",
+                "leftValue": "={{ $json.value }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "isEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "ob-04",
+        "name": "Initialize Onboarding",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          160
+        ],
+        "parameters": {
+          "jsCode": "const telegramId = $('Execute Workflow Trigger').first().json.telegramId;\nconst now = new Date().toISOString();\n\nconst state = {\n  telegram_id: telegramId,\n  step: 'ask_name',\n  block: 1,\n  started_at: now,\n  updated_at: now,\n  data: {\n    first_name: null, gender: null, age: null,\n    height_cm: null, weight_kg: null,\n    goal_type: null, target_weight: null,\n    dietary_restrictions: [], food_allergies: [],\n    disliked_foods: [], budget_level: null, meals_per_day: null,\n    fitness_level: null, equipment: null,\n    training_days_per_week: null, injuries: null,\n    wake_up_time: null, activity_level: null\n  },\n  temp: {}\n};\n\nreturn [{\n  json: {\n    state,\n    isNewUser: true,\n    responseMessage: 'Hola! Soy tu coach de nutricion y fitness. Voy a acompanarte en todo el proceso para que llegues a tu meta.\\n\\nAntes de armar tu plan necesito conocerte. Son unas preguntas rapidas, como 3 minutos.\\n\\nComo te llamo?',\n    replyMarkup: null\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "ob-05",
+        "name": "Parse Onboarding State",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          900,
+          440
+        ],
+        "parameters": {
+          "jsCode": "const stateStr = $('Get Onboarding State').first().json.value;\nconst state = typeof stateStr === 'string' ? JSON.parse(stateStr) : stateStr;\nconst userText = ($('Execute Workflow Trigger').first().json.text || '').trim();\nconst callbackData = $('Execute Workflow Trigger').first().json.callbackData || null;\n\nreturn [{\n  json: {\n    state,\n    userText,\n    callbackData,\n    currentStep: state.step,\n    currentBlock: state.block\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "ob-06",
+        "name": "Validate and Process Step",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          440
+        ],
+        "parameters": {
+          "jsCode": "const { state, userText, callbackData } = $json;\nconst input = callbackData || userText;\nconst step = state.step;\nlet isValid = false;\nlet errorMessage = '';\nlet nextStep = step;\nlet nextBlock = state.block;\nlet responseMessage = '';\nlet replyMarkup = null;\n\nswitch (step) {\n  case 'ask_name': {\n    const name = input.trim();\n    if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s\\-]{2,40}$/.test(name)) {\n      state.data.first_name = name;\n      nextStep = 'ask_gender'; nextBlock = 1; isValid = true;\n      responseMessage = `${name}, mucho gusto. Necesito unos datos fisicos basicos para calcular tus requerimientos. Empezamos:\\n\\nGenero biologico?`;\n      replyMarkup = { inline_keyboard: [[{ text: 'Hombre', callback_data: 'male' }, { text: 'Mujer', callback_data: 'female' }]] };\n    } else {\n      errorMessage = 'Solo necesito tu nombre (letras, entre 2 y 40 caracteres).';\n    }\n    break;\n  }\n  case 'ask_gender': {\n    if (['male','female'].includes(input)) {\n      state.data.gender = input;\n      nextStep = 'ask_age'; isValid = true;\n      responseMessage = 'Edad?';\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu genero.';\n    }\n    break;\n  }\n  case 'ask_age': {\n    const age = parseInt(input);\n    if (!isNaN(age) && age >= 14 && age <= 100) {\n      state.data.age = age;\n      nextStep = 'ask_height'; isValid = true;\n      responseMessage = 'Estatura en cm? (ej: 170)';\n    } else {\n      errorMessage = 'Necesito un numero entre 14 y 100.';\n    }\n    break;\n  }\n  case 'ask_height': {\n    const h = parseFloat(input.replace(',', '.'));\n    if (!isNaN(h) && h >= 100 && h <= 250) {\n      state.data.height_cm = h;\n      nextStep = 'ask_weight'; isValid = true;\n      responseMessage = 'Y peso actual en kg? (ej: 80)';\n    } else {\n      errorMessage = 'Necesito la estatura en centimetros (entre 100 y 250). Ej: 170';\n    }\n    break;\n  }\n  case 'ask_weight': {\n    const w = parseFloat(input.replace(',', '.'));\n    if (!isNaN(w) && w >= 30 && w <= 300) {\n      state.data.weight_kg = w;\n      nextStep = 'ask_goal'; nextBlock = 2; isValid = true;\n      responseMessage = 'Listo, ahora lo mas importante: que quieres lograr?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Perder grasa', callback_data: 'lose_fat' }, { text: 'Ganar musculo', callback_data: 'gain_muscle' }],\n        [{ text: 'Mantener peso', callback_data: 'maintain' }, { text: 'Recomposicion corporal', callback_data: 'recomposition' }]\n      ]};\n    } else {\n      errorMessage = 'Necesito el peso en kilos (entre 30 y 300). Ej: 75';\n    }\n    break;\n  }\n  case 'ask_goal': {\n    const validGoals = ['lose_fat','gain_muscle','maintain','recomposition'];\n    if (validGoals.includes(input)) {\n      state.data.goal_type = input;\n      isValid = true;\n      if (input === 'lose_fat' || input === 'gain_muscle') {\n        nextStep = 'ask_target_weight';\n        responseMessage = 'A cuanto quieres llegar? (peso meta en kg)';\n      } else {\n        state.data.target_weight = null;\n        nextStep = 'ask_dietary_restrictions_known'; nextBlock = 3;\n        responseMessage = 'Va. Ahora unas preguntas sobre como comes.\\n\\nTienes alguna restriccion dietaria o alergia alimentaria?';\n        replyMarkup = { inline_keyboard: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] };\n      }\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu objetivo.';\n    }\n    break;\n  }\n  case 'ask_target_weight': {\n    const tw = parseFloat(input.replace(',', '.'));\n    const currentW = state.data.weight_kg;\n    const isLoseFat = state.data.goal_type === 'lose_fat';\n    const isGainMuscle = state.data.goal_type === 'gain_muscle';\n    if (!isNaN(tw) && tw >= 30 && tw <= 300 &&\n        (!isLoseFat || tw < currentW) && (!isGainMuscle || tw > currentW)) {\n      state.data.target_weight = tw;\n      nextStep = 'ask_dietary_restrictions_known'; nextBlock = 3; isValid = true;\n      responseMessage = 'Va. Ahora unas preguntas sobre como comes.\\n\\nTienes alguna restriccion dietaria o alergia alimentaria?';\n      replyMarkup = { inline_keyboard: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] };\n    } else {\n      errorMessage = isLoseFat\n        ? `El peso meta debe ser menor a tu peso actual (${currentW} kg).`\n        : `El peso meta debe ser mayor a tu peso actual (${currentW} kg).`;\n    }\n    break;\n  }\n  case 'ask_dietary_restrictions_known': {\n    if (input === 'no') {\n      state.data.dietary_restrictions = [];\n      state.data.food_allergies = [];\n      nextStep = 'ask_disliked_foods'; isValid = true;\n      responseMessage = 'Hay alimentos que no te gusten? Escribelos o pon \"no\" si comes de todo.';\n    } else if (input === 'yes') {\n      nextStep = 'ask_dietary_input'; isValid = true;\n      responseMessage = 'Escribe todo junto: restricciones (vegetariano, vegano, sin gluten, etc.) y alergias (mani, mariscos, etc.) separadas por comas.';\n    } else {\n      errorMessage = 'Usa los botones para responder.';\n    }\n    break;\n  }\n  case 'ask_dietary_input': {\n    if (input.length >= 2 && input.length <= 500) {\n      const RESTRICTIONS = ['vegetariano','vegano','vegan','vegetarian','sin gluten','gluten','sin lactosa','lactosa','kosher','halal','celiac'];\n      const items = input.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);\n      const restrictions = items.filter(i => RESTRICTIONS.some(r => i.includes(r)));\n      const allergies = items.filter(i => !RESTRICTIONS.some(r => i.includes(r)));\n      state.data.dietary_restrictions = restrictions;\n      state.data.food_allergies = allergies;\n      nextStep = 'ask_disliked_foods'; isValid = true;\n      responseMessage = 'Hay alimentos que no te gusten? Escribelos o pon \"no\" si comes de todo.';\n    } else {\n      errorMessage = 'Escribe tus restricciones y/o alergias separadas por comas.';\n    }\n    break;\n  }\n  case 'ask_disliked_foods': {\n    const noFoods = ['no','ninguno','nada','ninguna','nope'];\n    state.data.disliked_foods = noFoods.includes(input.toLowerCase()) ? [] : input.split(',').map(s => s.trim()).filter(Boolean);\n    nextStep = 'ask_budget'; isValid = true;\n    responseMessage = 'Ok. Y tu presupuesto para ingredientes?';\n    replyMarkup = { inline_keyboard: [[\n      { text: 'Economico', callback_data: 'low' },\n      { text: 'Moderado', callback_data: 'medium' },\n      { text: 'Sin limite', callback_data: 'high' }\n    ]]};\n    break;\n  }\n  case 'ask_budget': {\n    if (['low','medium','high'].includes(input)) {\n      state.data.budget_level = input;\n      nextStep = 'ask_meals'; isValid = true;\n      responseMessage = 'Cuantas comidas al dia prefieres?';\n      replyMarkup = { inline_keyboard: [[\n        { text: '3', callback_data: '3' },\n        { text: '4', callback_data: '4' },\n        { text: '5', callback_data: '5' }\n      ]]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu presupuesto.';\n    }\n    break;\n  }\n  case 'ask_meals': {\n    const meals = parseInt(input);\n    if ([3,4,5].includes(meals)) {\n      state.data.meals_per_day = meals;\n      nextStep = 'ask_fitness_level'; nextBlock = 4; isValid = true;\n      responseMessage = 'Bien, ahora el tema del ejercicio.\\n\\nComo describirias tu experiencia entrenando?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Principiante (< 6 meses)', callback_data: 'beginner' }],\n        [{ text: 'Intermedio (6 meses - 2 anos)', callback_data: 'intermediate' }],\n        [{ text: 'Avanzado (2+ anos)', callback_data: 'advanced' }]\n      ]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar el numero de comidas.';\n    }\n    break;\n  }\n  case 'ask_fitness_level': {\n    if (['beginner','intermediate','advanced'].includes(input)) {\n      state.data.fitness_level = input;\n      nextStep = 'ask_equipment'; isValid = true;\n      responseMessage = 'Donde entrenas o planeas entrenar?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Casa sin equipo', callback_data: 'bodyweight' }],\n        [{ text: 'Casa con mancuernas/bandas', callback_data: 'home_basic' }],\n        [{ text: 'Gimnasio', callback_data: 'full_gym' }]\n      ]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu nivel.';\n    }\n    break;\n  }\n  case 'ask_equipment': {\n    if (['bodyweight','home_basic','full_gym'].includes(input)) {\n      state.data.equipment = input;\n      nextStep = 'ask_training_days'; isValid = true;\n      responseMessage = 'Cuantos dias a la semana puedes entrenar?';\n      replyMarkup = { inline_keyboard: [[\n        { text: '2', callback_data: '2' },\n        { text: '3', callback_data: '3' },\n        { text: '4', callback_data: '4' },\n        { text: '5', callback_data: '5' },\n        { text: '6', callback_data: '6' }\n      ]]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar donde entrenas.';\n    }\n    break;\n  }\n  case 'ask_training_days': {\n    const days = parseInt(input);\n    if (days >= 2 && days <= 6) {\n      state.data.training_days_per_week = days;\n      nextStep = 'ask_injuries'; isValid = true;\n      responseMessage = 'Alguna lesion o condicion fisica que deba saber?';\n      replyMarkup = { inline_keyboard: [[\n        { text: 'No, estoy bien', callback_data: 'no' },\n        { text: 'Si, tengo', callback_data: 'yes' }\n      ]]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar los dias.';\n    }\n    break;\n  }\n  case 'ask_injuries': {\n    if (input === 'no') {\n      state.data.injuries = null;\n      nextStep = 'ask_wake_time'; nextBlock = 5; isValid = true;\n      responseMessage = 'Casi terminamos. Solo necesito saber tus horarios.\\n\\nA que hora te despiertas normalmente?';\n      replyMarkup = { inline_keyboard: [[\n        { text: '5:00', callback_data: '05:00' },\n        { text: '6:00', callback_data: '06:00' },\n        { text: '7:00', callback_data: '07:00' },\n        { text: '8:00', callback_data: '08:00' },\n        { text: '9:00', callback_data: '09:00' },\n        { text: 'Otra', callback_data: 'custom' }\n      ]]};\n    } else if (input === 'yes') {\n      nextStep = 'ask_injuries_input'; isValid = true;\n      responseMessage = 'Describela brevemente.';\n    } else {\n      errorMessage = 'Usa los botones para responder.';\n    }\n    break;\n  }\n  case 'ask_injuries_input': {\n    if (input.length >= 3 && input.length <= 500) {\n      state.data.injuries = input;\n      nextStep = 'ask_wake_time'; nextBlock = 5; isValid = true;\n      responseMessage = 'Casi terminamos. Solo necesito saber tus horarios.\\n\\nA que hora te despiertas normalmente?';\n      replyMarkup = { inline_keyboard: [[\n        { text: '5:00', callback_data: '05:00' },\n        { text: '6:00', callback_data: '06:00' },\n        { text: '7:00', callback_data: '07:00' },\n        { text: '8:00', callback_data: '08:00' },\n        { text: '9:00', callback_data: '09:00' },\n        { text: 'Otra', callback_data: 'custom' }\n      ]]};\n    } else {\n      errorMessage = 'Describela brevemente (minimo 3 caracteres).';\n    }\n    break;\n  }\n  case 'ask_wake_time': {\n    if (input === 'custom') {\n      nextStep = 'ask_wake_time_custom'; isValid = true;\n      responseMessage = 'Escribe la hora en formato HH:MM (ej: 06:30)';\n    } else if (/^\\d{2}:\\d{2}$/.test(input)) {\n      state.data.wake_up_time = input;\n      nextStep = 'ask_activity_level'; isValid = true;\n      responseMessage = 'Fuera del ejercicio, como es tu dia a dia?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Sentado casi todo el dia', callback_data: 'sedentary' }],\n        [{ text: 'Camino algo, tareas ligeras', callback_data: 'lightly_active' }],\n        [{ text: 'De pie bastante, camino mucho', callback_data: 'moderately_active' }],\n        [{ text: 'Trabajo fisico pesado', callback_data: 'very_active' }]\n      ]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar la hora.';\n    }\n    break;\n  }\n  case 'ask_wake_time_custom': {\n    if (/^\\d{1,2}:\\d{2}$/.test(input)) {\n      state.data.wake_up_time = input.padStart(5, '0');\n      nextStep = 'ask_activity_level'; isValid = true;\n      responseMessage = 'Fuera del ejercicio, como es tu dia a dia?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Sentado casi todo el dia', callback_data: 'sedentary' }],\n        [{ text: 'Camino algo, tareas ligeras', callback_data: 'lightly_active' }],\n        [{ text: 'De pie bastante, camino mucho', callback_data: 'moderately_active' }],\n        [{ text: 'Trabajo fisico pesado', callback_data: 'very_active' }]\n      ]};\n    } else {\n      errorMessage = 'Escribe la hora en formato HH:MM (ej: 06:30)';\n    }\n    break;\n  }\n  case 'ask_activity_level': {\n    const validLevels = ['sedentary','lightly_active','moderately_active','very_active'];\n    if (validLevels.includes(input)) {\n      state.data.activity_level = input;\n      nextStep = 'confirm_profile'; nextBlock = null; isValid = true;\n      const d = state.data;\n      const goalDisplay = { lose_fat: 'Perder grasa', gain_muscle: 'Ganar musculo', maintain: 'Mantener peso', recomposition: 'Recomposicion' }[d.goal_type];\n      const targetLine = d.target_weight ? ` → meta: ${d.target_weight} kg` : '';\n      responseMessage = `Listo, ${d.first_name}. Confirmo los datos clave:\\n\\n${d.age} anos, ${d.height_cm} cm, ${d.weight_kg} kg\\nObjetivo: ${goalDisplay}${targetLine}\\n${d.training_days_per_week} dias de ejercicio, ${d.meals_per_day} comidas al dia\\n\\nTodo bien o quieres corregir algo?`;\n      replyMarkup = { inline_keyboard: [[\n        { text: 'Todo bien, dale', callback_data: 'confirm' },\n        { text: 'Quiero corregir algo', callback_data: 'correct' }\n      ]]};\n    } else {\n      errorMessage = 'Usa los botones para seleccionar tu nivel de actividad.';\n    }\n    break;\n  }\n  case 'confirm_profile': {\n    if (input === 'confirm') {\n      nextStep = 'calculate_and_complete'; isValid = true;\n      responseMessage = '';\n    } else if (input === 'correct') {\n      nextStep = 'correct_block'; isValid = true;\n      responseMessage = 'Que quieres cambiar?';\n      replyMarkup = { inline_keyboard: [\n        [{ text: 'Datos fisicos', callback_data: 'block_1' }, { text: 'Objetivo', callback_data: 'block_2' }],\n        [{ text: 'Alimentacion', callback_data: 'block_3' }, { text: 'Ejercicio', callback_data: 'block_4' }],\n        [{ text: 'Horarios', callback_data: 'block_5' }]\n      ]};\n    } else {\n      errorMessage = 'Usa los botones para confirmar o corregir.';\n    }\n    break;\n  }\n  case 'correct_block': {\n    const blockMap = { block_1: 'ask_gender', block_2: 'ask_goal', block_3: 'ask_dietary_restrictions_known', block_4: 'ask_fitness_level', block_5: 'ask_wake_time' };\n    const blockNum = { block_1: 1, block_2: 2, block_3: 3, block_4: 4, block_5: 5 };\n    if (blockMap[input]) {\n      nextStep = blockMap[input]; nextBlock = blockNum[input]; isValid = true;\n      const blockMessages = {\n        block_1: { msg: 'Genero biologico?', kb: [[{ text: 'Hombre', callback_data: 'male' }, { text: 'Mujer', callback_data: 'female' }]] },\n        block_2: { msg: 'Que quieres lograr?', kb: [[{ text: 'Perder grasa', callback_data: 'lose_fat' }, { text: 'Ganar musculo', callback_data: 'gain_muscle' }],[{ text: 'Mantener peso', callback_data: 'maintain' }, { text: 'Recomposicion corporal', callback_data: 'recomposition' }]] },\n        block_3: { msg: 'Tienes alguna restriccion dietaria o alergia alimentaria?', kb: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] },\n        block_4: { msg: 'Como describirias tu experiencia entrenando?', kb: [[{ text: 'Principiante', callback_data: 'beginner' }],[{ text: 'Intermedio', callback_data: 'intermediate' }],[{ text: 'Avanzado', callback_data: 'advanced' }]] },\n        block_5: { msg: 'A que hora te despiertas normalmente?', kb: [[{ text: '5:00', callback_data: '05:00' },{ text: '6:00', callback_data: '06:00' },{ text: '7:00', callback_data: '07:00' },{ text: '8:00', callback_data: '08:00' },{ text: '9:00', callback_data: '09:00' },{ text: 'Otra', callback_data: 'custom' }]] }\n      };\n      responseMessage = blockMessages[input].msg;\n      replyMarkup = { inline_keyboard: blockMessages[input].kb };\n    } else {\n      errorMessage = 'Usa los botones para seleccionar el bloque.';\n    }\n    break;\n  }\n  default:\n    isValid = true;\n    responseMessage = '';\n}\n\nif (isValid) {\n  state.step = nextStep;\n  state.block = nextBlock || state.block;\n  state.updated_at = new Date().toISOString();\n}\n\nconst isComplete = nextStep === 'calculate_and_complete';\n\nreturn [{\n  json: {\n    state,\n    isValid,\n    isComplete,\n    responseMessage: isValid ? responseMessage : errorMessage,\n    replyMarkup\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "ob-07",
+        "name": "Save Onboarding State",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          1340,
+          300
+        ],
+        "credentials": {
+          "redis": {
+            "id": "UGH5aP9zo2YPdm6x",
+            "name": "Redis account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "set",
+          "key": "=onboarding:{{ $('Execute Workflow Trigger').item.json.telegramId }}",
+          "value": "={{ JSON.stringify($json.state) }}",
+          "expire": true,
+          "ttl": 172800
+        }
+      },
+      {
+        "id": "ob-08",
+        "name": "Is Onboarding Complete?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1560,
+          300
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "cond-complete",
+                "leftValue": "={{ $json.isComplete }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "ob-09",
+        "name": "Send Question",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          1780,
+          460
+        ],
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        },
+        "parameters": {
+          "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
+          "text": "={{ $json.responseMessage }}",
+          "additionalFields": {
+            "parse_mode": "Markdown",
+            "appendAttribution": false,
+            "reply_markup": "={{ $json.replyMarkup ? JSON.stringify($json.replyMarkup) : undefined }}"
+          }
+        }
+      },
+      {
+        "id": "ob-10",
+        "name": "Calculate Metrics",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1780,
+          140
+        ],
+        "parameters": {
+          "jsCode": "const data = $json.state.data;\n\n// BMI\nconst bmi = data.weight_kg / Math.pow(data.height_cm / 100, 2);\nconst bmiCategory = bmi < 18.5 ? 'bajo peso' : bmi < 25 ? 'peso normal' : bmi < 30 ? 'sobrepeso' : 'obesidad';\n\n// BMR — Mifflin-St Jeor\nconst bmr = data.gender === 'male'\n  ? (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) + 5\n  : (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) - 161;\n\n// TDEE — v2: 4 levels\nconst activityMultipliers = { sedentary: 1.2, lightly_active: 1.375, moderately_active: 1.55, very_active: 1.725 };\nconst tdee = bmr * (activityMultipliers[data.activity_level] || 1.2);\n\n// Caloric target — v2: % of TDEE\nconst caloricTargetRaw = { lose_fat: tdee * 0.80, gain_muscle: tdee * 1.10, maintain: tdee * 1.0, recomposition: tdee * 0.95 }[data.goal_type];\nconst minCalories = data.gender === 'female' ? 1200 : 1500;\nconst caloricTarget = Math.max(Math.round(caloricTargetRaw), minCalories);\n\n// Macros\nconst proteinMultiplier = data.goal_type === 'gain_muscle' ? 2.2 : data.goal_type === 'recomposition' ? 2.0 : 1.8;\nconst proteinTarget = Math.round(data.weight_kg * proteinMultiplier);\nconst fatTarget = Math.round((caloricTarget * 0.25) / 9);\nconst carbTarget = Math.round((caloricTarget - (proteinTarget * 4) - (fatTarget * 9)) / 4);\n\nconst deficit = data.goal_type === 'lose_fat' ? Math.round(tdee - caloricTarget) : null;\nconst surplus = data.goal_type === 'gain_muscle' ? Math.round(caloricTarget - tdee) : null;\n\nlet estimatedWeeks = null;\nif (data.target_weight) {\n  const weightDiff = Math.abs(data.weight_kg - data.target_weight);\n  const weeklyRateKg = data.goal_type === 'lose_fat' ? 0.5 : 0.25;\n  estimatedWeeks = Math.ceil(weightDiff / weeklyRateKg);\n}\n\nconst goalDisplay = { lose_fat: 'Perder grasa', gain_muscle: 'Ganar musculo', maintain: 'Mantener peso', recomposition: 'Recomposicion corporal' }[data.goal_type];\nconst goalExplanations = {\n  lose_fat: 'Para bajar de peso de forma sostenible, la clave es mantener un deficit calorico moderado sin pasar hambre.',\n  gain_muscle: 'Para ganar musculo necesitas comer un poco mas de lo que gastas y asegurar suficiente proteina.',\n  maintain: 'Para mantener tu peso, el enfoque es equilibrar lo que comes con lo que gastas.',\n  recomposition: 'La recomposicion es ganar musculo mientras pierdes grasa — el proceso mas lento pero mas transformador.'\n};\n\nconst trigger = $('Execute Workflow Trigger').first().json;\n\nreturn [{\n  json: {\n    ...data,\n    bmi: Math.round(bmi * 10) / 10,\n    bmi_category: bmiCategory,\n    bmr: Math.round(bmr),\n    tdee: Math.round(tdee),\n    caloric_target: caloricTarget,\n    protein_target_g: proteinTarget,\n    carb_target_g: carbTarget,\n    fat_target_g: fatTarget,\n    deficit,\n    surplus,\n    estimated_weeks: estimatedWeeks,\n    goal_display: goalDisplay,\n    goal_explanation: goalExplanations[data.goal_type],\n    userId: trigger.userId,\n    telegramId: trigger.telegramId,\n    chatId: trigger.chatId\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "ob-11",
+        "name": "Save User Profile",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2000,
+          -20
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO user_profiles (\n  user_id, gender, age, height_cm, weight_kg,\n  activity_level, fitness_level, goal,\n  dietary_restrictions, food_allergies, disliked_foods,\n  injuries, available_equipment, training_days_per_week,\n  wake_up_time, meals_per_day, budget_level,\n  onboarding_completed, onboarding_completed_at,\n  bmr, tdee, caloric_target,\n  protein_target_g, carb_target_g, fat_target_g\n) VALUES (\n  $1, $2, $3, $4, $5,\n  $6, $7, $8,\n  $9, $10, $11,\n  $12, $13, $14,\n  $15, $16, $17,\n  true, NOW(),\n  $18, $19, $20,\n  $21, $22, $23\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n  gender = EXCLUDED.gender, age = EXCLUDED.age,\n  height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg,\n  activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level,\n  goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions,\n  food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods,\n  injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment,\n  training_days_per_week = EXCLUDED.training_days_per_week,\n  wake_up_time = EXCLUDED.wake_up_time, meals_per_day = EXCLUDED.meals_per_day,\n  budget_level = EXCLUDED.budget_level, onboarding_completed = true,\n  onboarding_completed_at = NOW(),\n  bmr = EXCLUDED.bmr, tdee = EXCLUDED.tdee, caloric_target = EXCLUDED.caloric_target,\n  protein_target_g = EXCLUDED.protein_target_g, carb_target_g = EXCLUDED.carb_target_g,\n  fat_target_g = EXCLUDED.fat_target_g;",
+          "options": {
+            "queryReplacement": "={{ [$json.userId, $json.gender, $json.age, $json.height_cm, $json.weight_kg, $json.activity_level, $json.fitness_level, $json.goal_type, JSON.stringify($json.dietary_restrictions || []), JSON.stringify($json.food_allergies || []), JSON.stringify($json.disliked_foods || []), $json.injuries || null, $json.equipment || 'none', $json.training_days_per_week, $json.wake_up_time || '07:00', $json.meals_per_day || 3, $json.budget_level || 'medium', $json.bmr, $json.tdee, $json.caloric_target, $json.protein_target_g, $json.carb_target_g, $json.fat_target_g] }}"
+          }
+        }
+      },
+      {
+        "id": "ob-12",
+        "name": "Save Initial Goal",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2000,
+          140
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO goals (user_id, goal_type, target_weight_kg, start_weight_kg, start_date, is_active)\nVALUES ($1, $2, $3, $4, CURRENT_DATE, true)\nON CONFLICT (user_id) DO UPDATE SET\n  goal_type = EXCLUDED.goal_type,\n  target_weight_kg = EXCLUDED.target_weight_kg,\n  start_weight_kg = EXCLUDED.start_weight_kg,\n  start_date = EXCLUDED.start_date,\n  is_active = true;",
+          "options": {
+            "queryReplacement": "={{ [$json.userId, $json.goal_type, $json.target_weight || null, $json.weight_kg] }}"
+          }
+        }
+      },
+      {
+        "id": "ob-13",
+        "name": "Save Initial Weight Log",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2000,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO weight_logs (user_id, weight_kg, notes, logged_at)\nVALUES ($1, $2, 'Peso inicial - onboarding', CURRENT_DATE)\nON CONFLICT DO NOTHING;",
+          "options": {
+            "queryReplacement": "={{ [$json.userId, $json.weight_kg] }}"
+          }
+        }
+      },
+      {
+        "id": "ob-14",
+        "name": "Create Tomorrow Daily Targets",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2000,
+          460
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n) VALUES (\n  $1,\n  (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day',\n  $2, $3, $4, $5,\n  0, 0, 0, 0\n)\nON CONFLICT (user_id, target_date) DO NOTHING;",
+          "options": {
+            "queryReplacement": "={{ [$json.userId, $json.caloric_target, $json.protein_target_g, $json.carb_target_g, $json.fat_target_g] }}"
+          }
+        }
+      },
+      {
+        "id": "ob-15",
+        "name": "Generate First Meal Plan",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          2220,
+          300
+        ],
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "KQhP9lQNxCKeOsbJ",
+            "mode": "id"
+          },
+          "options": {
+            "waitForSubWorkflow": false
+          },
+          "fields": {
+            "values": [
+              {
+                "name": "userId",
+                "type": "numberValue",
+                "numberValue": "={{ $('Calculate Metrics').item.json.userId }}"
+              },
+              {
+                "name": "planDate",
+                "type": "stringValue",
+                "stringValue": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); })() }}"
+              },
+              {
+                "name": "chatId",
+                "type": "numberValue",
+                "numberValue": "={{ $('Calculate Metrics').item.json.chatId }}"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "ob-16",
+        "name": "Delete Onboarding State",
+        "type": "n8n-nodes-base.redis",
+        "typeVersion": 1,
+        "position": [
+          2440,
+          300
+        ],
+        "credentials": {
+          "redis": {
+            "id": "UGH5aP9zo2YPdm6x",
+            "name": "Redis account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "delete",
+          "key": "=onboarding:{{ $('Execute Workflow Trigger').item.json.telegramId }}"
+        }
+      },
+      {
+        "id": "ob-17",
+        "name": "Index Onboarding Summary",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          2660,
+          300
+        ],
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "vAqqjXg2IE1ldgg3",
+            "mode": "id"
+          },
+          "options": {
+            "waitForSubWorkflow": false
+          },
+          "fields": {
+            "values": [
+              {
+                "name": "userId",
+                "type": "numberValue",
+                "numberValue": "={{ $('Calculate Metrics').item.json.userId }}"
+              },
+              {
+                "name": "contentType",
+                "type": "stringValue",
+                "stringValue": "onboarding_summary"
+              },
+              {
+                "name": "content",
+                "type": "stringValue",
+                "stringValue": "={{ (() => { const d = $('Calculate Metrics').item.json; return `${d.first_name}, ${d.gender === 'male' ? 'hombre' : 'mujer'}, ${d.age} anos, ${d.height_cm}cm, ${d.weight_kg}kg. Objetivo: ${d.goal_type}${d.target_weight ? ', meta ' + d.target_weight + 'kg' : ''}. Alimentacion: ${JSON.stringify(d.dietary_restrictions || [])}, presupuesto ${d.budget_level}, ${d.meals_per_day} comidas/dia. Ejercicio: nivel ${d.fitness_level}, ${d.equipment}, ${d.training_days_per_week} dias/semana. Horario: se despierta a las ${d.wake_up_time}. Actividad diaria: ${d.activity_level}. Metricas: TDEE ${d.tdee} kcal, objetivo ${d.caloric_target} kcal/dia, proteina ${d.protein_target_g}g/dia. Onboarding completado: ${new Date().toISOString().split('T')[0]}.`; })() }}"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "ob-18",
+        "name": "Send Metrics Message",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          2880,
+          140
+        ],
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        },
+        "parameters": {
+          "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
+          "text": "={{ (() => { const d = $('Calculate Metrics').item.json; const goalLines = { lose_fat: `Vamos a trabajar con *${d.caloric_target} kcal* diarias — un deficit de *${d.deficit} kcal* que te permite perder grasa sin perder musculo. Tu meta de proteina diaria: *${d.protein_target_g}g*.`, gain_muscle: `Vamos a trabajar con *${d.caloric_target} kcal* diarias — un superavit controlado de *${d.surplus} kcal* para ganar musculo limpio. Tu meta de proteina diaria: *${d.protein_target_g}g*.`, maintain: `Vamos a mantener tus *${d.caloric_target} kcal* diarias con un enfoque en *${d.protein_target_g}g de proteina* para mantener tu composicion corporal.`, recomposition: `Vamos a trabajar con *${d.caloric_target} kcal* diarias y *${d.protein_target_g}g de proteina* — la clave para recomposicion es entrenamiento de fuerza + proteina alta.` }; const weeksLine = d.target_weight && d.estimated_weeks ? ` Para llegar a *${d.target_weight} kg*, a un ritmo saludable estamos hablando de unas *${d.estimated_weeks} semanas*.` : ''; return `${d.first_name}, ya tengo todo.\\n\\nTu cuerpo gasta unas *${d.tdee} kcal* al dia. ${d.goal_explanation}\\n\\n${goalLines[d.goal_type]}\\n\\nTu IMC hoy: *${d.bmi}* (${d.bmi_category}).${weeksLine}`; })() }}",
+          "additionalFields": {
+            "parse_mode": "Markdown",
+            "appendAttribution": false
+          }
+        }
+      },
+      {
+        "id": "ob-19",
+        "name": "Send Welcome Message",
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          3100,
+          140
+        ],
+        "credentials": {
+          "telegramApi": {
+            "id": "1duS64x2hsrz3moJ",
+            "name": "Telegram account fitia"
+          }
+        },
+        "parameters": {
+          "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
+          "text": "Ya te prepare tu plan de comidas para manana. Te lo mando temprano junto con tu meta del dia.\n\nAsi va a funcionar: cada manana te envio tu plan con las comidas y calorias. Durante el dia me vas contando que comiste y yo llevo la cuenta de como vas. En la noche hacemos un check rapido. Y cada semana te mando tu resumen de progreso con numeros reales.\n\nDescansa bien, que manana arrancamos 💪",
+          "additionalFields": {
+            "parse_mode": "Markdown",
+            "appendAttribution": false
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get Onboarding State",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Onboarding State": {
+        "main": [
+          [
+            {
+              "node": "Initialize or Resume?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Initialize or Resume?": {
+        "main": [
+          [
+            {
+              "node": "Initialize Onboarding",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Parse Onboarding State",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Initialize Onboarding": {
+        "main": [
+          [
+            {
+              "node": "Save Onboarding State",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Onboarding State": {
+        "main": [
+          [
+            {
+              "node": "Validate and Process Step",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate and Process Step": {
+        "main": [
+          [
+            {
+              "node": "Save Onboarding State",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Onboarding State": {
+        "main": [
+          [
+            {
+              "node": "Is Onboarding Complete?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Onboarding Complete?": {
+        "main": [
+          [
+            {
+              "node": "Calculate Metrics",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Send Question",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calculate Metrics": {
+        "main": [
+          [
+            {
+              "node": "Save User Profile",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Save Initial Goal",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Save Initial Weight Log",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Create Tomorrow Daily Targets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save User Profile": {
+        "main": [
+          [
+            {
+              "node": "Generate First Meal Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Initial Goal": {
+        "main": [
+          [
+            {
+              "node": "Generate First Meal Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Initial Weight Log": {
+        "main": [
+          [
+            {
+              "node": "Generate First Meal Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Tomorrow Daily Targets": {
+        "main": [
+          [
+            {
+              "node": "Generate First Meal Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate First Meal Plan": {
+        "main": [
+          [
+            {
+              "node": "Delete Onboarding State",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete Onboarding State": {
+        "main": [
+          [
+            {
+              "node": "Index Onboarding Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Index Onboarding Summary": {
+        "main": [
+          [
+            {
+              "node": "Send Metrics Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Metrics Message": {
+        "main": [
+          [
+            {
+              "node": "Send Welcome Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-01T20:02:45.008Z",
+        "id": 260,
+        "workflowId": "yiUgnJ6gCoaIFVXe",
+        "versionId": "b704318a-831a-4e3c-a538-2c2c816cb121",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
 }

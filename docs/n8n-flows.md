@@ -1,6 +1,6 @@
 # Flujos n8n — FitAI Assistant
 
-Este documento describe en detalle los 12 workflows de n8n que componen la lógica de negocio completa del bot FitAI Assistant. Cada workflow se documenta con su trigger, nodos en orden, lógica de ramificación, manejo de errores y credenciales requeridas.
+Este documento describe en detalle los 16 workflows de n8n que componen la lógica de negocio completa del bot FitAI Assistant. Cada workflow se documenta con su trigger, nodos en orden, lógica de ramificación, manejo de errores y credenciales requeridas.
 
 ---
 
@@ -17,6 +17,12 @@ Este documento describe en detalle los 12 workflows de n8n que componen la lógi
 8. [FitAI - Workout Plan Generator](#8-fitai---workout-plan-generator)
 9. [FitAI - RAG Personal Indexer](#9-fitai---rag-personal-indexer)
 10. [FitAI - Membership Alert](#10-fitai---membership-alert)
+11. [FitAI - Log Food Intake (tool log_food_intake)](#11-fitai---log-food-intake-tool-log_food_intake)
+12. [FitAI - Get Daily Status (tool get_daily_status)](#12-fitai---get-daily-status-tool-get_daily_status)
+13. [FitAI - Morning Briefing](#13-fitai---morning-briefing)
+14. [FitAI - Evening Check-in](#14-fitai---evening-check-in)
+15. [FitAI - Weekly Report](#15-fitai---weekly-report)
+16. [FitAI - Silence Detector](#16-fitai---silence-detector)
 
 ---
 
@@ -756,7 +762,7 @@ function determineNextAction(dailyTargets, todayMeals, todayPlan, currentHour, p
   - **Input**: `{{ $json.text }}`
 - **Modelo conectado**: OpenAI Chat Model (ver nodo 7)
 - **Memoria conectada**: Window Buffer Memory (ver nodo 8)
-- **Tools conectados**: nodos 9 a 15
+- **Tools conectados**: nodos 9 a 17
 
 #### Nodo 7: OpenAI Chat Model
 
@@ -902,7 +908,89 @@ ORDER BY generated_at DESC
 LIMIT 1;
 ```
 
-#### Nodo 16: Send Response to Telegram (Telegram)
+#### Nodo 16: Tool - log_food_intake (toolWorkflow)
+
+- **Tipo**: `@n8n/n8n-nodes-langchain.toolWorkflow`
+- **typeVersion**: `1.3`
+- **Nombre de la tool**: `log_food_intake`
+- **Descripción**: `Registra lo que el usuario comio. Usa esta herramienta SIEMPRE que el usuario reporte haber comido algo (desayuno, almuerzo, snack, cena, o cualquier alimento). Estima los macros y registra el consumo en el balance del dia.`
+- **Workflow**: `FitAI - Log Food Intake` (sección 11)
+- **fields.values**:
+
+```json
+[
+  {
+    "name": "userId",
+    "type": "numberValue",
+    "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+  },
+  {
+    "name": "chatId",
+    "type": "numberValue",
+    "numberValue": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+  },
+  {
+    "name": "meal_type",
+    "type": "stringValue",
+    "stringValue": "={{ $fromAI('meal_type', 'Tipo de comida: breakfast, lunch, snack o dinner', 'string') }}"
+  },
+  {
+    "name": "description",
+    "type": "stringValue",
+    "stringValue": "={{ $fromAI('description', 'Descripcion de lo que comio el usuario, tal como lo reporto', 'string') }}"
+  },
+  {
+    "name": "estimated_calories",
+    "type": "numberValue",
+    "numberValue": "={{ $fromAI('estimated_calories', 'Calorias estimadas de la comida reportada', 'number') }}"
+  },
+  {
+    "name": "estimated_protein_g",
+    "type": "numberValue",
+    "numberValue": "={{ $fromAI('estimated_protein_g', 'Proteina estimada en gramos', 'number') }}"
+  },
+  {
+    "name": "estimated_carbs_g",
+    "type": "numberValue",
+    "numberValue": "={{ $fromAI('estimated_carbs_g', 'Carbohidratos estimados en gramos', 'number') }}"
+  },
+  {
+    "name": "estimated_fat_g",
+    "type": "numberValue",
+    "numberValue": "={{ $fromAI('estimated_fat_g', 'Grasa estimada en gramos', 'number') }}"
+  }
+]
+```
+
+**Nota**: `userId` y `chatId` son fijos del contexto del developer. Los 5 campos de nutrición los decide el LLM basándose en la conversación y el conocimiento nutricional del system prompt.
+
+#### Nodo 17: Tool - get_daily_status (toolWorkflow)
+
+- **Tipo**: `@n8n/n8n-nodes-langchain.toolWorkflow`
+- **typeVersion**: `1.3`
+- **Nombre de la tool**: `get_daily_status`
+- **Descripción**: `Obtiene el estado completo del dia actual: calorias y macros consumidos vs meta, comidas reportadas hasta ahora, y comidas pendientes del plan de hoy. Usa esta herramienta cuando el usuario pregunte cuanto ha comido hoy, cuanto le falta, como va el dia, o cuando necesites el balance actualizado antes de responder.`
+- **Workflow**: `FitAI - Get Daily Status` (sección 12)
+- **fields.values**:
+
+```json
+[
+  {
+    "name": "userId",
+    "type": "numberValue",
+    "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
+  },
+  {
+    "name": "chatId",
+    "type": "numberValue",
+    "numberValue": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+  }
+]
+```
+
+**Nota**: no tiene parámetros `$fromAI()`. El estado del día es siempre el del usuario actual — el LLM no necesita especificar ningún parámetro.
+
+#### Nodo 18: Send Response to Telegram (Telegram)
 
 - **Tipo**: Telegram - Send Message
 - **Chat ID**: `{{ $('Build Context').item.json.chatId }}`
@@ -912,7 +1000,7 @@ LIMIT 1;
 - **Opciones adicionales**:
   - Disable Web Page Preview: `true`
 
-#### Nodo 17: Log Conversation (PostgreSQL)
+#### Nodo 19: Log Conversation (PostgreSQL)
 
 - **Tipo**: PostgreSQL - Execute Query
 - **Credencial**: `FitAI PostgreSQL`
@@ -932,7 +1020,7 @@ VALUES ($1, $2, $3, $4, $5, $6, $7);
   - `$6`: array de tools invocadas
   - `$7`: tiempo de procesamiento en milisegundos
 
-#### Nodo 18: Trigger RAG Indexer (Execute Sub-Workflow)
+#### Nodo 20: Trigger RAG Indexer (Execute Sub-Workflow)
 
 - **Tipo**: Execute Sub-Workflow
 - **Workflow**: `FitAI - RAG Personal Indexer`
@@ -961,11 +1049,21 @@ Sub-Workflow Trigger
   → Load Weight Trend (PostgreSQL)         ← en paralelo (NUEVO v2)
   → Load Weekly Average (PostgreSQL)       ← en paralelo (NUEVO v2)
   → Build Context (Code)                   ← actualizado con dailyStatus, weeklyTrend, nextAction
-    → AI Agent (con tools conectados)
-      ├─ [Si tool call] → Ejecuta sub-workflow correspondiente → regresa al agente
-      └─ [Respuesta final] → Send Response to Telegram
-            → Log Conversation (PostgreSQL)
-            → Trigger RAG Indexer (asíncrono)
+    → AI Agent (20 nodos, 9 tools)
+      │
+      ├─ Tool: generate_meal_plan      → FitAI - Meal Plan Generator
+      ├─ Tool: generate_workout_plan   → FitAI - Workout Plan Generator
+      ├─ Tool: calculate_progress      → FitAI - Progress Calculator
+      ├─ Tool: search_knowledge        → Qdrant knowledge_rag
+      ├─ Tool: get_user_history        → Qdrant user_rag
+      ├─ Tool: log_weight              → PostgreSQL weight_logs
+      ├─ Tool: get_current_plan        → PostgreSQL meal_plans / exercise_plans
+      ├─ Tool: log_food_intake         → FitAI - Log Food Intake      ← NUEVO v2
+      ├─ Tool: get_daily_status        → FitAI - Get Daily Status      ← NUEVO v2
+      │
+      └─ [Respuesta final] → Send Response to Telegram (nodo 18)
+            → Log Conversation (nodo 19, PostgreSQL)
+            → Trigger RAG Indexer (nodo 20, asíncrono)
 ```
 
 Los 8 nodos de carga (Load User Profile, Search Knowledge RAG, Search User RAG, Load Daily Status, Load Today Meals, Load Today Plan, Load Weight Trend, Load Weekly Average) se ejecutan en paralelo para minimizar la latencia. Todos tienen `alwaysOutputData: true` para no detener el flujo cuando no hay datos del día (primer mensaje del día, primer día del usuario).
@@ -1001,12 +1099,15 @@ Los 8 nodos de carga (Load User Profile, Search Knowledge RAG, Search User RAG, 
 |-------|-------|
 | **Nombre en n8n** | `FitAI - Onboarding Flow` |
 | **Trigger** | Sub-workflow (llamado por `FitAI - Telegram Webhook Handler`) |
-| **Propósito** | Guía conversacional paso a paso para recopilar todos los datos del perfil del usuario nuevo. Gestiona el estado de onboarding en Redis y, al completarse, calcula las métricas base (BMR, TDEE, targets) y genera el primer plan de comidas. |
+| **Propósito** | Onboarding conversacional por bloques temáticos para recopilar el perfil completo del usuario nuevo. Gestiona estado en Redis (TTL 48h), organiza 17 campos en 5 bloques, no muestra confirmaciones intermedias, y al completarse: calcula métricas, guarda perfil, crea targets del día siguiente, genera el primer plan de comidas e indexa el resumen en RAG personal. |
 | **Activación** | Solo via Execute Sub-Workflow |
+| **Versión** | v2 — Conversacional por Bloques |
 
 ### Descripción del Propósito
 
-Cuando un usuario tiene membresía activa pero no ha completado el onboarding (`user_profiles.onboarding_completed = false` o no existe registro), este workflow toma el control. Mantiene un estado de conversación en Redis que persiste entre mensajes (cada mensaje del usuario es una nueva ejecución del webhook y por tanto una nueva invocación de este sub-workflow). El flujo es conversacional: se hace una pregunta, se espera la respuesta del usuario, se valida, se guarda el dato parcial, y se avanza al siguiente paso. Al completar todas las preguntas, calcula las métricas metabólicas y guarda el perfil completo en PostgreSQL.
+Cuando un usuario tiene membresía activa pero no ha completado el onboarding (`user_profiles.onboarding_completed = false` o no existe registro), este workflow toma el control. Mantiene un estado de conversación en Redis que persiste entre mensajes (cada mensaje del usuario es una nueva ejecución del webhook y por tanto una nueva invocación de este sub-workflow).
+
+**Filosofía v2**: el flujo se organiza en 5 bloques temáticos (Identidad/Cuerpo, Objetivo, Alimentación, Ejercicio, Estilo de vida). Dentro de cada bloque las preguntas fluyen sin confirmaciones intermedias — el acuse de recibo es la pregunta siguiente. La transición al coaching es automática: al completarse el bot presenta métricas de forma conversacional, genera el plan del primer día y programa el morning briefing. No hay lista de comandos ni "pregúntame lo que necesites".
 
 ### Nodos en Orden
 
@@ -1023,72 +1124,107 @@ Cuando un usuario tiene membresía activa pero no ha completado el onboarding (`
 
 **Salida**: objeto JSON con el estado actual del onboarding, o `null` si es la primera interacción.
 
-Estructura del estado en Redis:
+Estructura del estado en Redis (v2):
 
 ```json
 {
-  "step": 0,
-  "data": {},
-  "lastUpdated": "2026-03-26T10:00:00Z"
+  "telegram_id": 123456789,
+  "step": "ask_name",
+  "block": 1,
+  "started_at": "2026-03-26T10:00:00Z",
+  "updated_at": "2026-03-26T10:01:30Z",
+  "data": {
+    "first_name": null,
+    "gender": null,
+    "age": null,
+    "height_cm": null,
+    "weight_kg": null,
+    "goal_type": null,
+    "target_weight": null,
+    "dietary_restrictions": [],
+    "food_allergies": [],
+    "disliked_foods": [],
+    "budget_level": null,
+    "meals_per_day": null,
+    "fitness_level": null,
+    "equipment": null,
+    "training_days_per_week": null,
+    "injuries": null,
+    "wake_up_time": null,
+    "activity_level": null
+  },
+  "temp": {}
 }
 ```
 
-Los pasos (steps) del onboarding:
+Steps válidos del onboarding v2 (21 total):
 
-| Step | Pregunta | Campo | Validación |
-|------|----------|-------|------------|
-| 0 | Mensaje de bienvenida + pregunta género | `gender` | `male` o `female` |
-| 1 | Edad | `age` | Número entre 14 y 100 |
-| 2 | Estatura (cm) | `height_cm` | Número entre 100 y 250 |
-| 3 | Peso actual (kg) | `weight_kg` | Número entre 30 y 300 |
-| 4 | Nivel de actividad | `activity_level` | Uno de los 5 niveles del enum |
-| 5 | Nivel de fitness | `fitness_level` | `beginner`, `intermediate`, `advanced` |
-| 6 | Objetivo | `goal` | Uno de los 4 tipos de objetivo |
-| 7 | Peso objetivo (si aplica) | `target_weight` | Número válido o "skip" |
-| 8 | Restricciones dietéticas | `dietary_restrictions` | Texto libre o "ninguna" |
-| 9 | Alergias alimentarias | `food_allergies` | Texto libre o "ninguna" |
-| 10 | Alimentos que no le gustan | `disliked_foods` | Texto libre o "ninguna" |
-| 11 | Lesiones o limitaciones | `injuries` | Texto libre o "ninguna" |
-| 12 | Equipamiento disponible | `available_equipment` | Texto libre o "ninguno" |
-| 13 | Días de entrenamiento por semana | `training_days_per_week` | Número entre 1 y 7 |
-| 14 | Hora de despertar | `wake_up_time` | Formato HH:MM |
-| 15 | Hora de dormir | `sleep_time` | Formato HH:MM |
-| 16 | Número de comidas al día | `meal_count` | Número entre 2 y 6 |
-| 17 | Presupuesto para ingredientes | `budget_level` | `low` / `medium` / `high` |
-| 18 | Confirmación de datos | — | "sí" o "corregir" |
+| Step | Bloque | Campo | Tipo | Validación |
+|------|--------|-------|------|------------|
+| `ask_name` | 1 | `first_name` | Texto libre | 2-40 caracteres, letras/espacios/guiones |
+| `ask_gender` | 1 | `gender` | Inline keyboard | `male` / `female` |
+| `ask_age` | 1 | `age` | Número | Entero 14-100 |
+| `ask_height` | 1 | `height_cm` | Número | 100-250, 1 decimal |
+| `ask_weight` | 1 | `weight_kg` | Número | 30-300, 1 decimal |
+| `ask_goal` | 2 | `goal_type` | Inline keyboard | `lose_fat` / `gain_muscle` / `maintain` / `recomposition` |
+| `ask_target_weight` | 2 | `target_weight` | Número (condicional) | Solo si `lose_fat` o `gain_muscle` |
+| `ask_dietary_restrictions_known` | 3 | — | Inline keyboard | `yes` / `no` |
+| `ask_dietary_input` | 3 | `dietary_restrictions`, `food_allergies` | Texto libre (condicional) | Solo si respondió "Si" |
+| `ask_disliked_foods` | 3 | `disliked_foods` | Texto libre | 1-300 caracteres, "no" → `[]` |
+| `ask_budget` | 3 | `budget_level` | Inline keyboard | `low` / `medium` / `high` |
+| `ask_meals` | 3 | `meals_per_day` | Inline keyboard | 3 / 4 / 5 |
+| `ask_fitness_level` | 4 | `fitness_level` | Inline keyboard | `beginner` / `intermediate` / `advanced` |
+| `ask_equipment` | 4 | `equipment` | Inline keyboard | `bodyweight` / `home_basic` / `full_gym` |
+| `ask_training_days` | 4 | `training_days_per_week` | Inline keyboard | 2-6 |
+| `ask_injuries` | 4 | — | Inline keyboard | `yes` / `no` |
+| `ask_injuries_input` | 4 | `injuries` | Texto libre (condicional) | 3-500 caracteres, Solo si respondió "Si" |
+| `ask_wake_time` | 5 | `wake_up_time` | Inline keyboard | HH:00 o "Otra" |
+| `ask_wake_time_custom` | 5 | `wake_up_time` | Texto libre (condicional) | Formato HH:MM, Solo si "Otra" |
+| `ask_activity_level` | 5 | `activity_level` | Inline keyboard | `sedentary` / `lightly_active` / `moderately_active` / `very_active` |
+| `confirm_profile` | — | — | Inline keyboard | `confirm` / `correct` |
+| `correct_block` | — | — | Inline keyboard | Bloque 1-5 |
+| `calculate_and_complete` | — | — | — | Trigger de finalización |
 
 #### Nodo 3: Initialize or Resume? (IF)
 
-- **Tipo**: IF
-- **Condición**: el resultado de Redis es `null` o vacío
+- **Tipo**: IF (typeVersion 2)
+- **Condición**: el resultado de Redis es `null` o vacío (`{{ $json.value === null || $json.value === '' }}`)
 - **Rama true (primer contacto)**: nodo "Initialize Onboarding"
 - **Rama false (continuación)**: nodo "Parse Onboarding State"
 
 #### Nodo 4: Initialize Onboarding (Code)
 
 - **Tipo**: Code (JavaScript)
-- **Propósito**: crear el estado inicial del onboarding y preparar el mensaje de bienvenida.
+- **Propósito**: crear el estado inicial del onboarding v2 y preparar el mensaje de bienvenida conversacional. La primera pregunta va integrada en el saludo.
 
 ```javascript
+const telegramId = $('Sub-Workflow Trigger').first().json.telegramId;
+const now = new Date().toISOString();
+
 const state = {
-  step: 0,
-  data: {},
-  lastUpdated: new Date().toISOString()
+  telegram_id: telegramId,
+  step: 'ask_name',
+  block: 1,
+  started_at: now,
+  updated_at: now,
+  data: {
+    first_name: null, gender: null, age: null,
+    height_cm: null, weight_kg: null,
+    goal_type: null, target_weight: null,
+    dietary_restrictions: [], food_allergies: [],
+    disliked_foods: [], budget_level: null, meals_per_day: null,
+    fitness_level: null, equipment: null,
+    training_days_per_week: null, injuries: null,
+    wake_up_time: null, activity_level: null
+  },
+  temp: {}
 };
 
 return [{
   json: {
     state,
-    responseMessage: `¡Hola ${$json.firstName}! Bienvenido/a a FitAI.
-
-Soy tu asistente personal de nutrición y fitness. Para poder ayudarte de la mejor manera, necesito conocerte un poco.
-
-Vamos a empezar con unas preguntas rápidas (toma unos 3 minutos).
-
-¿Cuál es tu género biológico? Esto me ayuda a calcular tus necesidades calóricas con precisión.
-
-1️⃣ Masculino
-2️⃣ Femenino`
+    isNewUser: true,
+    responseMessage: `Hola! Soy tu coach de nutricion y fitness. Voy a acompanarte en todo el proceso para que llegues a tu meta.\n\nAntes de armar tu plan necesito conocerte. Son unas preguntas rapidas, como 3 minutos.\n\nComo te llamo?`
   }
 }];
 ```
@@ -1096,18 +1232,21 @@ Vamos a empezar con unas preguntas rápidas (toma unos 3 minutos).
 #### Nodo 5: Parse Onboarding State (Code)
 
 - **Tipo**: Code (JavaScript)
-- **Propósito**: parsear el estado almacenado en Redis y la respuesta del usuario para determinar qué hacer.
+- **Propósito**: parsear el estado almacenado en Redis (string JSON) y la respuesta del usuario para pasarlos al nodo de validación.
 
 ```javascript
 const stateStr = $('Get Onboarding State').first().json.value;
 const state = typeof stateStr === 'string' ? JSON.parse(stateStr) : stateStr;
-const userText = $('Sub-Workflow Trigger').first().json.text.trim();
+const userText = ($('Sub-Workflow Trigger').first().json.text || '').trim();
+const callbackData = $('Sub-Workflow Trigger').first().json.callbackData || null;
 
 return [{
   json: {
     state,
     userText,
-    currentStep: state.step
+    callbackData,
+    currentStep: state.step,
+    currentBlock: state.block
   }
 }];
 ```
@@ -1115,129 +1254,422 @@ return [{
 #### Nodo 6: Validate and Process Step (Code)
 
 - **Tipo**: Code (JavaScript)
-- **Propósito**: validar la respuesta del usuario para el paso actual, guardar el dato si es válido, preparar la siguiente pregunta o un mensaje de error de validación.
+- **Propósito**: validar la respuesta del usuario según el step actual, actualizar `state.data`, avanzar al siguiente step y preparar el mensaje de respuesta (siguiente pregunta o error de validación).
 
-Este nodo contiene un switch extenso que valida cada paso según su tipo:
+Este nodo implementa la lógica de bloques conversacionales v2. No hay confirmaciones intermedias — el acuse de recibo es la siguiente pregunta:
 
 ```javascript
-const { state, userText } = $json;
+const { state, userText, callbackData } = $json;
+const input = callbackData || userText;
 const step = state.step;
 let isValid = false;
 let errorMessage = '';
-let fieldName = '';
-let fieldValue = null;
-let nextQuestion = '';
+let nextStep = step;
+let nextBlock = state.block;
+let responseMessage = '';
+let replyMarkup = null; // inline_keyboard si aplica
+
+// Helper: next step en flujo normal
+const STEP_FLOW = [
+  'ask_name','ask_gender','ask_age','ask_height','ask_weight',
+  'ask_goal',
+  // ask_target_weight es condicional
+  'ask_dietary_restrictions_known',
+  // ask_dietary_input es condicional
+  'ask_disliked_foods','ask_budget','ask_meals',
+  'ask_fitness_level','ask_equipment','ask_training_days',
+  'ask_injuries',
+  // ask_injuries_input es condicional
+  'ask_wake_time',
+  // ask_wake_time_custom es condicional
+  'ask_activity_level','confirm_profile'
+];
 
 switch (step) {
-  case 0: // gender
-    fieldName = 'gender';
-    if (['1', 'masculino', 'hombre', 'male'].includes(userText.toLowerCase())) {
-      fieldValue = 'male'; isValid = true;
-    } else if (['2', 'femenino', 'mujer', 'female'].includes(userText.toLowerCase())) {
-      fieldValue = 'female'; isValid = true;
+  case 'ask_name': {
+    const name = input.trim();
+    if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s\-]{2,40}$/.test(name)) {
+      state.data.first_name = name;
+      nextStep = 'ask_gender'; nextBlock = 1; isValid = true;
+      responseMessage = `${name}, mucho gusto. Necesito unos datos fisicos basicos para calcular tus requerimientos. Empezamos:\n\nGenero biologico?`;
+      replyMarkup = { inline_keyboard: [[{ text: 'Hombre', callback_data: 'male' }, { text: 'Mujer', callback_data: 'female' }]] };
     } else {
-      errorMessage = 'Por favor responde con 1 (Masculino) o 2 (Femenino).';
+      errorMessage = 'Solo necesito tu nombre (letras, entre 2 y 40 caracteres).';
     }
-    if (isValid) nextQuestion = '¿Cuántos años tienes?';
     break;
+  }
 
-  case 1: // age
-    fieldName = 'age';
-    const age = parseInt(userText);
+  case 'ask_gender': {
+    if (['male','female'].includes(input)) {
+      state.data.gender = input;
+      nextStep = 'ask_age'; isValid = true;
+      responseMessage = 'Edad?';
+    } else {
+      errorMessage = 'Usa los botones para seleccionar tu genero.';
+    }
+    break;
+  }
+
+  case 'ask_age': {
+    const age = parseInt(input);
     if (!isNaN(age) && age >= 14 && age <= 100) {
-      fieldValue = age; isValid = true;
-      nextQuestion = '¿Cuánto mides? (en centímetros, ej: 170)';
+      state.data.age = age;
+      nextStep = 'ask_height'; isValid = true;
+      responseMessage = 'Estatura en cm? (ej: 170)';
     } else {
-      errorMessage = 'Por favor ingresa una edad válida entre 14 y 100 años.';
+      errorMessage = 'Necesito un numero entre 14 y 100.';
     }
     break;
+  }
 
-  case 2: // height_cm
-    fieldName = 'height_cm';
-    const height = parseFloat(userText.replace(',', '.'));
-    if (!isNaN(height) && height >= 100 && height <= 250) {
-      fieldValue = height; isValid = true;
-      nextQuestion = '¿Cuánto pesas actualmente? (en kilogramos, ej: 75.5)';
+  case 'ask_height': {
+    const h = parseFloat(input.replace(',', '.'));
+    if (!isNaN(h) && h >= 100 && h <= 250) {
+      state.data.height_cm = h;
+      nextStep = 'ask_weight'; isValid = true;
+      responseMessage = 'Y peso actual en kg? (ej: 80)';
     } else {
-      errorMessage = 'Por favor ingresa una estatura válida entre 100 y 250 cm.';
+      errorMessage = 'Necesito la estatura en centimetros (entre 100 y 250). Ej: 170';
     }
     break;
+  }
 
-  case 3: // weight_kg
-    fieldName = 'weight_kg';
-    const weight = parseFloat(userText.replace(',', '.'));
-    if (!isNaN(weight) && weight >= 30 && weight <= 300) {
-      fieldValue = weight; isValid = true;
-      nextQuestion = `¿Cuál es tu nivel de actividad física?\n\n1️⃣ Sedentario (trabajo de oficina, poco ejercicio)\n2️⃣ Ligeramente activo (ejercicio 1-3 días/semana)\n3️⃣ Moderadamente activo (ejercicio 3-5 días/semana)\n4️⃣ Muy activo (ejercicio 6-7 días/semana)\n5️⃣ Extra activo (atleta o trabajo muy físico)`;
+  case 'ask_weight': {
+    const w = parseFloat(input.replace(',', '.'));
+    if (!isNaN(w) && w >= 30 && w <= 300) {
+      state.data.weight_kg = w;
+      nextStep = 'ask_goal'; nextBlock = 2; isValid = true;
+      responseMessage = 'Listo, ahora lo mas importante: que quieres lograr?';
+      replyMarkup = { inline_keyboard: [
+        [{ text: 'Perder grasa', callback_data: 'lose_fat' }, { text: 'Ganar musculo', callback_data: 'gain_muscle' }],
+        [{ text: 'Mantener peso', callback_data: 'maintain' }, { text: 'Recomposicion corporal', callback_data: 'recomposition' }]
+      ]};
     } else {
-      errorMessage = 'Por favor ingresa un peso válido entre 30 y 300 kg.';
+      errorMessage = 'Necesito el peso en kilos (entre 30 y 300). Ej: 75';
     }
     break;
+  }
 
-  case 4: // activity_level
-    fieldName = 'activity_level';
-    const activityMap = {
-      '1': 'sedentary', '2': 'lightly_active', '3': 'moderately_active',
-      '4': 'very_active', '5': 'extra_active'
-    };
-    if (activityMap[userText]) {
-      fieldValue = activityMap[userText]; isValid = true;
-      nextQuestion = `¿Cuál es tu nivel de experiencia con el ejercicio?\n\n1️⃣ Principiante (menos de 6 meses)\n2️⃣ Intermedio (6 meses a 2 años)\n3️⃣ Avanzado (más de 2 años)`;
-    } else {
-      errorMessage = 'Por favor responde con un número del 1 al 5.';
-    }
-    break;
-
-  case 5: // fitness_level
-    fieldName = 'fitness_level';
-    const fitnessMap = { '1': 'beginner', '2': 'intermediate', '3': 'advanced' };
-    if (fitnessMap[userText]) {
-      fieldValue = fitnessMap[userText]; isValid = true;
-      nextQuestion = `¿Cuál es tu objetivo principal?\n\n1️⃣ Perder peso\n2️⃣ Ganar músculo\n3️⃣ Mantener peso\n4️⃣ Recomposición corporal`;
-    } else {
-      errorMessage = 'Por favor responde con 1, 2 o 3.';
-    }
-    break;
-
-  case 6: // goal
-    fieldName = 'goal';
-    const goalMap = {
-      '1': 'lose_weight', '2': 'gain_muscle',
-      '3': 'maintain', '4': 'recomposition'
-    };
-    if (goalMap[userText]) {
-      fieldValue = goalMap[userText]; isValid = true;
-      if (goalMap[userText] === 'lose_weight' || goalMap[userText] === 'gain_muscle') {
-        nextQuestion = '¿Cuál es tu peso objetivo? (en kg, ej: 70)\nSi no tienes un número específico, escribe "no sé".';
+  case 'ask_goal': {
+    const validGoals = ['lose_fat','gain_muscle','maintain','recomposition'];
+    if (validGoals.includes(input)) {
+      state.data.goal_type = input;
+      isValid = true;
+      if (input === 'lose_fat' || input === 'gain_muscle') {
+        nextStep = 'ask_target_weight';
+        responseMessage = 'A cuanto quieres llegar? (peso meta en kg)';
       } else {
-        nextQuestion = '¿Tienes alguna restricción dietética? (ej: vegetariano, vegano, sin gluten, etc.)\nSi no tienes ninguna, escribe "ninguna".';
-        // Skip target_weight step
+        state.data.target_weight = null;
+        nextStep = 'ask_dietary_restrictions_known'; nextBlock = 3;
+        responseMessage = 'Va. Ahora unas preguntas sobre como comes.\n\nTienes alguna restriccion dietaria o alergia alimentaria?';
+        replyMarkup = { inline_keyboard: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] };
       }
     } else {
-      errorMessage = 'Por favor responde con un número del 1 al 4.';
+      errorMessage = 'Usa los botones para seleccionar tu objetivo.';
     }
     break;
+  }
 
-  // ... pasos 7-17 con validación similar
-  // El patrón continúa para cada campo del perfil
+  case 'ask_target_weight': {
+    const tw = parseFloat(input.replace(',', '.'));
+    const currentW = state.data.weight_kg;
+    const isLoseFat = state.data.goal_type === 'lose_fat';
+    const isGainMuscle = state.data.goal_type === 'gain_muscle';
+    if (!isNaN(tw) && tw >= 30 && tw <= 300 &&
+        (!isLoseFat || tw < currentW) && (!isGainMuscle || tw > currentW)) {
+      state.data.target_weight = tw;
+      nextStep = 'ask_dietary_restrictions_known'; nextBlock = 3; isValid = true;
+      responseMessage = 'Va. Ahora unas preguntas sobre como comes.\n\nTienes alguna restriccion dietaria o alergia alimentaria?';
+      replyMarkup = { inline_keyboard: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] };
+    } else {
+      errorMessage = isLoseFat
+        ? `El peso meta debe ser menor a tu peso actual (${currentW} kg).`
+        : `El peso meta debe ser mayor a tu peso actual (${currentW} kg).`;
+    }
+    break;
+  }
+
+  case 'ask_dietary_restrictions_known': {
+    if (input === 'no') {
+      state.data.dietary_restrictions = [];
+      state.data.food_allergies = [];
+      nextStep = 'ask_disliked_foods'; isValid = true;
+      responseMessage = 'Hay alimentos que no te gusten? Escribelos o pon "no" si comes de todo.';
+    } else if (input === 'yes') {
+      nextStep = 'ask_dietary_input'; isValid = true;
+      responseMessage = 'Escribe todo junto: restricciones (vegetariano, vegano, sin gluten, etc.) y alergias (mani, mariscos, etc.) separadas por comas.';
+    } else {
+      errorMessage = 'Usa los botones para responder.';
+    }
+    break;
+  }
+
+  case 'ask_dietary_input': {
+    if (input.length >= 2 && input.length <= 500) {
+      // Clasificacion automatica: restriction keywords vs allergies
+      const RESTRICTIONS = ['vegetariano','vegano','vegan','vegetarian','sin gluten','gluten','sin lactosa','lactosa','kosher','halal','celiac'];
+      const items = input.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+      const restrictions = items.filter(i => RESTRICTIONS.some(r => i.includes(r)));
+      const allergies = items.filter(i => !RESTRICTIONS.some(r => i.includes(r)));
+      state.data.dietary_restrictions = restrictions;
+      state.data.food_allergies = allergies;
+      nextStep = 'ask_disliked_foods'; isValid = true;
+      responseMessage = 'Hay alimentos que no te gusten? Escribelos o pon "no" si comes de todo.';
+    } else {
+      errorMessage = 'Escribe tus restricciones y/o alergias separadas por comas.';
+    }
+    break;
+  }
+
+  case 'ask_disliked_foods': {
+    const noFoods = ['no','ninguno','nada','ninguna','nope'];
+    state.data.disliked_foods = noFoods.includes(input.toLowerCase()) ? [] : input.split(',').map(s => s.trim()).filter(Boolean);
+    nextStep = 'ask_budget'; isValid = true;
+    responseMessage = 'Ok. Y tu presupuesto para ingredientes?';
+    replyMarkup = { inline_keyboard: [[
+      { text: 'Economico', callback_data: 'low' },
+      { text: 'Moderado', callback_data: 'medium' },
+      { text: 'Sin limite', callback_data: 'high' }
+    ]]};
+    break;
+  }
+
+  case 'ask_budget': {
+    if (['low','medium','high'].includes(input)) {
+      state.data.budget_level = input;
+      nextStep = 'ask_meals'; isValid = true;
+      responseMessage = 'Cuantas comidas al dia prefieres?';
+      replyMarkup = { inline_keyboard: [[
+        { text: '3', callback_data: '3' },
+        { text: '4', callback_data: '4' },
+        { text: '5', callback_data: '5' }
+      ]]};
+    } else {
+      errorMessage = 'Usa los botones para seleccionar tu presupuesto.';
+    }
+    break;
+  }
+
+  case 'ask_meals': {
+    const meals = parseInt(input);
+    if ([3,4,5].includes(meals)) {
+      state.data.meals_per_day = meals;
+      nextStep = 'ask_fitness_level'; nextBlock = 4; isValid = true;
+      responseMessage = 'Bien, ahora el tema del ejercicio.\n\nComo describirias tu experiencia entrenando?';
+      replyMarkup = { inline_keyboard: [
+        [{ text: 'Principiante (< 6 meses)', callback_data: 'beginner' }],
+        [{ text: 'Intermedio (6 meses - 2 anos)', callback_data: 'intermediate' }],
+        [{ text: 'Avanzado (2+ anos)', callback_data: 'advanced' }]
+      ]};
+    } else {
+      errorMessage = 'Usa los botones para seleccionar el numero de comidas.';
+    }
+    break;
+  }
+
+  case 'ask_fitness_level': {
+    if (['beginner','intermediate','advanced'].includes(input)) {
+      state.data.fitness_level = input;
+      nextStep = 'ask_equipment'; isValid = true;
+      responseMessage = 'Donde entrenas o planeas entrenar?';
+      replyMarkup = { inline_keyboard: [
+        [{ text: 'Casa sin equipo', callback_data: 'bodyweight' }],
+        [{ text: 'Casa con mancuernas/bandas', callback_data: 'home_basic' }],
+        [{ text: 'Gimnasio', callback_data: 'full_gym' }]
+      ]};
+    } else {
+      errorMessage = 'Usa los botones para seleccionar tu nivel.';
+    }
+    break;
+  }
+
+  case 'ask_equipment': {
+    if (['bodyweight','home_basic','full_gym'].includes(input)) {
+      state.data.equipment = input;
+      nextStep = 'ask_training_days'; isValid = true;
+      responseMessage = 'Cuantos dias a la semana puedes entrenar?';
+      replyMarkup = { inline_keyboard: [[
+        { text: '2', callback_data: '2' },
+        { text: '3', callback_data: '3' },
+        { text: '4', callback_data: '4' },
+        { text: '5', callback_data: '5' },
+        { text: '6', callback_data: '6' }
+      ]]};
+    } else {
+      errorMessage = 'Usa los botones para seleccionar donde entrenas.';
+    }
+    break;
+  }
+
+  case 'ask_training_days': {
+    const days = parseInt(input);
+    if (days >= 2 && days <= 6) {
+      state.data.training_days_per_week = days;
+      nextStep = 'ask_injuries'; isValid = true;
+      responseMessage = 'Alguna lesion o condicion fisica que deba saber?';
+      replyMarkup = { inline_keyboard: [[
+        { text: 'No, estoy bien', callback_data: 'no' },
+        { text: 'Si, tengo', callback_data: 'yes' }
+      ]]};
+    } else {
+      errorMessage = 'Usa los botones para seleccionar los dias.';
+    }
+    break;
+  }
+
+  case 'ask_injuries': {
+    if (input === 'no') {
+      state.data.injuries = null;
+      nextStep = 'ask_wake_time'; nextBlock = 5; isValid = true;
+      responseMessage = 'Casi terminamos. Solo necesito saber tus horarios.\n\nA que hora te despiertas normalmente?';
+      replyMarkup = { inline_keyboard: [[
+        { text: '5:00', callback_data: '05:00' },
+        { text: '6:00', callback_data: '06:00' },
+        { text: '7:00', callback_data: '07:00' },
+        { text: '8:00', callback_data: '08:00' },
+        { text: '9:00', callback_data: '09:00' },
+        { text: 'Otra', callback_data: 'custom' }
+      ]]};
+    } else if (input === 'yes') {
+      nextStep = 'ask_injuries_input'; isValid = true;
+      responseMessage = 'Describela brevemente.';
+    } else {
+      errorMessage = 'Usa los botones para responder.';
+    }
+    break;
+  }
+
+  case 'ask_injuries_input': {
+    if (input.length >= 3 && input.length <= 500) {
+      state.data.injuries = input;
+      nextStep = 'ask_wake_time'; nextBlock = 5; isValid = true;
+      responseMessage = 'Casi terminamos. Solo necesito saber tus horarios.\n\nA que hora te despiertas normalmente?';
+      replyMarkup = { inline_keyboard: [[
+        { text: '5:00', callback_data: '05:00' },
+        { text: '6:00', callback_data: '06:00' },
+        { text: '7:00', callback_data: '07:00' },
+        { text: '8:00', callback_data: '08:00' },
+        { text: '9:00', callback_data: '09:00' },
+        { text: 'Otra', callback_data: 'custom' }
+      ]]};
+    } else {
+      errorMessage = 'Describela brevemente (minimo 3 caracteres).';
+    }
+    break;
+  }
+
+  case 'ask_wake_time': {
+    if (input === 'custom') {
+      nextStep = 'ask_wake_time_custom'; isValid = true;
+      responseMessage = 'Escribe la hora en formato HH:MM (ej: 06:30)';
+    } else if (/^\d{2}:\d{2}$/.test(input)) {
+      state.data.wake_up_time = input;
+      nextStep = 'ask_activity_level'; isValid = true;
+      responseMessage = 'Fuera del ejercicio, como es tu dia a dia?';
+      replyMarkup = { inline_keyboard: [
+        [{ text: 'Sentado casi todo el dia', callback_data: 'sedentary' }],
+        [{ text: 'Camino algo, tareas ligeras', callback_data: 'lightly_active' }],
+        [{ text: 'De pie bastante, camino mucho', callback_data: 'moderately_active' }],
+        [{ text: 'Trabajo fisico pesado', callback_data: 'very_active' }]
+      ]};
+    } else {
+      errorMessage = 'Usa los botones para seleccionar la hora.';
+    }
+    break;
+  }
+
+  case 'ask_wake_time_custom': {
+    if (/^\d{1,2}:\d{2}$/.test(input)) {
+      state.data.wake_up_time = input.padStart(5, '0');
+      nextStep = 'ask_activity_level'; isValid = true;
+      responseMessage = 'Fuera del ejercicio, como es tu dia a dia?';
+      replyMarkup = { inline_keyboard: [
+        [{ text: 'Sentado casi todo el dia', callback_data: 'sedentary' }],
+        [{ text: 'Camino algo, tareas ligeras', callback_data: 'lightly_active' }],
+        [{ text: 'De pie bastante, camino mucho', callback_data: 'moderately_active' }],
+        [{ text: 'Trabajo fisico pesado', callback_data: 'very_active' }]
+      ]};
+    } else {
+      errorMessage = 'Escribe la hora en formato HH:MM (ej: 06:30)';
+    }
+    break;
+  }
+
+  case 'ask_activity_level': {
+    const validLevels = ['sedentary','lightly_active','moderately_active','very_active'];
+    if (validLevels.includes(input)) {
+      state.data.activity_level = input;
+      nextStep = 'confirm_profile'; nextBlock = null; isValid = true;
+      // Build brief confirmation summary
+      const d = state.data;
+      const goalDisplay = { lose_fat: 'Perder grasa', gain_muscle: 'Ganar musculo', maintain: 'Mantener peso', recomposition: 'Recomposicion' }[d.goal_type];
+      const targetLine = d.target_weight ? ` → meta: ${d.target_weight} kg` : '';
+      responseMessage = `Listo, ${d.first_name}. Confirmo los datos clave:\n\n${d.age} anos, ${d.height_cm} cm, ${d.weight_kg} kg\nObjetivo: ${goalDisplay}${targetLine}\n${d.training_days_per_week} dias de ejercicio, ${d.meals_per_day} comidas al dia\n\nTodo bien o quieres corregir algo?`;
+      replyMarkup = { inline_keyboard: [[
+        { text: 'Todo bien, dale', callback_data: 'confirm' },
+        { text: 'Quiero corregir algo', callback_data: 'correct' }
+      ]]};
+    } else {
+      errorMessage = 'Usa los botones para seleccionar tu nivel de actividad.';
+    }
+    break;
+  }
+
+  case 'confirm_profile': {
+    if (input === 'confirm') {
+      nextStep = 'calculate_and_complete'; isValid = true;
+      responseMessage = ''; // handled by completion flow
+    } else if (input === 'correct') {
+      nextStep = 'correct_block'; isValid = true;
+      responseMessage = 'Que quieres cambiar?';
+      replyMarkup = { inline_keyboard: [
+        [{ text: 'Datos fisicos', callback_data: 'block_1' }, { text: 'Objetivo', callback_data: 'block_2' }],
+        [{ text: 'Alimentacion', callback_data: 'block_3' }, { text: 'Ejercicio', callback_data: 'block_4' }],
+        [{ text: 'Horarios', callback_data: 'block_5' }]
+      ]};
+    } else {
+      errorMessage = 'Usa los botones para confirmar o corregir.';
+    }
+    break;
+  }
+
+  case 'correct_block': {
+    const blockMap = { block_1: 'ask_gender', block_2: 'ask_goal', block_3: 'ask_dietary_restrictions_known', block_4: 'ask_fitness_level', block_5: 'ask_wake_time' };
+    const blockNum = { block_1: 1, block_2: 2, block_3: 3, block_4: 4, block_5: 5 };
+    if (blockMap[input]) {
+      nextStep = blockMap[input]; nextBlock = blockNum[input]; isValid = true;
+      // Re-ask first question of the selected block
+      const blockMessages = {
+        block_1: { msg: 'Genero biologico?', kb: [[{ text: 'Hombre', callback_data: 'male' }, { text: 'Mujer', callback_data: 'female' }]] },
+        block_2: { msg: 'Que quieres lograr?', kb: [[{ text: 'Perder grasa', callback_data: 'lose_fat' }, { text: 'Ganar musculo', callback_data: 'gain_muscle' }],[{ text: 'Mantener peso', callback_data: 'maintain' }, { text: 'Recomposicion corporal', callback_data: 'recomposition' }]] },
+        block_3: { msg: 'Tienes alguna restriccion dietaria o alergia alimentaria?', kb: [[{ text: 'Si, tengo', callback_data: 'yes' }, { text: 'No, ninguna', callback_data: 'no' }]] },
+        block_4: { msg: 'Como describirias tu experiencia entrenando?', kb: [[{ text: 'Principiante', callback_data: 'beginner' }],[{ text: 'Intermedio', callback_data: 'intermediate' }],[{ text: 'Avanzado', callback_data: 'advanced' }]] },
+        block_5: { msg: 'A que hora te despiertas normalmente?', kb: [[{ text: '5:00', callback_data: '05:00' },{ text: '6:00', callback_data: '06:00' },{ text: '7:00', callback_data: '07:00' },{ text: '8:00', callback_data: '08:00' },{ text: '9:00', callback_data: '09:00' },{ text: 'Otra', callback_data: 'custom' }]] }
+      };
+      responseMessage = blockMessages[input].msg;
+      replyMarkup = { inline_keyboard: blockMessages[input].kb };
+    } else {
+      errorMessage = 'Usa los botones para seleccionar el bloque.';
+    }
+    break;
+  }
 }
 
 if (isValid) {
-  state.data[fieldName] = fieldValue;
-  state.step = step + 1;
-  // Ajuste para saltar step 7 si el objetivo es maintain o recomposition
-  if (step === 6 && (fieldValue === 'maintain' || fieldValue === 'recomposition')) {
-    state.step = 8; // Saltar target_weight
-  }
-  state.lastUpdated = new Date().toISOString();
+  state.step = nextStep;
+  state.block = nextBlock || state.block;
+  state.updated_at = new Date().toISOString();
 }
+
+const isComplete = nextStep === 'calculate_and_complete';
 
 return [{
   json: {
     state,
     isValid,
-    responseMessage: isValid ? nextQuestion : errorMessage,
-    isComplete: state.step > 17
+    isComplete,
+    responseMessage: isValid ? responseMessage : errorMessage,
+    replyMarkup
   }
 }];
 ```
@@ -1247,13 +1679,13 @@ return [{
 - **Tipo**: Redis - Set
 - **Key**: `onboarding:{{ $('Sub-Workflow Trigger').item.json.telegramId }}`
 - **Value**: `{{ JSON.stringify($json.state) }}`
-- **TTL**: `86400` (24 horas)
+- **TTL**: `172800` (48 horas — se renueva con cada interacción)
 - **Credencial**: `FitAI Redis`
 
 #### Nodo 8: Is Onboarding Complete? (IF)
 
-- **Tipo**: IF
-- **Condición**: `{{ $json.isComplete }}` es `true`
+- **Tipo**: IF (typeVersion 2)
+- **Condición**: `{{ $json.isComplete }}` string equals `"true"`
 - **Rama true**: nodo "Calculate Metrics"
 - **Rama false**: nodo "Send Question"
 
@@ -1263,72 +1695,87 @@ return [{
 - **Chat ID**: `{{ $('Sub-Workflow Trigger').item.json.chatId }}`
 - **Texto**: `{{ $json.responseMessage }}`
 - **Parse Mode**: Markdown
+- **Reply Markup**: `{{ $json.replyMarkup ? JSON.stringify($json.replyMarkup) : undefined }}` (inline keyboard cuando aplica)
 - **Credencial**: `FitAI Telegram Bot`
 
-Nodo terminal para esta ejecución. El usuario responderá con otro mensaje que volverá a activar el webhook y eventualmente este sub-workflow.
+Nodo terminal para esta ejecución. El usuario responderá con otro mensaje (texto o callback de botón) que volverá a activar el webhook e invocar este sub-workflow.
 
 #### Nodo 10: Calculate Metrics (Code)
 
 - **Tipo**: Code (JavaScript)
-- **Propósito**: calcular BMR (tasa metabólica basal), TDEE (gasto energético total diario) y targets de macronutrientes.
+- **Propósito**: calcular BMI, BMR (Mifflin-St Jeor), TDEE y targets de macronutrientes con las fórmulas v2.
 
 ```javascript
 const data = $json.state.data;
 
-// Mifflin-St Jeor Equation
-let bmr;
-if (data.gender === 'male') {
-  bmr = (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) + 5;
-} else {
-  bmr = (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) - 161;
-}
+// BMI
+const bmi = data.weight_kg / Math.pow(data.height_cm / 100, 2);
+const bmiCategory = bmi < 18.5 ? 'bajo peso' : bmi < 25 ? 'peso normal' : bmi < 30 ? 'sobrepeso' : 'obesidad';
 
-// Activity multipliers
+// BMR — Mifflin-St Jeor
+const bmr = data.gender === 'male'
+  ? (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) + 5
+  : (10 * data.weight_kg) + (6.25 * data.height_cm) - (5 * data.age) - 161;
+
+// TDEE — activity multipliers (v2: 4 niveles, sin extra_active)
 const activityMultipliers = {
-  'sedentary': 1.2,
-  'lightly_active': 1.375,
-  'moderately_active': 1.55,
-  'very_active': 1.725,
-  'extra_active': 1.9
+  sedentary: 1.2,
+  lightly_active: 1.375,
+  moderately_active: 1.55,
+  very_active: 1.725
 };
-
 const tdee = bmr * activityMultipliers[data.activity_level];
 
-// Caloric target based on goal
-let caloricTarget;
-switch (data.goal) {
-  case 'lose_weight':
-    caloricTarget = tdee - 500; // Deficit of 500 kcal
-    break;
-  case 'gain_muscle':
-    caloricTarget = tdee + 300; // Surplus of 300 kcal
-    break;
-  case 'maintain':
-    caloricTarget = tdee;
-    break;
-  case 'recomposition':
-    caloricTarget = tdee - 100; // Slight deficit
-    break;
+// Caloric target — v2 formulas (% of TDEE, not fixed offsets)
+const caloricTargetRaw = {
+  lose_fat: tdee * 0.80,
+  gain_muscle: tdee * 1.10,
+  maintain: tdee * 1.0,
+  recomposition: tdee * 0.95
+}[data.goal_type];
+
+// Absolute minimums
+const minCalories = data.gender === 'female' ? 1200 : 1500;
+const caloricTarget = Math.max(Math.round(caloricTargetRaw), minCalories);
+
+// Macronutrients
+const proteinMultiplier = data.goal_type === 'gain_muscle' ? 2.2 : data.goal_type === 'recomposition' ? 2.0 : 1.8;
+const proteinTarget = Math.round(data.weight_kg * proteinMultiplier);
+const fatTarget = Math.round((caloricTarget * 0.25) / 9);
+const carbTarget = Math.round((caloricTarget - (proteinTarget * 4) - (fatTarget * 9)) / 4);
+
+// Deficit/surplus for messaging
+const deficit = data.goal_type === 'lose_fat' ? Math.round(tdee - caloricTarget) : null;
+const surplus = data.goal_type === 'gain_muscle' ? Math.round(caloricTarget - tdee) : null;
+
+// Estimated weeks to goal
+let estimatedWeeks = null;
+if (data.target_weight) {
+  const weightDiff = Math.abs(data.weight_kg - data.target_weight);
+  const weeklyRateKg = data.goal_type === 'lose_fat' ? 0.5 : 0.25;
+  estimatedWeeks = Math.ceil(weightDiff / weeklyRateKg);
 }
 
-// Macronutrient targets
-const proteinTarget = data.weight_kg * (data.goal === 'gain_muscle' ? 2.2 : 1.8);
-const fatTarget = (caloricTarget * 0.25) / 9;
-const carbTarget = (caloricTarget - (proteinTarget * 4) - (fatTarget * 9)) / 4;
+const goalDisplay = { lose_fat: 'Perder grasa', gain_muscle: 'Ganar musculo', maintain: 'Mantener peso', recomposition: 'Recomposicion corporal' }[data.goal_type];
 
 return [{
   json: {
     ...data,
-    bmr: Math.round(bmr * 100) / 100,
-    tdee: Math.round(tdee * 100) / 100,
-    caloric_target: Math.round(caloricTarget * 100) / 100,
-    protein_target_g: Math.round(proteinTarget * 10) / 10,
-    carb_target_g: Math.round(carbTarget * 10) / 10,
-    fat_target_g: Math.round(fatTarget * 10) / 10,
+    bmi: Math.round(bmi * 10) / 10,
+    bmi_category: bmiCategory,
+    bmr: Math.round(bmr),
+    tdee: Math.round(tdee),
+    caloric_target: caloricTarget,
+    protein_target_g: proteinTarget,
+    carb_target_g: carbTarget,
+    fat_target_g: fatTarget,
+    deficit,
+    surplus,
+    estimated_weeks: estimatedWeeks,
+    goal_display: goalDisplay,
     userId: $('Sub-Workflow Trigger').first().json.userId,
     telegramId: $('Sub-Workflow Trigger').first().json.telegramId,
-    chatId: $('Sub-Workflow Trigger').first().json.chatId,
-    firstName: $('Sub-Workflow Trigger').first().json.firstName
+    chatId: $('Sub-Workflow Trigger').first().json.chatId
   }
 }];
 ```
@@ -1345,7 +1792,7 @@ INSERT INTO user_profiles (
   activity_level, fitness_level, goal,
   dietary_restrictions, food_allergies, disliked_foods,
   injuries, available_equipment, training_days_per_week,
-  wake_up_time, sleep_time, meal_count, local_culture, budget_level,
+  wake_up_time, meals_per_day, budget_level,
   onboarding_completed, onboarding_completed_at,
   bmr, tdee, caloric_target,
   protein_target_g, carb_target_g, fat_target_g
@@ -1354,7 +1801,7 @@ INSERT INTO user_profiles (
   $6, $7, $8,
   $9, $10, $11,
   $12, $13, $14,
-  $15, $16, $17, 'mexican',
+  $15, $16, $17,
   true, NOW(),
   $18, $19, $20,
   $21, $22, $23
@@ -1375,8 +1822,7 @@ DO UPDATE SET
   available_equipment = EXCLUDED.available_equipment,
   training_days_per_week = EXCLUDED.training_days_per_week,
   wake_up_time = EXCLUDED.wake_up_time,
-  sleep_time = EXCLUDED.sleep_time,
-  meal_count = EXCLUDED.meal_count,
+  meals_per_day = EXCLUDED.meals_per_day,
   budget_level = EXCLUDED.budget_level,
   onboarding_completed = true,
   onboarding_completed_at = NOW(),
@@ -1388,6 +1834,8 @@ DO UPDATE SET
   fat_target_g = EXCLUDED.fat_target_g;
 ```
 
+**Nota v2**: eliminados `sleep_time` y `meal_count` (obsoletos). Renombrado `meal_count` → `meals_per_day`, `available_equipment` → `equipment`.
+
 #### Nodo 12: Save Initial Goal (PostgreSQL)
 
 - **Tipo**: PostgreSQL - Execute Query
@@ -1396,10 +1844,16 @@ DO UPDATE SET
 
 ```sql
 INSERT INTO goals (user_id, goal_type, target_weight, start_weight, start_date, is_active)
-VALUES ($1, $2, $3, $4, CURRENT_DATE, true);
+VALUES ($1, $2, $3, $4, CURRENT_DATE, true)
+ON CONFLICT (user_id) DO UPDATE SET
+  goal_type = EXCLUDED.goal_type,
+  target_weight = EXCLUDED.target_weight,
+  start_weight = EXCLUDED.start_weight,
+  start_date = EXCLUDED.start_date,
+  is_active = true;
 ```
 
-- **Parámetros**: `userId`, `goal`, `target_weight` (puede ser null), `weight_kg`
+- **Parámetros**: `userId`, `goal_type`, `target_weight` (puede ser null), `weight_kg`
 
 #### Nodo 13: Save Initial Weight Log (PostgreSQL)
 
@@ -1409,48 +1863,107 @@ VALUES ($1, $2, $3, $4, CURRENT_DATE, true);
 
 ```sql
 INSERT INTO weight_logs (user_id, weight_kg, notes, logged_at)
-VALUES ($1, $2, 'Peso inicial - onboarding', CURRENT_DATE);
+VALUES ($1, $2, 'Peso inicial - onboarding', CURRENT_DATE)
+ON CONFLICT DO NOTHING;
 ```
 
-#### Nodo 14: Delete Onboarding State (Redis)
+#### Nodo 14: Create Tomorrow Daily Targets (PostgreSQL)
 
-- **Tipo**: Redis - Delete
-- **Key**: `onboarding:{{ $('Sub-Workflow Trigger').item.json.telegramId }}`
-- **Credencial**: `FitAI Redis`
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Propósito**: crear el registro de `daily_targets` para mañana con los valores calculados durante el onboarding. Esto permite que el morning briefing del día siguiente tenga los targets listos.
 
-Limpia el estado de onboarding de Redis ya que se completó exitosamente.
+```sql
+INSERT INTO daily_targets (
+  user_id, target_date,
+  caloric_target, protein_target_g, carb_target_g, fat_target_g,
+  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g
+) VALUES (
+  $1,
+  (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day',
+  $2, $3, $4, $5,
+  0, 0, 0, 0
+)
+ON CONFLICT (user_id, target_date) DO NOTHING;
+```
+
+- **Parámetros**: `userId`, `caloric_target`, `protein_target_g`, `carb_target_g`, `fat_target_g`
 
 #### Nodo 15: Generate First Meal Plan (Execute Sub-Workflow)
 
 - **Tipo**: Execute Sub-Workflow
 - **Workflow**: `FitAI - Meal Plan Generator`
-- **Datos enviados**: `userId`, `chatId`, `planType` (del membership)
+- **Datos enviados**: `userId`, `chatId`, `plan_date` (mañana en timezone Colombia)
 
-#### Nodo 16: Send Completion Message (Telegram)
+```javascript
+// En el nodo Set antes de llamar al sub-workflow:
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+const planDate = tomorrow.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+// → "2026-03-27"
+```
+
+#### Nodo 16: Delete Onboarding State (Redis)
+
+- **Tipo**: Redis - Delete
+- **Key**: `onboarding:{{ $('Sub-Workflow Trigger').item.json.telegramId }}`
+- **Credencial**: `FitAI Redis`
+
+Se ejecuta **después** de guardar perfil y goals exitosamente. Si el guardado falla, el estado de Redis NO se elimina para que el usuario pueda reintentar.
+
+#### Nodo 17: Index Onboarding Summary (Execute Sub-Workflow)
+
+- **Tipo**: Execute Sub-Workflow
+- **Workflow**: `FitAI - RAG Personal Indexer`
+- **Propósito**: indexar un resumen del perfil del usuario en `user_rag` (Qdrant) para que el AI Agent tenga contexto del usuario disponible via RAG desde el primer mensaje.
+- **Datos enviados**: `userId`, `contentType: 'onboarding_summary'`, texto con perfil completo en lenguaje natural
+
+Ejemplo de texto indexado:
+
+```
+Mauro, hombre, 28 años, 180cm, 82kg. Objetivo: perder grasa, meta 75kg.
+Alimentación: sin restricciones, presupuesto moderado, 3 comidas al día.
+Ejercicio: nivel intermedio, gimnasio, 4 días/semana.
+Horario: se despierta a las 6:00. Actividad diaria: trabajo sedentario.
+Métricas: TDEE 2580 kcal, objetivo 2064 kcal/día, proteína 148g/día.
+Onboarding completado: 2026-03-31.
+```
+
+#### Nodo 18: Send Metrics Message (Telegram)
 
 - **Tipo**: Telegram - Send Message
-- **Chat ID**: `{{ $json.chatId }}`
+- **Chat ID**: `{{ $('Sub-Workflow Trigger').item.json.chatId }}`
+- **Parse Mode**: Markdown
+- **Texto**: mensaje conversacional de métricas (v2 — no lista técnica)
+
+```
+{{ $('Calculate Metrics').item.json.first_name }}, ya tengo todo.
+
+Tu cuerpo gasta unas *{{ $('Calculate Metrics').item.json.tdee }} kcal* al dia.
+
+[Línea contextual según goal_type — ver prompts/onboarding.md sección 5]
+
+Tu IMC hoy: *{{ $('Calculate Metrics').item.json.bmi }}* ({{ $('Calculate Metrics').item.json.bmi_category }}).
+```
+
+> **Nota de implementación**: el texto exacto varía por `goal_type` (4 variantes). Ver [`prompts/onboarding.md`](../prompts/onboarding.md) sección 5 "Mensaje de métricas contextuales" para los templates completos con variables `{{deficit}}`, `{{surplus}}`, `{{protein_g}}`, `{{estimated_weeks}}`.
+
+#### Nodo 19: Send Welcome to Service Message (Telegram)
+
+- **Tipo**: Telegram - Send Message
+- **Chat ID**: `{{ $('Sub-Workflow Trigger').item.json.chatId }}`
+- **Parse Mode**: Markdown
 - **Texto**:
 
 ```
-¡Perfecto, {{ $json.firstName }}! Tu perfil está completo.
+Ya te prepare tu plan de comidas para manana. Te lo mando temprano junto con tu meta del dia.
 
-Aquí están tus datos calculados:
+Asi va a funcionar: cada manana te envio tu plan con las comidas y calorias. Durante el dia me vas contando que comiste y yo llevo la cuenta de como vas. En la noche hacemos un check rapido. Y cada semana te mando tu resumen de progreso con numeros reales.
 
-- TMB (Tasa Metabólica Basal): {{ $json.bmr }} kcal
-- TDEE (Gasto Energético Diario): {{ $json.tdee }} kcal
-- Objetivo calórico: {{ $json.caloric_target }} kcal/día
-- Proteína: {{ $json.protein_target_g }}g
-- Carbohidratos: {{ $json.carb_target_g }}g
-- Grasa: {{ $json.fat_target_g }}g
-
-Ya generé tu primer plan de comidas. Puedes pedirme verlo en cualquier momento.
-
-¡Estoy listo para ayudarte a alcanzar tu objetivo! Pregúntame lo que necesites.
+Descansa bien, que manana arrancamos 💪
 ```
 
-- **Parse Mode**: Markdown
-- **Credencial**: `FitAI Telegram Bot`
+Se envía como **segundo mensaje**, inmediatamente después del mensaje de métricas. No incluye lista de comandos — el coaching toma la iniciativa.
 
 ### Lógica de Ramificación
 
@@ -1458,30 +1971,48 @@ Ya generé tu primer plan de comidas. Puedes pedirme verlo en cualquier momento.
 Sub-Workflow Trigger
   → Get Onboarding State (Redis)
     → Initialize or Resume? (IF)
-        ├─ true (primer contacto) → Initialize Onboarding
-        │     → Save Onboarding State (Redis)
-        │     → Send Question (Telegram) → FIN
-        └─ false (continuación) → Parse Onboarding State
-              → Validate and Process Step (Code)
-                → Save Onboarding State (Redis)
-                → Is Onboarding Complete? (IF)
-                    ├─ false → Send Question (Telegram) → FIN
-                    └─ true → Calculate Metrics (Code)
-                          → Save User Profile (PostgreSQL)
-                          → Save Initial Goal (PostgreSQL)         ← en paralelo
-                          → Save Initial Weight Log (PostgreSQL)   ← en paralelo
-                          → Delete Onboarding State (Redis)
-                          → Generate First Meal Plan (sub-workflow)
-                          → Send Completion Message (Telegram) → FIN
+        ├─ true (primer contacto)
+        │     → Initialize Onboarding (Code)
+        │     → Save Onboarding State (Redis, TTL 172800)
+        │     → Send Question (Telegram: bienvenida + "Como te llamo?") → FIN
+        └─ false (continuación)
+              → Parse Onboarding State (Code)
+                → Validate and Process Step (Code)
+                  → Save Onboarding State (Redis, TTL 172800)
+                  → Is Onboarding Complete? (IF)
+                      ├─ false → Send Question (Telegram: siguiente pregunta + inline keyboard) → FIN
+                      └─ true
+                            → Calculate Metrics (Code)
+                                [en paralelo]
+                                ├─ Save User Profile (PostgreSQL)
+                                ├─ Save Initial Goal (PostgreSQL)
+                                ├─ Save Initial Weight Log (PostgreSQL)
+                                └─ Create Tomorrow Daily Targets (PostgreSQL)
+                            → Generate First Meal Plan (sub-workflow: plan_date = tomorrow)
+                            → Delete Onboarding State (Redis)
+                            → Index Onboarding Summary (sub-workflow: RAG Personal Indexer)
+                            → Send Metrics Message (Telegram) → Send Welcome Message (Telegram) → FIN
+```
+
+**Flujo de corrección** (dentro del loop de preguntas):
+
+```
+... → ask_activity_level → confirm_profile
+        ├─ "Todo bien, dale" → calculate_and_complete → [completion flow]
+        └─ "Quiero corregir algo" → correct_block
+              → selección de bloque → re-ask primer pregunta del bloque
+              → ... respuestas del bloque ...
+              → confirm_profile (vuelve a mostrar resumen breve)
 ```
 
 ### Manejo de Errores
 
-- **Redis no disponible al inicio**: si no se puede leer el estado de onboarding, se asume que es un nuevo inicio y se muestra el mensaje de bienvenida (paso 0). Si no se puede escribir en Redis, se notifica al usuario que intente de nuevo.
-- **Validación fallida**: no es un error del sistema; simplemente se reenvía la pregunta con un mensaje explicando el formato esperado. El step no avanza.
-- **State expirado (TTL)**: si pasaron más de 24 horas sin actividad, el estado de Redis expira. El usuario debe reiniciar el onboarding desde el principio. Se le notifica amigablemente.
-- **PostgreSQL error al guardar perfil**: se captura el error, se envía un mensaje al usuario indicando que hubo un problema y que intente de nuevo, y se notifica al admin. El estado de Redis NO se elimina para que el usuario pueda reintentar sin repetir todas las preguntas.
-- **Error en cálculo de métricas**: se logea el error y se usan valores por defecto conservadores. Se marca en el perfil para revisión manual.
+- **Redis no disponible al inicio**: se asume primer contacto y se muestra el mensaje de bienvenida. Si no se puede escribir en Redis, se notifica al usuario que intente de nuevo.
+- **Validación fallida**: se repite la pregunta actual SIN confirmaciones largas. Solo: `No entendi eso. [pregunta original]` o el mensaje de error específico del campo. El step no avanza.
+- **State expirado (TTL 48h)**: mensaje de retoma amigable: `Ey, parece que no terminamos tu registro. Quieres retomar donde lo dejamos o empezar de nuevo?` con botones `[ Retomar ]  [ Empezar de nuevo ]`. Si elige "Empezar de nuevo", se borra el estado Redis y se reinicia.
+- **Comando /cancelar**: `Cancelado. Cuando quieras retomar solo escribeme.` (sin mencionar /start).
+- **PostgreSQL error al guardar perfil**: se captura el error, se envía mensaje al usuario indicando el problema, se notifica al admin. El estado de Redis NO se elimina — el usuario puede reintentar sin repetir todas las preguntas.
+- **Error en cálculo de métricas**: se logea el error y se usan valores conservadores por defecto. Se marca el perfil para revisión manual.
 
 ### Variables de Entorno y Credenciales
 
@@ -1490,7 +2021,7 @@ Sub-Workflow Trigger
 | Credencial n8n | `FitAI Telegram Bot` | Token del bot de Telegram |
 | Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
 | Credencial n8n | `FitAI Redis` | Conexión a Redis |
-| Variable de entorno | `ONBOARDING_TTL` | TTL del estado en Redis en segundos (default: `86400`) |
+| Variable de entorno | `ONBOARDING_TTL` | TTL del estado en Redis en segundos (default: `172800`) |
 
 ---
 
@@ -1501,154 +2032,265 @@ Sub-Workflow Trigger
 | Campo | Valor |
 |-------|-------|
 | **Nombre en n8n** | `FitAI - Meal Plan Generator` |
-| **Trigger** | Tool llamada por el agente principal (o sub-workflow desde Onboarding) |
-| **Propósito** | Genera un plan de comidas semanal personalizado usando GPT-4o con el perfil completo del usuario, lo parsea como JSON estructurado y lo guarda en la tabla `meal_plans`. |
-| **Activación** | Solo via Tool call del AI Agent o Execute Sub-Workflow |
+| **Trigger** | Tool llamada por el agente principal, sub-workflow desde Onboarding, o cron nocturno |
+| **Propósito** | Genera el plan de comidas de UN DÍA específico (`plan_date`) usando GPT-4o. Considera los últimos 3 días de comidas (variedad), el intake real de ayer (ajuste calórico), el promedio semanal y si el usuario tiene entrenamiento ese día. |
+| **Activación** | Execute Sub-Workflow o Tool call del AI Agent |
+| **Versión** | v2 — Plan diario (no semanal) |
 
 ### Descripción del Propósito
 
-Este workflow recibe el ID del usuario, carga su perfil nutricional completo de PostgreSQL, construye un prompt detallado basado en la plantilla `prompts/meal-plan-generation.md` con todas las variables personalizadas (calorías, macros, restricciones, cultura, preferencias), llama a GPT-4o para generar el plan en formato JSON, valida y parsea la respuesta, desactiva planes anteriores, guarda el nuevo plan en `meal_plans`, y retorna una versión formateada para que el agente la incluya en su respuesta al usuario.
+Este workflow recibe `userId` y `planDate` (por defecto mañana), carga el perfil del usuario y 4 fuentes de contexto en paralelo, construye el prompt diario con todas las variables de adaptación (intake real, variedad, workout), llama a GPT-4o para generar el plan de un solo día en JSON, valida la estructura, desactiva planes anteriores del mismo `plan_date`, guarda el nuevo plan con `plan_date` y retorna el plan formateado para el morning briefing o para la respuesta del agente.
+
+**Cambio clave v1→v2**: el plan es **diario**, no semanal. `week_number` y `year` quedan deprecated. El campo principal es `plan_date`. Se generan planes individuales cada noche para el día siguiente, con contexto del intake real y variedad respecto a los últimos 3 días.
 
 ### Nodos en Orden
 
-#### Nodo 1: Sub-Workflow Trigger / Tool Input
+#### Nodo 1: Sub-Workflow Trigger
 
 - **Tipo**: Execute Sub-Workflow Trigger
-- **Datos de entrada**: `userId`, `chatId`, `planType`
+- **Datos de entrada**: `userId`, `planDate` (fecha ISO YYYY-MM-DD, default: mañana en Colombia), `chatId` (opcional)
 
-#### Nodo 2: Load User Profile (PostgreSQL)
+#### Nodo 2: Load User Profile (PostgreSQL) — en paralelo
 
 - **Tipo**: PostgreSQL - Execute Query
 - **Credencial**: `FitAI PostgreSQL`
 - **Query**:
 
 ```sql
-SELECT up.*, g.goal_type, g.target_weight,
-       u.first_name, u.language_code
+SELECT up.*, g.goal_type, g.target_weight, u.first_name
 FROM user_profiles up
 JOIN users u ON up.user_id = u.id
 LEFT JOIN goals g ON up.user_id = g.user_id AND g.is_active = true
 WHERE up.user_id = $1;
 ```
 
-- **Parámetros**: `[$json.userId]`
+- **Parámetros**: `userId`
 
-#### Nodo 3: Get Previous Plans (PostgreSQL)
+#### Nodo 3: Get Recent Meals (PostgreSQL) — en paralelo
 
 - **Tipo**: PostgreSQL - Execute Query
 - **Credencial**: `FitAI PostgreSQL`
+- **Propósito**: obtener los planes de los últimos 3 días para evitar repetición de platos.
 - **Query**:
 
 ```sql
-SELECT plan_json
-FROM meal_plans
-WHERE user_id = $1 AND is_active = true
-ORDER BY generated_at DESC
-LIMIT 1;
+SELECT mp.plan_date, mp.plan_json
+FROM meal_plans mp
+WHERE mp.user_id = $1
+  AND mp.plan_date >= ($2::date - INTERVAL '3 days')
+  AND mp.plan_date < $2::date
+ORDER BY mp.plan_date DESC;
 ```
 
-- **Parámetros**: `[$json.userId]`
+- **Parámetros**: `userId`, `planDate`
+- **`alwaysOutputData: true`** — un usuario nuevo no tiene planes previos.
 
-**Propósito**: obtener el plan anterior (si existe) para pasarlo al prompt y que GPT-4o genere variedad, evitando repetir las mismas comidas.
+#### Nodo 4: Get Yesterday Intake (PostgreSQL) — en paralelo
 
-#### Nodo 4: Build Meal Plan Prompt (Code)
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Propósito**: obtener el intake real de ayer para ajustar el plan de hoy (si se excedió en calorías o quedó bajo en proteína).
+- **Query**:
+
+```sql
+SELECT
+  dt.calories_consumed,
+  dt.protein_consumed_g,
+  dt.carbs_consumed_g,
+  dt.fat_consumed_g,
+  dt.meals_logged
+FROM daily_targets dt
+WHERE dt.user_id = $1
+  AND dt.target_date = ($2::date - INTERVAL '1 day');
+```
+
+- **Parámetros**: `userId`, `planDate`
+- **`alwaysOutputData: true`** — puede no existir para usuarios nuevos.
+
+#### Nodo 5: Get Weekly Average (PostgreSQL) — en paralelo
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Propósito**: calcular el promedio calórico semanal actual para ajuste fino del plan.
+- **Query**:
+
+```sql
+SELECT
+  AVG(calories_consumed) AS avg_calories,
+  AVG(protein_consumed_g) AS avg_protein
+FROM daily_targets
+WHERE user_id = $1
+  AND target_date >= date_trunc('week', $2::date)
+  AND target_date < $2::date
+  AND meals_logged > 0;
+```
+
+- **Parámetros**: `userId`, `planDate`
+- **`alwaysOutputData: true`**
+
+#### Nodo 6: Check Workout Day (PostgreSQL) — en paralelo
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Propósito**: determinar si el usuario tiene entrenamiento el día del plan (para incluir snack pre/post workout si aplica).
+- **Query**:
+
+```sql
+SELECT EXISTS(
+  SELECT 1 FROM exercise_plans
+  WHERE user_id = $1
+    AND is_active = true
+    AND plan_json::jsonb @> jsonb_build_object('day_of_week', to_char($2::date, 'FMDay'))
+) AS has_workout;
+```
+
+- **Parámetros**: `userId`, `planDate`
+
+#### Nodo 7: Build Daily Meal Plan Prompt (Code)
 
 - **Tipo**: Code (JavaScript)
-- **Propósito**: construir el prompt completo para la generación del plan usando la plantilla y los datos del usuario.
+- **Propósito**: consolidar todas las fuentes de contexto y construir el prompt diario usando el template de `prompts/meal-plan-generation.md`.
 
 ```javascript
 const profile = $('Load User Profile').first().json;
-const previousPlan = $('Get Previous Plans').first()?.json?.plan_json || null;
+const recentPlans = $('Get Recent Meals').all().map(i => i.json);
+const yesterdayRaw = $('Get Yesterday Intake').first()?.json || null;
+const weeklyAvgRaw = $('Get Weekly Average').first()?.json || null;
+const hasWorkout = $('Check Workout Day').first()?.json?.has_workout || false;
+const planDate = $('Sub-Workflow Trigger').first().json.planDate;
 
-const weekNumber = getWeekNumber(new Date());
-const year = new Date().getFullYear();
-
-const prompt = `
-Genera un plan de comidas semanal (lunes a domingo) para el siguiente perfil:
-
-PERFIL DEL USUARIO:
-- Género: ${profile.gender === 'male' ? 'Masculino' : 'Femenino'}
-- Edad: ${profile.age} años
-- Peso: ${profile.weight_kg} kg
-- Estatura: ${profile.height_cm} cm
-- Objetivo: ${translateGoal(profile.goal)}
-- Nivel de actividad: ${translateActivity(profile.activity_level)}
-- Cultura gastronómica: ${profile.local_culture}
-- Presupuesto para ingredientes: ${profile.budget_level === 'low' ? 'Económico' : profile.budget_level === 'high' ? 'Sin restricción' : 'Moderado'}
-
-TARGETS NUTRICIONALES:
-- Calorías diarias: ${profile.caloric_target} kcal
-- Proteína: ${profile.protein_target_g}g
-- Carbohidratos: ${profile.carb_target_g}g
-- Grasa: ${profile.fat_target_g}g
-- Comidas al día: ${profile.meal_count}
-
-RESTRICCIONES:
-- Restricciones dietéticas: ${profile.dietary_restrictions?.join(', ') || 'Ninguna'}
-- Alergias: ${profile.food_allergies?.join(', ') || 'Ninguna'}
-- Alimentos que no le gustan: ${profile.disliked_foods?.join(', ') || 'Ninguno'}
-
-${previousPlan ? `PLAN ANTERIOR (evita repetir las mismas comidas):
-${JSON.stringify(previousPlan).substring(0, 500)}` : ''}
-
-INSTRUCCIONES DE FORMATO:
-Responde ÚNICAMENTE con un JSON válido con la siguiente estructura (sin texto adicional):
-{
-  "days": {
-    "monday": { "meals": [...] },
-    ...
-  },
-  "daily_totals": { "calories": N, "protein_g": N, "carb_g": N, "fat_g": N },
-  "shopping_list": [...],
-  "notes": "..."
+// Resumen de comidas recientes para evitar repetición
+let recentMeals = '';
+for (const plan of recentPlans) {
+  if (!plan.plan_json) continue;
+  const p = typeof plan.plan_json === 'string' ? JSON.parse(plan.plan_json) : plan.plan_json;
+  const mealNames = (p.meals || []).map(m => m.name).join(', ');
+  recentMeals += `${plan.plan_date}: ${mealNames}\n`;
 }
 
-Cada meal debe tener: name, type (breakfast/lunch/dinner/snack), foods (array con name, quantity, unit, calories, protein_g, carb_g, fat_g), total_calories.
-`;
+// Día de la semana y fin de semana
+const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+const dateObj = new Date(planDate + 'T12:00:00');
+const dayOfWeek = dayNames[dateObj.getDay()];
+const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
-return [{
-  json: {
-    prompt,
-    userId: $json.userId,
-    weekNumber,
-    year,
-    profile
+// Contexto de intake de ayer (solo si el usuario logueó comidas)
+const yesterdayIntake = (yesterdayRaw?.meals_logged > 0) ? {
+  calories: yesterdayRaw.calories_consumed,
+  protein: yesterdayRaw.protein_consumed_g
+} : null;
+
+// Promedio semanal (solo si hay datos)
+const weeklyAvg = weeklyAvgRaw?.avg_calories ? {
+  avg_calories: Math.round(weeklyAvgRaw.avg_calories),
+  avg_protein: Math.round(weeklyAvgRaw.avg_protein)
+} : null;
+
+// Construir prompt con template diario (ver prompts/meal-plan-generation.md)
+const prompt = buildDailyPrompt({
+  userName: profile.first_name,
+  planDate,
+  dayOfWeek,
+  caloricTarget: profile.caloric_target,
+  proteinTarget: profile.protein_target_g,
+  carbTarget: profile.carb_target_g,
+  fatTarget: profile.fat_target_g,
+  mealCount: profile.meals_per_day || profile.meal_count || 3,
+  dietaryRestrictions: profile.dietary_restrictions || [],
+  foodAllergies: profile.food_allergies || [],
+  dislikedFoods: profile.disliked_foods || [],
+  localCulture: profile.local_culture || 'colombian',
+  budget: profile.budget_level || 'medium',
+  wakeUpTime: profile.wake_up_time || '07:00',
+  recentMeals: recentMeals || null,
+  yesterdayIntake,
+  weeklyAvg,
+  isWeekend,
+  hasWorkout
+});
+
+return [{ json: { prompt, userId: $json.userId, planDate, dayOfWeek } }];
+
+function buildDailyPrompt(vars) {
+  // Template completo en prompts/meal-plan-generation.md sección "Template Principal"
+  // Esta función construye el string del prompt interpolando las variables
+  let p = `Eres un nutriologo experto creando el plan de comidas de UN DIA para un usuario.\n\n`;
+  p += `PERFIL DEL USUARIO:\n`;
+  p += `- Nombre: ${vars.userName}\n`;
+  p += `- Objetivo calorico diario: ${vars.caloricTarget} kcal\n`;
+  p += `- Macros objetivo: ${vars.proteinTarget}g proteina, ${vars.carbTarget}g carbohidratos, ${vars.fatTarget}g grasa\n`;
+  p += `- Restricciones dietarias: ${vars.dietaryRestrictions.length ? vars.dietaryRestrictions.join(', ') : 'ninguna'}\n`;
+  p += `- Alergias: ${vars.foodAllergies.length ? vars.foodAllergies.join(', ') : 'ninguna'}\n`;
+  p += `- Alimentos que no le gustan: ${vars.dislikedFoods.length ? vars.dislikedFoods.join(', ') : 'ninguno'}\n`;
+  p += `- Cultura gastronomica: ${vars.localCulture}\n`;
+  p += `- Presupuesto: ${vars.budget}\n`;
+  p += `- Numero de comidas: ${vars.mealCount}\n`;
+  p += `- Hora de despertar: ${vars.wakeUpTime}\n`;
+  p += `- Dia: ${vars.dayOfWeek} (${vars.planDate})\n`;
+  p += `- Es fin de semana: ${vars.isWeekend}\n`;
+  p += `- Tiene entrenamiento programado: ${vars.hasWorkout}\n\n`;
+
+  if (vars.recentMeals) {
+    p += `COMIDAS DE LOS ULTIMOS 3 DIAS (no repitas estos platos):\n${vars.recentMeals}\n`;
   }
-}];
+  if (vars.yesterdayIntake) {
+    p += `INTAKE REAL DE AYER:\n`;
+    p += `- Calorias consumidas: ${vars.yesterdayIntake.calories} kcal (meta: ${vars.caloricTarget})\n`;
+    p += `- Proteina consumida: ${vars.yesterdayIntake.protein}g (meta: ${vars.proteinTarget})\n`;
+    if (vars.yesterdayIntake.calories > vars.caloricTarget + 200) {
+      p += `NOTA: Ayer se excedio en calorias. Ajusta ligeramente el plan de hoy hacia la parte baja del rango (${vars.caloricTarget} - 100).\n`;
+    }
+    if (vars.yesterdayIntake.protein < vars.proteinTarget * 0.8) {
+      p += `NOTA: Ayer quedo bajo en proteina. Prioriza fuentes de proteina en las comidas de hoy.\n`;
+    }
+    p += '\n';
+  }
+  if (vars.weeklyAvg) {
+    p += `PROMEDIO SEMANAL ACTUAL:\n`;
+    p += `- Calorias promedio: ${vars.weeklyAvg.avg_calories} kcal/dia\n`;
+    p += `- Proteina promedio: ${vars.weeklyAvg.avg_protein}g/dia\n`;
+    if (vars.weeklyAvg.avg_calories > vars.caloricTarget + 100) {
+      p += `NOTA: El promedio semanal esta por encima de la meta. Apunta al limite bajo del rango calorico hoy.\n`;
+    }
+    p += '\n';
+  }
 
-function getWeekNumber(d) {
-  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
+  p += `INSTRUCCIONES:\n1. Genera exactamente ${vars.mealCount} comidas para este dia.\n`;
+  p += `2. Las calorias totales del dia deben estar entre ${vars.caloricTarget} - 50 y ${vars.caloricTarget} + 50.\n`;
+  p += `3. Los macros deben acercarse a los objetivos (±10%).\n`;
+  p += `4. NUNCA incluyas alimentos de las restricciones, alergias o disgustos.\n`;
+  p += `5. Usa ingredientes comunes en la cultura ${vars.localCulture}.\n`;
+  p += `6. Adapta al presupuesto: low=proteinas economicas (huevo, pollo, atun, leguminosas); medium=pechuga, carne molida, tilapia; high=sin restriccion.\n`;
+  p += `7. Distribuye las comidas desde ${vars.wakeUpTime} con intervalos de 3-4 horas.\n`;
+  p += `8. Preparacion: maximo 25 minutos${vars.isWeekend ? ' (fin de semana, puede ser mas elaborada)' : ''}.\n`;
+  p += `9. NO repitas platos de los ultimos 3 dias.\n`;
+  p += `10. Varia el tipo de proteina entre comidas del mismo dia.\n`;
+  if (vars.hasWorkout) {
+    p += `11. El usuario tiene entrenamiento hoy. Incluye snack pre o post-entrenamiento si el numero de comidas lo permite.\n`;
+  }
 
-function translateGoal(goal) {
-  const map = { lose_weight: 'Perder peso', gain_muscle: 'Ganar músculo', maintain: 'Mantener peso', recomposition: 'Recomposición corporal' };
-  return map[goal] || goal;
-}
+  p += `\nFORMATO DE SALIDA — responde EXCLUSIVAMENTE con JSON valido:\n`;
+  p += `{"plan_date":"${vars.planDate}","day_of_week":"${vars.dayOfWeek}","total_calories":<n>,"total_protein_g":<n>,"total_carbs_g":<n>,"total_fat_g":<n>,"meals":[{"meal_type":"breakfast|lunch|snack|dinner","meal_label":"Desayuno|Almuerzo|Snack|Cena","time":"HH:MM","name":"<nombre en espanol>","calories":<n>,"protein_g":<n>,"carbs_g":<n>,"fat_g":<n>,"ingredients":[{"name":"<ingrediente>","quantity":"<cantidad>","grams":<n>}],"preparation_notes":"<instrucciones breves>"}]}`;
 
-function translateActivity(level) {
-  const map = { sedentary: 'Sedentario', lightly_active: 'Ligeramente activo', moderately_active: 'Moderadamente activo', very_active: 'Muy activo', extra_active: 'Extra activo' };
-  return map[level] || level;
+  return p;
 }
 ```
 
-#### Nodo 5: Generate Meal Plan (OpenAI)
+#### Nodo 8: Generate Meal Plan (OpenAI)
 
 - **Tipo**: OpenAI - Chat Completion
 - **Credencial**: `FitAI OpenAI`
 - **Modelo**: `gpt-4o`
-- **Temperature**: `0.8` (ligeramente más creativo para variedad en los planes)
-- **Max Tokens**: `4096` (los planes son extensos)
-- **System Message**: contenido de `prompts/meal-plan-generation.md`
+- **Temperature**: `0.85` (ligeramente más alto que v1 para variedad día a día)
+- **Max Tokens**: `2048` (un día necesita menos tokens que 7 días)
+- **System Message**: `"Eres un nutriologo experto. Responde SOLO con JSON valido, sin texto adicional."`
 - **User Message**: `{{ $json.prompt }}`
 - **Response Format**: `json_object`
 
-#### Nodo 6: Parse and Validate Plan (Code)
+#### Nodo 9: Parse and Validate Plan (Code)
 
 - **Tipo**: Code (JavaScript)
-- **Propósito**: parsear el JSON retornado por GPT-4o, validar la estructura y calcular totales.
+- **Propósito**: parsear y validar la respuesta JSON de un plan de un solo día.
 
 ```javascript
 const response = $('Generate Meal Plan').first().json.message.content;
@@ -1657,133 +2299,130 @@ let plan;
 try {
   plan = JSON.parse(response);
 } catch (e) {
-  // Intentar extraer JSON de la respuesta si tiene texto adicional
   const jsonMatch = response.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     plan = JSON.parse(jsonMatch[0]);
   } else {
-    throw new Error('No se pudo parsear el plan de comidas generado por OpenAI');
+    throw new Error('No se pudo parsear el plan diario generado por OpenAI');
   }
 }
 
-// Validar estructura mínima
-if (!plan.days || typeof plan.days !== 'object') {
-  throw new Error('El plan no contiene la estructura de días esperada');
+// Validar estructura de plan diario (v2)
+if (!plan.meals || !Array.isArray(plan.meals)) {
+  throw new Error('El plan no contiene la estructura de meals esperada');
+}
+if (plan.meals.length < 3) {
+  throw new Error('El plan tiene menos de 3 comidas');
 }
 
-const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-for (const day of dayNames) {
-  if (!plan.days[day] || !plan.days[day].meals) {
-    throw new Error(`El plan no contiene datos para ${day}`);
-  }
-}
+// Asegurar campos requeridos
+plan.plan_date = $json.planDate;
+plan.day_of_week = $json.dayOfWeek;
 
-// Calcular total de calorías promedio
-const totalCalories = dayNames.reduce((sum, day) => {
-  const dayCalories = plan.days[day].meals.reduce((s, meal) => s + (meal.total_calories || 0), 0);
-  return sum + dayCalories;
-}, 0) / 7;
+const totalCalories = plan.total_calories ||
+  plan.meals.reduce((sum, m) => sum + (m.calories || 0), 0);
+const totalProtein = plan.total_protein_g ||
+  plan.meals.reduce((sum, m) => sum + (m.protein_g || 0), 0);
 
 return [{
   json: {
     plan,
     totalCalories: Math.round(totalCalories),
+    totalProtein: Math.round(totalProtein),
     userId: $json.userId,
-    weekNumber: $json.weekNumber,
-    year: $json.year
+    planDate: $json.planDate
   }
 }];
 ```
 
-#### Nodo 7: Deactivate Previous Plans (PostgreSQL)
+#### Nodo 10: Deactivate Previous Plan for Same Date (PostgreSQL)
 
 - **Tipo**: PostgreSQL - Execute Query
 - **Credencial**: `FitAI PostgreSQL`
+- **Propósito**: desactivar solo el plan del mismo `plan_date` (no todos los planes activos del usuario).
 - **Query**:
 
 ```sql
 UPDATE meal_plans
 SET is_active = false
-WHERE user_id = $1 AND is_active = true;
+WHERE user_id = $1
+  AND plan_date = $2::date
+  AND is_active = true;
 ```
 
-- **Parámetros**: `[$json.userId]`
+- **Parámetros**: `userId`, `planDate`
 
-#### Nodo 8: Save New Plan (PostgreSQL)
+#### Nodo 11: Save New Daily Plan (PostgreSQL)
 
 - **Tipo**: PostgreSQL - Execute Query
 - **Credencial**: `FitAI PostgreSQL`
 - **Query**:
 
 ```sql
-INSERT INTO meal_plans (user_id, week_number, year, plan_json, total_calories, is_active, expires_at)
-VALUES ($1, $2, $3, $4, $5, true, NOW() + INTERVAL '7 days')
+INSERT INTO meal_plans (user_id, plan_date, plan_json, total_calories, is_active, generated_at)
+VALUES ($1, $2::date, $3, $4, true, NOW())
 RETURNING id;
 ```
 
-- **Parámetros**: `userId`, `weekNumber`, `year`, `JSON.stringify(plan)`, `totalCalories`
+- **Parámetros**: `userId`, `planDate`, `JSON.stringify(plan)`, `totalCalories`
 
-#### Nodo 9: Format Plan for Response (Code)
+**Nota**: no se usan `week_number`, `year` ni `expires_at` en v2. `plan_date` es el campo principal.
+
+#### Nodo 12: Return Plan to Caller (Code)
 
 - **Tipo**: Code (JavaScript)
-- **Propósito**: formatear el plan JSON en un texto legible para que el agente lo incluya en su respuesta al usuario.
+- **Propósito**: formatear el plan del día de forma concisa para el morning briefing o para la respuesta del agente al usuario.
 
 ```javascript
-const plan = $json.plan;
-let formatted = `Plan de comidas generado (Semana ${$json.weekNumber}, ${$json.year})\n`;
-formatted += `Objetivo calórico diario: ~${$json.totalCalories} kcal\n\n`;
+const plan = $('Parse and Validate Plan').first().json.plan;
+const meals = plan.meals || [];
 
-const dayTranslations = {
-  monday: 'Lunes', tuesday: 'Martes', wednesday: 'Miércoles',
-  thursday: 'Jueves', friday: 'Viernes', saturday: 'Sábado', sunday: 'Domingo'
-};
+// Formato conciso — una línea por comida
+let formatted = `Plan de comidas para ${plan.day_of_week} (${plan.plan_date}):\n\n`;
+for (const meal of meals) {
+  formatted += `${meal.meal_label} (${meal.time}): ${meal.name} — *${meal.calories} kcal*, ${meal.protein_g}g proteina\n`;
+}
+formatted += `\nTotal del dia: *${plan.total_calories} kcal* | *${plan.total_protein_g}g* proteina`;
 
-for (const [day, data] of Object.entries(plan.days)) {
-  formatted += `📅 ${dayTranslations[day]}\n`;
-  for (const meal of data.meals) {
-    formatted += `  🍽 ${meal.name} (${meal.total_calories} kcal)\n`;
-    for (const food of meal.foods) {
-      formatted += `    - ${food.name}: ${food.quantity} ${food.unit}\n`;
-    }
+return [{
+  json: {
+    formattedPlan: formatted,
+    plan,
+    totalCalories: plan.total_calories,
+    totalProtein: plan.total_protein_g,
+    planDate: plan.plan_date
   }
-  formatted += '\n';
-}
-
-if (plan.shopping_list && plan.shopping_list.length > 0) {
-  formatted += '🛒 Lista de compras:\n';
-  plan.shopping_list.forEach(item => {
-    formatted += `  - ${item}\n`;
-  });
-}
-
-return [{ json: { formattedPlan: formatted } }];
+}];
 ```
-
-**Salida**: el texto formateado se retorna al agente como resultado de la tool.
 
 ### Lógica de Ramificación
 
 ```
 Sub-Workflow Trigger
-  → Load User Profile (PostgreSQL)    ← en paralelo
-  → Get Previous Plans (PostgreSQL)   ← en paralelo
-  → Build Meal Plan Prompt (Code)
+  ├─ Load User Profile (PostgreSQL)        ← en paralelo
+  ├─ Get Recent Meals (PostgreSQL)         ← en paralelo
+  ├─ Get Yesterday Intake (PostgreSQL)     ← en paralelo
+  ├─ Get Weekly Average (PostgreSQL)       ← en paralelo
+  └─ Check Workout Day (PostgreSQL)        ← en paralelo
+       ↓ (todos convergen)
+  Build Daily Meal Plan Prompt (Code)
     → Generate Meal Plan (OpenAI)
       → Parse and Validate Plan (Code)
-        → Deactivate Previous Plans (PostgreSQL)
-          → Save New Plan (PostgreSQL)
-            → Format Plan for Response (Code)
-              → Return to calling workflow
+        → Deactivate Previous Plan for Same Date (PostgreSQL)
+          → Save New Daily Plan (PostgreSQL)
+            → Return Plan to Caller (Code)
 ```
 
-Este workflow tiene un flujo lineal sin ramificaciones condicionales. Las únicas bifurcaciones posibles son por errores.
+Flujo lineal sin ramificaciones condicionales. Los 5 nodos de contexto corren en paralelo; el resto es secuencial.
 
 ### Manejo de Errores
 
-- **OpenAI retorna JSON inválido**: el nodo Parse and Validate intenta extraer JSON con regex. Si no lo consigue, lanza un error que se captura y se retorna al agente con el mensaje: `No pude generar el plan de comidas en este momento. Por favor intenta de nuevo.`
-- **OpenAI retorna plan incompleto**: la validación de estructura detecta días faltantes y lanza un error descriptivo. Se reintenta la generación 1 vez antes de fallar.
-- **PostgreSQL error al guardar**: se logea el error, el plan no se persiste, pero se retorna al usuario igualmente el plan formateado (con una nota de que no se pudo guardar y se regenerará después).
-- **Timeout de OpenAI**: con 4096 tokens de respuesta, la generación puede tardar 15-30 segundos. El timeout del nodo OpenAI está configurado a 60 segundos.
+- **OpenAI retorna JSON inválido**: reintento 1 vez con prompt reforzado. Si falla, retorna error al agente: `No pude generar el plan de comidas. Por favor intenta de nuevo.`
+- **Plan incompleto (< 3 comidas)**: reintento 1 vez antes de fallar.
+- **PostgreSQL error al guardar**: el plan se retorna igualmente al usuario con nota interna de que no se persistió.
+- **Timeout OpenAI**: 45 segundos (un día es más rápido que 7 días con 2048 tokens).
+- **Sin perfil de usuario**: error crítico — log + notificación al admin.
+- **Nodos de contexto sin resultados** (`Get Recent Meals`, `Get Yesterday Intake`, `Get Weekly Average`): todos tienen `alwaysOutputData: true` — el prompt se construye igualmente sin esas variables (usuario nuevo o sin datos).
 
 ### Variables de Entorno y Credenciales
 
@@ -1792,8 +2431,173 @@ Este workflow tiene un flujo lineal sin ramificaciones condicionales. Las única
 | Credencial n8n | `FitAI OpenAI` | API key de OpenAI |
 | Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
 | Variable de entorno | `MEAL_PLAN_MODEL` | Modelo para generación de planes (default: `gpt-4o`) |
-| Variable de entorno | `MEAL_PLAN_TEMPERATURE` | Temperature para planes (default: `0.8`) |
-| Variable de entorno | `MEAL_PLAN_MAX_TOKENS` | Max tokens para planes (default: `4096`) |
+| Variable de entorno | `MEAL_PLAN_TEMPERATURE` | Temperature para planes (default: `0.85`) |
+| Variable de entorno | `MEAL_PLAN_MAX_TOKENS` | Max tokens para planes diarios (default: `2048`) |
+
+---
+
+## 4.1. FitAI - Daily Plan Generator Cron
+
+### Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Nombre en n8n** | `FitAI - Daily Plan Generator Cron` |
+| **Trigger** | Cron: `0 21 * * *` (9:00 pm hora Colombia) |
+| **Propósito** | Genera automáticamente el plan de comidas del día siguiente para todos los usuarios activos que aún no tienen plan. También crea el registro `daily_targets` de mañana para cada usuario. |
+| **Activación** | Automática cada noche a las 9pm |
+
+### Descripción del Propósito
+
+Cada noche a las 9pm, este workflow consulta todos los usuarios con membresía activa y onboarding completado que **no tienen** plan de comidas activo para mañana. Por cada usuario faltante, invoca el sub-workflow `FitAI - Meal Plan Generator` con `planDate = mañana` y crea su registro en `daily_targets`. Cada generación tiene una pausa de 1 segundo para respetar los rate limits de la API de OpenAI. Los errores por usuario son capturados individualmente y no detienen el batch.
+
+### Nodos en Orden
+
+#### Nodo 1: Cron Trigger
+
+- **Tipo**: Cron
+- **Expresión**: `0 21 * * *` (diario a las 21:00 hora `America/Bogota`)
+
+#### Nodo 2: Get Active Users Without Tomorrow Plan (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Propósito**: obtener usuarios activos sin plan para mañana (evita regenerar si ya existe).
+- **Query**:
+
+```sql
+SELECT
+  u.id AS user_id,
+  u.telegram_id,
+  u.first_name,
+  up.wake_up_time,
+  up.caloric_target,
+  up.protein_target_g,
+  up.carb_target_g,
+  up.fat_target_g
+FROM users u
+JOIN memberships m
+  ON u.id = m.user_id
+  AND m.status = 'active'
+  AND m.expires_at > NOW()
+JOIN user_profiles up
+  ON u.id = up.user_id
+  AND up.onboarding_completed = true
+LEFT JOIN meal_plans mp
+  ON u.id = mp.user_id
+  AND mp.plan_date = CURRENT_DATE + 1
+  AND mp.is_active = true
+WHERE mp.id IS NULL
+ORDER BY u.id;
+```
+
+**`alwaysOutputData: true`** — puede no haber usuarios si todos ya tienen plan.
+
+#### Nodo 3: Loop Over Users (SplitInBatches)
+
+- **Tipo**: SplitInBatches
+- **Batch size**: `1` (procesar de uno en uno con pausa)
+- **Propósito**: iterar sobre cada usuario y llamar el sub-workflow de generación.
+
+#### Nodo 4: Generate Plan for User (Execute Sub-Workflow)
+
+- **Tipo**: Execute Sub-Workflow
+- **Workflow**: `FitAI - Meal Plan Generator`
+- **Datos enviados**:
+
+```javascript
+// Nodo Set antes del Execute Sub-Workflow
+{
+  userId: "={{ $json.user_id }}",
+  planDate: "={{ (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); })() }}"
+}
+```
+
+**Manejo de error**: el nodo tiene `continueOnFail: true` — si un usuario falla (sin perfil, error de OpenAI), el loop continúa con el siguiente.
+
+#### Nodo 5: Create Tomorrow Daily Targets (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Propósito**: crear el registro `daily_targets` de mañana para que el morning briefing tenga los targets disponibles.
+- **Query**:
+
+```sql
+INSERT INTO daily_targets (
+  user_id, target_date,
+  caloric_target, protein_target_g, carb_target_g, fat_target_g,
+  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g
+)
+SELECT
+  up.user_id,
+  (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day',
+  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,
+  0, 0, 0, 0
+FROM user_profiles up
+WHERE up.user_id = $1
+ON CONFLICT (user_id, target_date) DO NOTHING;
+```
+
+- **Parámetros**: `user_id` del usuario actual en el loop
+
+#### Nodo 6: Wait 1 Second
+
+- **Tipo**: Wait
+- **Duración**: `1000ms`
+- **Propósito**: respetar el rate limit de la API de OpenAI entre generaciones consecutivas.
+
+#### Nodo 7: Log Completion (Code)
+
+- **Tipo**: Code (JavaScript)
+- **Propósito**: registrar cuántos planes se generaron exitosamente y cuántos fallaron en el batch.
+
+```javascript
+// Este nodo corre al finalizar el loop (rama "done" del SplitInBatches)
+const totalProcessed = $input.all().length;
+const now = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+const planDate = (() => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+})();
+
+return [{ json: {
+  message: `Daily Plan Generator Cron completado`,
+  date: now,
+  planDate,
+  plansAttempted: totalProcessed
+}}];
+```
+
+### Lógica de Ramificación
+
+```
+Cron Trigger (9pm diario)
+  → Get Active Users Without Tomorrow Plan (PostgreSQL)
+    → Loop Over Users (SplitInBatches, batch=1)
+        ├─ [cada usuario]
+        │     → Generate Plan for User (Execute Sub-Workflow: Meal Plan Generator)
+        │           continueOnFail=true
+        │     → Create Tomorrow Daily Targets (PostgreSQL)
+        │     → Wait 1 Second
+        │     → [siguiente usuario]
+        └─ [done]
+              → Log Completion (Code)
+```
+
+### Manejo de Errores
+
+- **Usuario sin perfil completo**: el sub-workflow `Meal Plan Generator` lanza error → capturado por `continueOnFail: true` → loop continúa con el siguiente usuario.
+- **Error de OpenAI (rate limit, timeout)**: capturado por `continueOnFail: true`. El usuario quedará sin plan para ese día — el agente puede generarlo on-demand si el usuario lo solicita en el morning.
+- **PostgreSQL error en `daily_targets`**: `ON CONFLICT DO NOTHING` previene duplicados; errores se loguean pero no detienen el flujo.
+- **Todos los usuarios ya tienen plan**: `Get Active Users` retorna 0 filas → `alwaysOutputData: true` previene que el flujo se detenga → `Log Completion` registra 0 planes generados.
+
+### Variables de Entorno y Credenciales
+
+| Tipo | Nombre | Propósito |
+|------|--------|-----------|
+| Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
+| Credencial n8n | `FitAI OpenAI` | API key (via sub-workflow Meal Plan Generator) |
 
 ---
 
@@ -1804,170 +2608,149 @@ Este workflow tiene un flujo lineal sin ramificaciones condicionales. Las única
 | Campo | Valor |
 |-------|-------|
 | **Nombre en n8n** | `FitAI - Meal Reminder Scheduler` |
-| **Trigger** | Cron (3 veces al día: 08:00, 13:30, 19:30 hora del servidor) |
-| **Propósito** | Envía recordatorios personalizados de comidas a los usuarios activos, indicándoles qué comida corresponde según su plan actual y su hora habitual de despertar. |
+| **Trigger** | Cron: `*/15 7-21 * * *` (cada 15 min de 7am a 9pm) |
+| **Propósito** | Recordar al usuario su próxima comida del plan diario cuando se acerca la hora, incluyendo el balance actual del día. Versión v2 — reemplaza el cron fijo de 3 veces al día. |
 | **Activación** | Siempre activo (cron automático) |
 
 ### Descripción del Propósito
 
-Este workflow se ejecuta tres veces al día en horarios correspondientes a los bloques típicos de desayuno, comida y cena. Para cada ejecución, consulta la base de datos para obtener a todos los usuarios activos con membresía vigente y plan de comidas activo. Determina qué comida del día corresponde basándose en la hora actual y la `wake_up_time` del usuario (para personalizar los horarios de cada usuario). Extrae la comida correspondiente del `plan_json` del día actual y envía un mensaje de recordatorio personalizado por Telegram.
+En lugar de dispararse 3 veces fijas al día (8am, 1:30pm, 7:30pm), el v2 verifica cada 15 minutos si algún usuario tiene una comida programada en los próximos 15 minutos que aún no ha recibido recordatorio. Esto personaliza los recordatorios según el horario de cada comida en el plan diario de cada usuario. Usa `jsonb_array_elements` para descomponer el JSON del plan y `conversation_logs` para deduplicación.
 
 ### Nodos en Orden
 
 #### Nodo 1: Cron Trigger
 
 - **Tipo**: Cron
-- **Configuración**: tres expresiones cron separadas:
-  - `0 8 * * *` (08:00 diario)
-  - `30 13 * * *` (13:30 diario)
-  - `30 19 * * *` (19:30 diario)
-- **Timezone**: `America/Mexico_City`
+- **Expresión**: `*/15 7-21 * * *`
+- **Timezone**: `America/Bogota`
 
-#### Nodo 2: Get Active Users with Plans (PostgreSQL)
+#### Nodo 2: Get Users with Upcoming Meal (PostgreSQL)
 
 - **Tipo**: PostgreSQL - Execute Query
 - **Credencial**: `FitAI PostgreSQL`
 - **Query**:
 
 ```sql
-SELECT u.telegram_id, u.first_name,
-       up.wake_up_time, up.meal_count,
-       mp.plan_json
-FROM users u
-JOIN memberships m ON u.id = m.user_id
-  AND m.status = 'active'
-  AND m.expires_at > NOW()
-JOIN user_profiles up ON u.id = up.user_id
-  AND up.onboarding_completed = true
-JOIN meal_plans mp ON u.id = mp.user_id
-  AND mp.is_active = true
-WHERE u.is_active = true;
+WITH user_meals AS (
+  SELECT u.id AS user_id, u.telegram_id, u.first_name,
+         up.caloric_target, up.protein_target_g,
+         mp.plan_json,
+         dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,
+         m.meal_type, m.meal_name, m.meal_time, m.meal_calories, m.meal_protein
+  FROM users u
+  JOIN memberships mb ON u.id = mb.user_id AND mb.status = 'active' AND mb.expires_at > NOW()
+  JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true
+  JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true
+  LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE
+  CROSS JOIN LATERAL jsonb_array_elements(mp.plan_json::jsonb -> 'meals') AS meal_item
+  CROSS JOIN LATERAL (
+    SELECT
+      meal_item ->> 'meal_type' AS meal_type,
+      meal_item ->> 'name' AS meal_name,
+      (meal_item ->> 'time')::time AS meal_time,
+      (meal_item ->> 'calories')::int AS meal_calories,
+      (meal_item ->> 'protein_g')::int AS meal_protein
+  ) m
+  WHERE u.is_active = true
+    -- Comida en los próximos 15 minutos
+    AND m.meal_time BETWEEN LOCALTIME AND LOCALTIME + INTERVAL '15 minutes'
+    -- No se ha enviado recordatorio para esta comida hoy
+    AND NOT EXISTS (
+      SELECT 1 FROM conversation_logs cl
+      WHERE cl.user_id = u.id
+        AND cl.message_type = 'meal_reminder'
+        AND cl.assistant_response LIKE '%' || m.meal_name || '%'
+        AND cl.created_at::date = CURRENT_DATE
+    )
+)
+SELECT * FROM user_meals;
 ```
 
-**Salida**: lista de todos los usuarios activos con sus planes de comidas activos.
+**Nota**: La query descompone el JSON del plan con `jsonb_array_elements`. Si el rendimiento es un problema con muchos usuarios, se puede precalcular en una tabla auxiliar.
 
 #### Nodo 3: Has Users? (IF)
 
 - **Tipo**: IF
 - **Condición**: el resultado tiene al menos una fila
 - **Rama true**: continúa
-- **Rama false**: FIN (no hay usuarios activos con planes)
+- **Rama false**: FIN (nadie tiene comida en los próximos 15 min)
 
-#### Nodo 4: Determine Current Meal (Code)
+#### Nodo 4: Build Reminder Message (Code)
 
 - **Tipo**: Code (JavaScript)
 - **Modo**: Run Once for Each Item
-- **Propósito**: para cada usuario, determinar qué comida del día corresponde según la hora actual y su hora de despertar.
 
 ```javascript
-const now = new Date();
-const currentHour = now.getHours();
-const currentMinute = now.getMinutes();
-const currentTime = currentHour * 60 + currentMinute; // minutos desde medianoche
+const caloriesConsumed = $json.calories_consumed || 0;
+const proteinConsumed = $json.protein_consumed_g || 0;
+const caloriesRemaining = $json.caloric_target - caloriesConsumed;
+const proteinRemaining = $json.protein_target_g - proteinConsumed;
+const mealsLogged = $json.meals_logged || 0;
 
-const [wakeHour, wakeMin] = ($json.wake_up_time || '07:00').split(':').map(Number);
-const wakeTime = wakeHour * 60 + wakeMin;
+const mealLabels = {
+  breakfast: 'desayuno', lunch: 'almuerzo', snack: 'snack', dinner: 'cena'
+};
+const mealLabel = mealLabels[$json.meal_type] || $json.meal_type;
 
-// Determinar el tipo de comida basado en la hora relativa al despertar
-const minutesSinceWake = currentTime - wakeTime;
-let mealType;
-if (minutesSinceWake <= 90) {
-  mealType = 'breakfast';
-} else if (minutesSinceWake <= 330) { // ~5.5 horas después de despertar
-  mealType = 'lunch';
-} else {
-  mealType = 'dinner';
+let balanceText = '';
+if (mealsLogged > 0) {
+  balanceText = `\nLlevas *${caloriesConsumed} de ${$json.caloric_target} kcal* y *${proteinConsumed} de ${$json.protein_target_g}g proteína*.`;
 }
 
-// Obtener el día actual en inglés
-const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-const today = dayNames[now.getDay()];
+const message = `${$json.first_name}, es hora de tu ${mealLabel}: *${$json.meal_name}* — *${$json.meal_calories} kcal*, ${$json.meal_protein}g proteína.${balanceText}
 
-// Extraer la comida del plan
-const plan = typeof $json.plan_json === 'string' ? JSON.parse($json.plan_json) : $json.plan_json;
-const todayPlan = plan.days?.[today];
-const meal = todayPlan?.meals?.find(m => m.type === mealType);
-
-if (!meal) {
-  return [{ json: { skip: true } }];
-}
-
-// Formatear los alimentos
-const foodList = meal.foods.map(f => `- ${f.name}: ${f.quantity} ${f.unit}`).join('\n');
-
-const mealTypeSpanish = { breakfast: 'desayuno', lunch: 'comida', dinner: 'cena', snack: 'snack' };
+Cuando termines de comer, dime qué comiste y llevo la cuenta.`;
 
 return [{
   json: {
-    skip: false,
     telegramId: $json.telegram_id,
-    firstName: $json.first_name,
-    mealType: mealTypeSpanish[mealType],
-    mealName: meal.name,
-    totalCalories: meal.total_calories,
-    foodList
+    userId: $json.user_id,
+    mealName: $json.meal_name,
+    message
   }
 }];
 ```
 
-#### Nodo 5: Should Send? (IF)
-
-- **Tipo**: IF
-- **Condición**: `{{ $json.skip }}` es `false`
-- **Rama true**: envía recordatorio
-- **Rama false**: FIN para este usuario
-
-#### Nodo 6: Send Meal Reminder (Telegram)
+#### Nodo 5: Send Reminder (Telegram)
 
 - **Tipo**: Telegram - Send Message
 - **Chat ID**: `{{ $json.telegramId }}`
-- **Texto**:
-
-```
-¡Hola {{ $json.firstName }}! Es hora de tu {{ $json.mealType }}.
-
-🍽 {{ $json.mealName }} (~{{ $json.totalCalories }} kcal)
-
-{{ $json.foodList }}
-
-¡Buen provecho! Si necesitas algún ajuste o sustitución, solo dime.
-```
-
+- **Texto**: `{{ $json.message }}`
 - **Parse Mode**: Markdown
 - **Credencial**: `FitAI Telegram Bot`
 
-#### Nodo 7: Log Reminder Sent (Code)
+#### Nodo 6: Log Reminder Sent (PostgreSQL)
 
-- **Tipo**: Code (JavaScript)
-- **Propósito**: registrar en los logs que se envió el recordatorio (para debugging y métricas).
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
 
-```javascript
-console.log(`Reminder sent to ${$json.telegramId} for ${$json.mealType} at ${new Date().toISOString()}`);
-return [$json];
+```sql
+INSERT INTO conversation_logs (user_id, message_type, assistant_response, created_at)
+VALUES ($1, 'meal_reminder', $2, NOW());
 ```
+
+- **Parámetros**: `$1` = `userId`, `$2` = `message`
 
 ### Lógica de Ramificación
 
 ```
-Cron Trigger (08:00 / 13:30 / 19:30)
-  → Get Active Users with Plans (PostgreSQL)
+Cron (cada 15 min, 7am-9pm)
+  → Get Users with Upcoming Meal (PostgreSQL)
     → Has Users? (IF)
         ├─ false → FIN
         └─ true → [Para cada usuario]:
-              Determine Current Meal (Code)
-                → Should Send? (IF)
-                    ├─ false → FIN (este usuario)
-                    └─ true → Send Meal Reminder (Telegram)
-                          → Log Reminder Sent (Code)
+              Build Reminder Message (Code)
+                → Send Reminder (Telegram)
+                  → Log Reminder Sent (PostgreSQL)
 ```
 
 ### Manejo de Errores
 
-- **Sin usuarios activos**: el workflow termina silenciosamente sin error.
-- **Plan JSON inválido**: si el `plan_json` de un usuario no se puede parsear, se salta ese usuario y se logea el error. Los demás usuarios reciben su recordatorio normalmente.
-- **Telegram error al enviar**: si un usuario tiene el bot bloqueado o el chat no existe, Telegram retorna un error 403. Se captura, se logea, y se continúa con los demás usuarios. Se puede considerar desactivar el usuario después de N errores consecutivos.
-- **Error de base de datos**: si PostgreSQL no está disponible, el cron falla completamente. Se notifica al admin a través del Error Workflow global.
-- **Batching**: si hay muchos usuarios (100+), los mensajes se envían con un delay de 50ms entre cada uno para respetar los rate limits de la API de Telegram (30 mensajes/segundo).
+- **Query vacía** (nadie tiene comida en los próximos 15 min): termina silenciosamente.
+- **Plan JSON inválido**: `CROSS JOIN LATERAL jsonb_array_elements` falla si el campo es NULL o inválido. Activar `continueOnFail: true` en nodo 2 para que otros usuarios sigan procesándose.
+- **Telegram 403** (bot bloqueado): log + continúa con siguientes. `continueOnFail: true` en nodo 5.
+- **Rate limiting**: 50ms entre mensajes en batch.
 
 ### Variables de Entorno y Credenciales
 
@@ -1975,8 +2758,6 @@ Cron Trigger (08:00 / 13:30 / 19:30)
 |------|--------|-----------|
 | Credencial n8n | `FitAI Telegram Bot` | Token del bot de Telegram |
 | Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
-| Variable de entorno | `REMINDER_TIMEZONE` | Timezone para los cron triggers (default: `America/Mexico_City`) |
-| Variable de entorno | `TELEGRAM_BATCH_DELAY_MS` | Delay entre mensajes en batch (default: `50`) |
 
 ---
 
@@ -3391,3 +4172,757 @@ Sub-Workflow Trigger
 | Tipo | Nombre | Propósito |
 |------|--------|-----------|
 | Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
+
+---
+
+## 13. FitAI - Morning Briefing
+
+### Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Nombre en n8n** | `FitAI - Morning Briefing` |
+| **Trigger** | Cron: `*/30 5-9 * * *` (cada 30 min de 5am a 9:30am) |
+| **Propósito** | Enviar al usuario su plan del día, meta calórica y un mensaje motivacional contextual. Es la primera interacción del día. |
+| **Activación** | Siempre activo (cron automático) |
+
+### Descripción del Propósito
+
+Este workflow se ejecuta cada 30 minutos durante la ventana típica de despertar (5am–9:30am). En cada ejecución, busca usuarios cuyo `wake_up_time` coincide con la ventana actual (±15 min) y que aún no han recibido su briefing de hoy. Les envía su plan de comidas del día con la meta calórica y de proteína. Usa `conversation_logs.message_type = 'morning_briefing'` para deduplicación.
+
+### Nodos en Orden
+
+#### Nodo 1: Cron Trigger
+
+- **Tipo**: Cron
+- **Expresión**: `*/30 5-9 * * *`
+- **Timezone**: `America/Bogota`
+
+#### Nodo 2: Get Users for Current Window (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       up.wake_up_time, up.caloric_target, up.protein_target_g,
+       mp.plan_json, mp.total_calories,
+       g.target_weight, g.start_weight,
+       wl.weight_kg AS current_weight
+FROM users u
+JOIN memberships m ON u.id = m.user_id
+  AND m.status = 'active' AND m.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id
+  AND up.onboarding_completed = true
+LEFT JOIN meal_plans mp ON u.id = mp.user_id
+  AND mp.plan_date = CURRENT_DATE AND mp.is_active = true
+LEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true
+LEFT JOIN LATERAL (
+  SELECT weight_kg FROM weight_logs
+  WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1
+) wl ON true
+WHERE u.is_active = true
+  -- Ventana de wake_up_time: hora actual ± 15 min
+  AND ABS(
+    EXTRACT(EPOCH FROM (up.wake_up_time::time - LOCALTIME)) / 60
+  ) <= 15
+  -- No ha recibido briefing hoy
+  AND NOT EXISTS (
+    SELECT 1 FROM conversation_logs cl
+    WHERE cl.user_id = u.id
+      AND cl.message_type = 'morning_briefing'
+      AND cl.created_at::date = CURRENT_DATE
+  );
+```
+
+#### Nodo 3: Has Users? (IF)
+
+- **Tipo**: IF
+- **Condición**: el resultado tiene al menos una fila
+- **Rama false**: FIN
+
+#### Nodo 4: Build Briefing Message (Code)
+
+- **Tipo**: Code (JavaScript)
+- **Modo**: Run Once for Each Item
+
+```javascript
+const plan = $json.plan_json
+  ? (typeof $json.plan_json === 'string' ? JSON.parse($json.plan_json) : $json.plan_json)
+  : null;
+
+const firstName = $json.first_name;
+const caloricTarget = $json.caloric_target;
+const proteinTarget = $json.protein_target_g;
+
+// Formatear comidas del día
+let mealsText = '';
+if (plan?.meals) {
+  for (const meal of plan.meals) {
+    mealsText += `${meal.meal_label} (${meal.time}): ${meal.name} — *${meal.calories} kcal*\n`;
+  }
+}
+
+// Mensaje motivacional contextual
+const currentWeight = $json.current_weight;
+const targetWeight = $json.target_weight;
+const startWeight = $json.start_weight;
+let motivation = '';
+
+if (currentWeight && targetWeight && startWeight) {
+  const totalToChange = Math.abs(startWeight - targetWeight);
+  const changed = Math.abs(startWeight - currentWeight);
+  const pct = totalToChange > 0 ? Math.round((changed / totalToChange) * 100) : 0;
+
+  if (pct >= 75) motivation = 'Ya llevas más del 75% de tu meta. ¡La recta final!';
+  else if (pct >= 50) motivation = 'Más de la mitad del camino recorrido. Sigue así.';
+  else if (pct >= 25) motivation = 'Un cuarto de tu meta completado. Cada día cuenta.';
+}
+
+// Saludo variado
+const greetings = [
+  `Buenos días, ${firstName}!`,
+  `Buen día, ${firstName}!`,
+  `Hey ${firstName}, ¡arrancamos el día!`,
+  `${firstName}, aquí está tu plan de hoy:`,
+  `¡Buenos días! ¿Listo para hoy, ${firstName}?`
+];
+const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+let message = `${greeting}\n\n`;
+
+if (mealsText) {
+  message += `${mealsText}\nMeta del día: *${caloricTarget} kcal* | *${proteinTarget}g proteína*`;
+} else {
+  message += `Hoy no tienes plan de comidas generado. Escríbeme y te armo uno rápido.`;
+}
+
+if (motivation) {
+  message += `\n\n${motivation}`;
+}
+
+return [{
+  json: {
+    telegramId: $json.telegram_id,
+    userId: $json.user_id,
+    message
+  }
+}];
+```
+
+#### Nodo 5: Send Briefing (Telegram)
+
+- **Tipo**: Telegram - Send Message
+- **Chat ID**: `{{ $json.telegramId }}`
+- **Texto**: `{{ $json.message }}`
+- **Parse Mode**: Markdown
+- **Credencial**: `FitAI Telegram Bot`
+
+#### Nodo 6: Log Briefing Sent (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
+
+```sql
+INSERT INTO conversation_logs (user_id, message_type, assistant_response, created_at)
+VALUES ($1, 'morning_briefing', $2, NOW());
+```
+
+- **Parámetros**: `$1` = `userId`, `$2` = `message`
+
+### Lógica de Ramificación
+
+```
+Cron (cada 30 min, 5am-9:30am)
+  → Get Users for Current Window (PostgreSQL)
+    → Has Users? (IF)
+        ├─ false → FIN
+        └─ true → [Para cada usuario]:
+              Build Briefing Message (Code)
+                → Send Briefing (Telegram)
+                  → Log Briefing Sent (PostgreSQL)
+```
+
+### Manejo de Errores
+
+- **Sin plan para hoy** (`LEFT JOIN mp = NULL`): el mensaje le dice al usuario que no tiene plan y le sugiere escribir.
+- **Telegram 403** (bot bloqueado): log + continúa con siguientes. `continueOnFail: true` en nodo 5.
+- **Batching**: 50ms entre mensajes.
+
+### Variables de Entorno y Credenciales
+
+| Tipo | Nombre | Propósito |
+|------|--------|-----------|
+| Credencial n8n | `FitAI Telegram Bot` | Token del bot de Telegram |
+| Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
+
+---
+
+## 14. FitAI - Evening Check-in
+
+### Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Nombre en n8n** | `FitAI - Evening Check-in` |
+| **Trigger** | Cron: `0 20-22 * * *` (cada hora de 8pm a 10pm) |
+| **Propósito** | Cerrar el día con el usuario: resumir lo que comió, mostrar balance final, preguntar cómo le fue. |
+| **Activación** | Siempre activo (cron automático) |
+
+### Descripción del Propósito
+
+Al final del día, el asistente le escribe al usuario para hacer un cierre. Muestra el resumen de lo que comió, cuántas calorías/proteína consumió vs la meta, y le pregunta cómo le fue. Si el usuario no reportó nada en el día, le pregunta amablemente qué pasó. La hora exacta de envío (8pm, 9pm o 10pm) se determina según el `wake_up_time` del usuario.
+
+### Nodos en Orden
+
+#### Nodo 1: Cron Trigger
+
+- **Tipo**: Cron
+- **Expresión**: `0 20-22 * * *`
+- **Timezone**: `America/Bogota`
+- Se ejecuta a las 8pm, 9pm y 10pm. Cada ejecución busca usuarios cuya ventana de check-in coincide.
+
+#### Nodo 2: Get Users for Check-in (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       up.caloric_target, up.protein_target_g, up.wake_up_time,
+       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,
+       dt.plan_adherence_pct
+FROM users u
+JOIN memberships m ON u.id = m.user_id
+  AND m.status = 'active' AND m.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id
+  AND up.onboarding_completed = true
+LEFT JOIN daily_targets dt ON u.id = dt.user_id
+  AND dt.target_date = CURRENT_DATE
+WHERE u.is_active = true
+  -- Ventana de check-in: 2 horas antes de dormir estimado
+  AND EXTRACT(HOUR FROM LOCALTIME) =
+    CASE
+      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 6 THEN 20  -- madrugador → 8pm
+      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 8 THEN 21  -- normal → 9pm
+      ELSE 22  -- tardío → 10pm
+    END
+  -- No ha recibido check-in hoy
+  AND NOT EXISTS (
+    SELECT 1 FROM conversation_logs cl
+    WHERE cl.user_id = u.id
+      AND cl.message_type = 'evening_checkin'
+      AND cl.created_at::date = CURRENT_DATE
+  );
+```
+
+#### Nodo 3: Has Users? (IF)
+
+- **Tipo**: IF
+- **Condición**: el resultado tiene al menos una fila
+- **Rama false**: FIN
+
+#### Nodo 4: Build Check-in Message (Code)
+
+- **Tipo**: Code (JavaScript)
+- **Modo**: Run Once for Each Item
+
+```javascript
+const firstName = $json.first_name;
+const caloriesConsumed = $json.calories_consumed || 0;
+const proteinConsumed = $json.protein_consumed_g || 0;
+const caloricTarget = $json.caloric_target;
+const proteinTarget = $json.protein_target_g;
+const mealsLogged = $json.meals_logged || 0;
+
+let message = '';
+
+if (mealsLogged === 0) {
+  const phrases = [
+    `Oye ${firstName}, ¿cómo te fue hoy? No me reportaste nada y quería saber si todo está bien.`,
+    `${firstName}, ¿qué tal tu día? No alcanzo a ver qué comiste hoy. Si se te complicó el plan, no pasa nada — mañana retomamos.`,
+    `Hey ${firstName}, ¿cómo estuvo el día? Si comiste fuera de plan o se te fue el tiempo, está bien. Solo cuéntame cómo te fue.`
+  ];
+  message = phrases[Math.floor(Math.random() * phrases.length)];
+} else {
+  const caloriePct = Math.round((caloriesConsumed / caloricTarget) * 100);
+  const proteinPct = Math.round((proteinConsumed / proteinTarget) * 100);
+
+  let assessment = '';
+  if (caloriePct >= 85 && caloriePct <= 115 && proteinPct >= 80) {
+    assessment = 'Día sólido, cumpliste la meta.';
+  } else if (caloriePct < 85) {
+    assessment = 'Te faltaron calorías hoy. Intenta no saltarte comidas mañana.';
+  } else if (caloriePct > 115) {
+    assessment = 'Hoy te pasaste un poco de calorías. No pasa nada, mañana compensamos ligeramente.';
+  } else if (proteinPct < 80) {
+    assessment = 'Te faltó proteína hoy. Intenta incluir más pollo, huevos o legumbres mañana.';
+  }
+
+  message = `${firstName}, resumen del día:
+
+Calorías: *${caloriesConsumed} de ${caloricTarget} kcal* (${caloriePct}%)
+Proteína: *${proteinConsumed} de ${proteinTarget}g* (${proteinPct}%)
+Comidas reportadas: ${mealsLogged}
+
+${assessment} Descansa bien, mañana te mando el plan temprano.`;
+}
+
+return [{
+  json: {
+    telegramId: $json.telegram_id,
+    userId: $json.user_id,
+    message
+  }
+}];
+```
+
+#### Nodo 5: Send Check-in (Telegram)
+
+- **Tipo**: Telegram - Send Message
+- **Chat ID**: `{{ $json.telegramId }}`
+- **Texto**: `{{ $json.message }}`
+- **Parse Mode**: Markdown
+- **Credencial**: `FitAI Telegram Bot`
+
+#### Nodo 6: Log Check-in (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
+
+```sql
+INSERT INTO conversation_logs (user_id, message_type, assistant_response, created_at)
+VALUES ($1, 'evening_checkin', $2, NOW());
+```
+
+- **Parámetros**: `$1` = `userId`, `$2` = `message`
+
+### Lógica de Ramificación
+
+```
+Cron (8pm, 9pm, 10pm)
+  → Get Users for Check-in (PostgreSQL)
+    → Has Users? (IF)
+        ├─ false → FIN
+        └─ true → [Para cada usuario]:
+              Build Check-in Message (Code)
+                → Send Check-in (Telegram)
+                  → Log Check-in (PostgreSQL)
+```
+
+### Manejo de Errores
+
+- **Sin datos de `daily_targets`** (`LEFT JOIN dt = NULL`): `mealsLogged = 0`, se envía el mensaje de "no reportaste nada hoy".
+- **Telegram 403**: log + continúa. `continueOnFail: true` en nodo 5.
+- **Batching**: 50ms entre mensajes.
+
+### Variables de Entorno y Credenciales
+
+| Tipo | Nombre | Propósito |
+|------|--------|-----------|
+| Credencial n8n | `FitAI Telegram Bot` | Token del bot de Telegram |
+| Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
+
+---
+
+## 15. FitAI - Weekly Report
+
+### Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Nombre en n8n** | `FitAI - Weekly Report` |
+| **Trigger** | Cron: `0 10 * * 0` (domingos a las 10am) |
+| **Propósito** | Enviar un resumen semanal completo con métricas de peso, calorías, proteína, adherencia y proyección de meta. |
+| **Activación** | Siempre activo (cron automático) |
+
+### Descripción del Propósito
+
+Cada domingo a las 10am, este workflow genera y envía a cada usuario activo un informe semanal completo. Incluye: cambio de peso vs semana anterior, progreso hacia la meta con proyección de semanas restantes, promedios semanales de calorías/proteína, días de tracking, y sesiones de ejercicio completadas. Los datos se obtienen con `LATERAL JOINs` para minimizar queries.
+
+### Nodos en Orden
+
+#### Nodo 1: Cron Trigger
+
+- **Tipo**: Cron
+- **Expresión**: `0 10 * * 0` (domingo 10am)
+- **Timezone**: `America/Bogota`
+
+#### Nodo 2: Get Active Users with Weekly Data (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       up.caloric_target, up.protein_target_g, up.height_cm, up.gender, up.age,
+       g.goal_type, g.target_weight, g.start_weight, g.start_date,
+       w_current.weight_kg AS current_weight,
+       w_current.logged_at AS current_weight_date,
+       w_prev.weight_kg AS previous_weight,
+       weekly.avg_calories, weekly.avg_protein, weekly.days_tracked,
+       weekly.avg_adherence,
+       workouts.completed AS workouts_completed,
+       up.training_days_per_week
+FROM users u
+JOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true
+LEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true
+-- Peso más reciente
+LEFT JOIN LATERAL (
+  SELECT weight_kg, logged_at FROM weight_logs
+  WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1
+) w_current ON true
+-- Peso de hace ~1 semana
+LEFT JOIN LATERAL (
+  SELECT weight_kg FROM weight_logs
+  WHERE user_id = u.id AND logged_at < CURRENT_DATE - INTERVAL '5 days'
+  ORDER BY logged_at DESC LIMIT 1
+) w_prev ON true
+-- Promedios semanales de daily_targets
+LEFT JOIN LATERAL (
+  SELECT
+    ROUND(AVG(calories_consumed)) AS avg_calories,
+    ROUND(AVG(protein_consumed_g)) AS avg_protein,
+    COUNT(*) FILTER (WHERE meals_logged > 0) AS days_tracked,
+    ROUND(AVG(plan_adherence_pct)) AS avg_adherence
+  FROM daily_targets
+  WHERE user_id = u.id
+    AND target_date >= CURRENT_DATE - INTERVAL '7 days'
+    AND target_date < CURRENT_DATE
+) weekly ON true
+-- Ejercicios completados (via conversation_logs)
+LEFT JOIN LATERAL (
+  SELECT COUNT(*) AS completed FROM conversation_logs
+  WHERE user_id = u.id
+    AND message_type = 'workout_completed'
+    AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+) workouts ON true
+WHERE u.is_active = true;
+```
+
+#### Nodo 3: Has Users? (IF)
+
+- **Tipo**: IF
+- **Condición**: el resultado tiene al menos una fila
+- **Rama false**: FIN
+
+#### Nodo 4: Build Weekly Report (Code)
+
+- **Tipo**: Code (JavaScript)
+- **Modo**: Run Once for Each Item
+
+```javascript
+const d = $json;
+const firstName = d.first_name;
+
+const currentWeight = d.current_weight;
+const previousWeight = d.previous_weight;
+const startWeight = d.start_weight;
+const targetWeight = d.target_weight;
+
+let weightSection = '';
+if (currentWeight && previousWeight) {
+  const weeklyChange = Math.round((currentWeight - previousWeight) * 10) / 10;
+  const direction = weeklyChange < 0 ? 'bajaste' : weeklyChange > 0 ? 'subiste' : 'te mantuviste en';
+  const changeAbs = Math.abs(weeklyChange);
+  weightSection = `Peso: *${currentWeight} kg* (${direction} *${changeAbs} kg* esta semana)`;
+
+  if (startWeight) {
+    const totalChange = Math.round((currentWeight - startWeight) * 10) / 10;
+    weightSection += `\nDesde el inicio: *${totalChange > 0 ? '+' : ''}${totalChange} kg*`;
+  }
+} else if (currentWeight) {
+  weightSection = `Peso actual: *${currentWeight} kg* (no tengo dato de la semana pasada)`;
+} else {
+  weightSection = `No me reportaste peso esta semana. ¡Pésate mañana en ayunas!`;
+}
+
+let goalSection = '';
+if (currentWeight && targetWeight && startWeight) {
+  const totalToChange = Math.abs(startWeight - targetWeight);
+  const changed = Math.abs(startWeight - currentWeight);
+  const pct = totalToChange > 0 ? Math.round((changed / totalToChange) * 100) : 0;
+  const remaining = Math.round(Math.abs(currentWeight - targetWeight) * 10) / 10;
+
+  goalSection = `Meta: *${pct}% completada* (faltan *${remaining} kg*)`;
+
+  if (previousWeight && currentWeight !== previousWeight) {
+    const weeklyRate = Math.abs(currentWeight - previousWeight);
+    if (weeklyRate > 0.1) {
+      const weeksRemaining = Math.ceil(remaining / weeklyRate);
+      goalSection += ` — a este ritmo, ~*${weeksRemaining} semanas* más`;
+    }
+  }
+}
+
+let nutritionSection = '';
+if (d.avg_calories && d.days_tracked > 0) {
+  nutritionSection = `Calorías promedio: *${d.avg_calories} kcal/día* (meta: ${d.caloric_target})`;
+  nutritionSection += `\nProteína promedio: *${d.avg_protein}g/día* (meta: ${d.protein_target_g})`;
+  nutritionSection += `\nDías registrados: ${d.days_tracked} de 7`;
+  if (d.avg_adherence) {
+    nutritionSection += `\nAdherencia: *${d.avg_adherence}%*`;
+  }
+} else {
+  nutritionSection = `No tengo datos de nutrición de esta semana. Recuerda reportarme lo que comes cada día.`;
+}
+
+let exerciseSection = '';
+const workoutsTarget = d.training_days_per_week || 0;
+const workoutsCompleted = d.workouts_completed || 0;
+if (workoutsTarget > 0) {
+  exerciseSection = `Ejercicio: *${workoutsCompleted} de ${workoutsTarget} sesiones*`;
+}
+
+let bmiSection = '';
+if (currentWeight && d.height_cm) {
+  const heightM = d.height_cm / 100;
+  const bmi = Math.round((currentWeight / (heightM * heightM)) * 10) / 10;
+  bmiSection = `IMC: *${bmi}*`;
+}
+
+let message = `${firstName}, tu resumen de la semana:\n\n`;
+message += weightSection + '\n';
+if (goalSection) message += goalSection + '\n';
+message += '\n' + nutritionSection + '\n';
+if (exerciseSection) message += '\n' + exerciseSection + '\n';
+if (bmiSection) message += bmiSection + '\n';
+
+if (d.avg_calories && Math.abs(d.avg_calories - d.caloric_target) <= 100 && currentWeight && previousWeight) {
+  const goingRight = (d.goal_type === 'lose_fat' && currentWeight <= previousWeight) ||
+                     (d.goal_type === 'gain_muscle' && currentWeight >= previousWeight);
+  if (goingRight) {
+    message += '\nBuena semana. Los números dicen que vas en la dirección correcta.';
+  }
+}
+
+message += '\n\nEsta semana vamos por más. Tu plan de mañana te lo mando temprano.';
+
+return [{
+  json: {
+    telegramId: d.telegram_id,
+    userId: d.user_id,
+    message
+  }
+}];
+```
+
+#### Nodo 5: Send Report (Telegram)
+
+- **Tipo**: Telegram - Send Message
+- **Chat ID**: `{{ $json.telegramId }}`
+- **Texto**: `{{ $json.message }}`
+- **Parse Mode**: Markdown
+- **Credencial**: `FitAI Telegram Bot`
+
+#### Nodo 6: Log Report (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
+
+```sql
+INSERT INTO conversation_logs (user_id, message_type, assistant_response, created_at)
+VALUES ($1, 'weekly_report', $2, NOW());
+```
+
+- **Parámetros**: `$1` = `userId`, `$2` = `message`
+
+### Lógica de Ramificación
+
+```
+Cron (domingo 10am)
+  → Get Active Users with Weekly Data (PostgreSQL)  ← LATERAL JOINs para w_current, w_prev, weekly, workouts
+    → Has Users? (IF)
+        ├─ false → FIN
+        └─ true → [Para cada usuario]:
+              Build Weekly Report (Code)
+                → Send Report (Telegram)
+                  → Log Report (PostgreSQL)
+```
+
+### Manejo de Errores
+
+- **Sin datos de peso**: `w_current` y `w_prev` son `LEFT JOIN LATERAL` → retornan `NULL`. El código maneja el caso.
+- **Sin tracking semanal**: `weekly` retorna `NULL` → mensaje alternativo.
+- **Telegram 403**: log + continúa. `continueOnFail: true` en nodo 5.
+
+### Variables de Entorno y Credenciales
+
+| Tipo | Nombre | Propósito |
+|------|--------|-----------|
+| Credencial n8n | `FitAI Telegram Bot` | Token del bot de Telegram |
+| Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
+
+---
+
+## 16. FitAI - Silence Detector
+
+### Información General
+
+| Campo | Valor |
+|-------|-------|
+| **Nombre en n8n** | `FitAI - Silence Detector` |
+| **Trigger** | Cron: `0 18 * * *` (6pm diario) |
+| **Propósito** | Detectar usuarios que llevan 24+ horas sin interactuar y enviarles un mensaje casual para reactivarlos. |
+| **Activación** | Siempre activo (cron automático) |
+
+### Descripción del Propósito
+
+Si un usuario no ha enviado ningún mensaje ni reportado comida en 24+ horas, es señal de que puede estar perdiendo adherencia. El asistente le escribe un mensaje breve y casual — no un recordatorio formal, sino un "oye, ¿cómo andas?". Solo se actúa en la ventana 24h–72h; después de 72h de silencio, se deja de insistir.
+
+### Nodos en Orden
+
+#### Nodo 1: Cron Trigger
+
+- **Tipo**: Cron
+- **Expresión**: `0 18 * * *`
+- **Timezone**: `America/Bogota`
+
+#### Nodo 2: Get Silent Users (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
+
+```sql
+SELECT u.id AS user_id, u.telegram_id, u.first_name,
+       last_interaction.last_at,
+       EXTRACT(EPOCH FROM (NOW() - last_interaction.last_at)) / 3600 AS hours_silent
+FROM users u
+JOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()
+JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true
+CROSS JOIN LATERAL (
+  SELECT MAX(created_at) AS last_at
+  FROM conversation_logs
+  WHERE user_id = u.id
+) last_interaction
+WHERE u.is_active = true
+  -- 24+ horas sin interacción
+  AND last_interaction.last_at < NOW() - INTERVAL '24 hours'
+  -- Pero no más de 72 horas
+  AND last_interaction.last_at > NOW() - INTERVAL '72 hours'
+  -- No se le envió silence_check hoy
+  AND NOT EXISTS (
+    SELECT 1 FROM conversation_logs cl
+    WHERE cl.user_id = u.id
+      AND cl.message_type = 'silence_check'
+      AND cl.created_at::date = CURRENT_DATE
+  );
+```
+
+**Lógica**: solo usuarios entre 24h y 72h de silencio. Si llevan más de 72h, no insistir.
+
+#### Nodo 3: Has Users? (IF)
+
+- **Tipo**: IF
+- **Condición**: el resultado tiene al menos una fila
+- **Rama false**: FIN
+
+#### Nodo 4: Build Silence Message (Code)
+
+- **Tipo**: Code (JavaScript)
+- **Modo**: Run Once for Each Item
+
+```javascript
+const firstName = $json.first_name;
+const hoursSilent = Math.round($json.hours_silent);
+
+const messages = [
+  `Oye ${firstName}, ¿todo bien? Llevas un rato sin reportar y quería ver cómo vas.`,
+  `${firstName}, ¿cómo andas? Si se te complicó el plan ayer no pasa nada, pero cuéntame para ajustar.`,
+  `Hey ${firstName}, solo quería saber cómo estás. Si necesitas cambiar algo del plan, dime.`,
+  `${firstName}, aquí estoy pendiente. Cualquier cosa que necesites, escríbeme.`
+];
+
+const message = messages[Math.floor(Math.random() * messages.length)];
+
+return [{
+  json: {
+    telegramId: $json.telegram_id,
+    userId: $json.user_id,
+    message
+  }
+}];
+```
+
+#### Nodo 5: Send Message (Telegram)
+
+- **Tipo**: Telegram - Send Message
+- **Chat ID**: `{{ $json.telegramId }}`
+- **Texto**: `{{ $json.message }}`
+- **Parse Mode**: Markdown
+- **Credencial**: `FitAI Telegram Bot`
+
+#### Nodo 6: Log Silence Check (PostgreSQL)
+
+- **Tipo**: PostgreSQL - Execute Query
+- **Credencial**: `FitAI PostgreSQL`
+- **Query**:
+
+```sql
+INSERT INTO conversation_logs (user_id, message_type, assistant_response, created_at)
+VALUES ($1, 'silence_check', $2, NOW());
+```
+
+- **Parámetros**: `$1` = `userId`, `$2` = `message`
+
+### Lógica de Ramificación
+
+```
+Cron (6pm diario)
+  → Get Silent Users (24-72h sin interacción) (PostgreSQL)
+    → Has Users? (IF)
+        ├─ false → FIN
+        └─ true → [Para cada usuario]:
+              Build Silence Message (Code)
+                → Send Message (Telegram)
+                  → Log Silence Check (PostgreSQL)
+```
+
+### Manejo de Errores
+
+- **Solo 1 silence check por usuario por día**: dedup via `conversation_logs.message_type = 'silence_check'`.
+- **Máximo 1 por período de silencio**: ventana 24h–72h garantiza que no se insiste después.
+- **Telegram 403**: log + continúa. `continueOnFail: true` en nodo 5.
+
+### Variables de Entorno y Credenciales
+
+| Tipo | Nombre | Propósito |
+|------|--------|-----------|
+| Credencial n8n | `FitAI Telegram Bot` | Token del bot de Telegram |
+| Credencial n8n | `FitAI PostgreSQL` | Conexión a PostgreSQL |
+
+---
+
+## Cronología de un Día Típico
+
+```
+05:00-09:30  Morning Briefing (cron cada 30 min — envía según wake_up_time)
+07:00-21:00  Meal Reminder v2 (cron cada 15 min — envía según horario del plan)
+18:00        Silence Detector (detecta usuarios 24-72h sin actividad)
+20:00-22:00  Evening Check-in (cron cada hora — envía según wake_up_time)
+21:00        Daily Plan Generator Cron (genera plan de mañana)
+
+Domingo adicional:
+10:00        Weekly Report
+```
+
+### Deduplicación via `conversation_logs.message_type`
+
+Todos los workflows proactivos usan `conversation_logs.message_type` para evitar duplicados:
+
+| `message_type` | Workflow |
+|---|---|
+| `morning_briefing` | FitAI - Morning Briefing |
+| `meal_reminder` | FitAI - Meal Reminder Scheduler |
+| `evening_checkin` | FitAI - Evening Check-in |
+| `weekly_report` | FitAI - Weekly Report |
+| `silence_check` | FitAI - Silence Detector |
+| `workout_completed` | Usado por AI Agent al confirmar sesión de ejercicio |

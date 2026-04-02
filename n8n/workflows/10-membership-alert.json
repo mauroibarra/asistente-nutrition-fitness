@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-28T16:47:26.037Z",
+  "updatedAt": "2026-03-30T16:26:46.184Z",
   "createdAt": "2026-03-27T16:34:21.840Z",
   "id": "I4Q4C6SOPY2fnK3W",
   "name": "FitAI - Membership Alert",
@@ -133,9 +133,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "c81f8d9f-194a-4f81-a245-a86d6af1af31",
-  "activeVersionId": "c81f8d9f-194a-4f81-a245-a86d6af1af31",
-  "versionCounter": 36,
+  "versionId": "12fb78d5-10df-47a7-82ae-b6024141ef07",
+  "activeVersionId": "12fb78d5-10df-47a7-82ae-b6024141ef07",
+  "versionCounter": 41,
   "triggerCount": 1,
   "shared": [
     {
@@ -158,9 +158,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-28T16:47:26.038Z",
-    "createdAt": "2026-03-28T16:47:26.038Z",
-    "versionId": "c81f8d9f-194a-4f81-a245-a86d6af1af31",
+    "updatedAt": "2026-03-30T16:26:46.192Z",
+    "createdAt": "2026-03-30T16:26:46.192Z",
+    "versionId": "12fb78d5-10df-47a7-82ae-b6024141ef07",
     "workflowId": "I4Q4C6SOPY2fnK3W",
     "nodes": [
       {
@@ -221,7 +221,9 @@
         "parameters": {
           "chatId": "={{ $json.telegramId }}",
           "text": "={{ '⚠️ Hola ' + $json.firstName + ', tu membresía ' + $json.planType + ' vence en ' + $json.daysLeft + ' día(s) (' + $json.expiresAt + '). Para renovar, contacta al administrador.' }}",
-          "additionalFields": {}
+          "additionalFields": {
+            "appendAttribution": false
+          }
         },
         "id": "node-w10-5",
         "name": "Send Expiry Alert",
@@ -281,10 +283,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-28T16:47:27.092Z",
-        "id": 139,
+        "createdAt": "2026-03-30T16:26:46.804Z",
+        "id": 170,
         "workflowId": "I4Q4C6SOPY2fnK3W",
-        "versionId": "c81f8d9f-194a-4f81-a245-a86d6af1af31",
+        "versionId": "12fb78d5-10df-47a7-82ae-b6024141ef07",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

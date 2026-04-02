@@ -460,3 +460,35 @@ Se diseñó `phone_pending` dos veces (flag + derivado) con fallos en ambas iter
 - **Fallo 2:** Al completar el perfil siempre se pedía el teléfono, ignorando que el usuario podría ya tenerlo
 
 La solución final usa `profile_saved` (derivado de `goal IS NOT NULL`) + `phone_provided` (derivado de `phone_number != ''`) con todos los caminos validados explícitamente.
+
+---
+
+## 13. Timezone bug: `CURRENT_DATE AT TIME ZONE` en DB con UTC
+
+**Síntoma:** Un INSERT con `target_date = (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day'` guarda la fecha de *hoy* en lugar de mañana.
+
+**Causa:** Cuando la DB corre en UTC, `CURRENT_DATE AT TIME ZONE 'America/Bogota'` convierte la medianoche UTC (`2026-04-01 00:00:00 UTC`) a la hora local en Bogota (`2026-03-31 19:00:00`) y devuelve ese valor como `timestamp without time zone`. Al sumar `1 day` se obtiene `2026-04-01 19:00:00`, que al castear a `DATE` da `2026-04-01` (hoy).
+
+**Fix:** Para calcular la fecha de mañana en SQL, usar siempre:
+```sql
+CURRENT_DATE + 1
+```
+No usar `AT TIME ZONE` para aritmética de fechas relativas. El AT TIME ZONE solo es útil para convertir timestamps a string en una zona horaria específica.
+
+**Dónde se encontró:** `Create Tomorrow Daily Targets` en `FitAI - Daily Plan Generator Cron` (workflow `xILhDSQy0ZP40jjt`).
+
+---
+
+## 14. `conversation_logs.message_text` es NOT NULL
+
+**Síntoma:** `INSERT INTO conversation_logs (user_id, message_type, assistant_response, ...)` falla con `null value in column "message_text" violates not-null constraint`.
+
+**Causa:** La tabla tiene `message_text TEXT NOT NULL`. Es el campo del mensaje del usuario. Los workflows proactivos no tienen mensaje de usuario, así que hay que pasarle un placeholder.
+
+**Fix:** En todos los INSERTs proactivos incluir `message_text = '[proactive]'`:
+```sql
+INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at)
+VALUES ($1, 'meal_reminder', '[proactive]', $2, NOW());
+```
+
+**Aplica a:** Todos los workflows proactivos (meal_reminder, morning_briefing, evening_checkin, weekly_report, silence_check, etc.).

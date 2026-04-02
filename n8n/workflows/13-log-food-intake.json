@@ -1,0 +1,323 @@
+{
+  "updatedAt": "2026-04-01T19:51:38.036Z",
+  "createdAt": "2026-04-01T19:51:38.036Z",
+  "id": "DQsnzXQWMSqJxigL",
+  "name": "FitAI - Log Food Intake",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "lf-01",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "lf-02",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Parse the JSON query sent by the AI Agent\nconst input = $('Execute Workflow Trigger').first().json;\nconst userId = input.userId;\nconst chatId = input.chatId;\n\n// The AI Agent sends food data as JSON string in 'query' field\nlet parsed = {};\ntry {\n  parsed = typeof input.query === 'string' ? JSON.parse(input.query) : input.query;\n} catch(e) {\n  // Fallback: try to extract from raw query string\n  parsed = { food_name: input.query || 'Alimento', meal_type: 'snack', calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };\n}\n\nreturn [{\n  json: {\n    userId,\n    chatId,\n    meal_type: parsed.meal_type || 'snack',\n    description: parsed.food_name || parsed.description || 'Alimento',\n    estimated_calories: parseInt(parsed.calories || parsed.estimated_calories || 0),\n    estimated_protein_g: parseFloat(parsed.protein_g || parsed.estimated_protein_g || 0),\n    estimated_carbs_g: parseFloat(parsed.carbs_g || parsed.estimated_carbs_g || 0),\n    estimated_fat_g: parseFloat(parsed.fat_g || parsed.estimated_fat_g || 0)\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "lf-03",
+      "name": "Insert Food Log",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO daily_intake_logs (\n  user_id, log_date, meal_type, description,\n  estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g\n)\nVALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7)\nRETURNING id, log_date, meal_type, description AS food_name, estimated_calories, estimated_protein_g;",
+        "options": {
+          "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.meal_type, $('Parse Input').first().json.description, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
+        }
+      }
+    },
+    {
+      "id": "lf-04",
+      "name": "Upsert Daily Targets",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,\n  meals_logged\n)\nSELECT\n  $1, CURRENT_DATE,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  $2, $3, $4, $5,\n  1\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO UPDATE SET\n  calories_consumed  = daily_targets.calories_consumed  + EXCLUDED.calories_consumed,\n  protein_consumed_g = daily_targets.protein_consumed_g + EXCLUDED.protein_consumed_g,\n  carbs_consumed_g   = daily_targets.carbs_consumed_g   + EXCLUDED.carbs_consumed_g,\n  fat_consumed_g     = daily_targets.fat_consumed_g     + EXCLUDED.fat_consumed_g,\n  meals_logged       = daily_targets.meals_logged + 1,\n  updated_at         = NOW()\nRETURNING\n  calories_consumed, protein_consumed_g,\n  caloric_target, protein_target_g;",
+        "options": {
+          "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
+        }
+      }
+    },
+    {
+      "id": "lf-05",
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const targets = $('Upsert Daily Targets').first().json;\nconst log = $('Insert Food Log').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    registro: {\n      meal_type: log.meal_type,\n      calorias: log.estimated_calories,\n      proteina_g: log.estimated_protein_g,\n      descripcion: log.food_name,\n      fecha: log.log_date\n    },\n    balance_dia: {\n      calorias_consumidas: targets.calories_consumed,\n      calorias_meta: targets.caloric_target,\n      calorias_restantes: targets.caloric_target - targets.calories_consumed,\n      proteina_consumida_g: targets.protein_consumed_g,\n      proteina_meta_g: targets.protein_target_g,\n      proteina_restante_g: targets.protein_target_g - targets.protein_consumed_g\n    }\n  }\n}];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Insert Food Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Food Log": {
+      "main": [
+        [
+          {
+            "node": "Upsert Daily Targets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Daily Targets": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "5eb968d5-c9af-4f17-87ec-a893d51f13ff",
+  "activeVersionId": "5eb968d5-c9af-4f17-87ec-a893d51f13ff",
+  "versionCounter": 3,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-01T19:51:38.042Z",
+      "createdAt": "2026-04-01T19:51:38.042Z",
+      "role": "workflow:owner",
+      "workflowId": "DQsnzXQWMSqJxigL",
+      "projectId": "GE3JULxyP9D4KS9G",
+      "project": {
+        "updatedAt": "2026-03-12T16:58:26.122Z",
+        "createdAt": "2026-03-12T15:02:21.486Z",
+        "id": "GE3JULxyP9D4KS9G",
+        "name": "Mauro Ibarra  <leandro.147.mi@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-01T19:51:38.048Z",
+    "createdAt": "2026-04-01T19:51:38.048Z",
+    "versionId": "5eb968d5-c9af-4f17-87ec-a893d51f13ff",
+    "workflowId": "DQsnzXQWMSqJxigL",
+    "nodes": [
+      {
+        "id": "lf-01",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          300
+        ],
+        "parameters": {}
+      },
+      {
+        "id": "lf-02",
+        "name": "Parse Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          300
+        ],
+        "parameters": {
+          "jsCode": "// Parse the JSON query sent by the AI Agent\nconst input = $('Execute Workflow Trigger').first().json;\nconst userId = input.userId;\nconst chatId = input.chatId;\n\n// The AI Agent sends food data as JSON string in 'query' field\nlet parsed = {};\ntry {\n  parsed = typeof input.query === 'string' ? JSON.parse(input.query) : input.query;\n} catch(e) {\n  // Fallback: try to extract from raw query string\n  parsed = { food_name: input.query || 'Alimento', meal_type: 'snack', calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 };\n}\n\nreturn [{\n  json: {\n    userId,\n    chatId,\n    meal_type: parsed.meal_type || 'snack',\n    description: parsed.food_name || parsed.description || 'Alimento',\n    estimated_calories: parseInt(parsed.calories || parsed.estimated_calories || 0),\n    estimated_protein_g: parseFloat(parsed.protein_g || parsed.estimated_protein_g || 0),\n    estimated_carbs_g: parseFloat(parsed.carbs_g || parsed.estimated_carbs_g || 0),\n    estimated_fat_g: parseFloat(parsed.fat_g || parsed.estimated_fat_g || 0)\n  }\n}];\n"
+        }
+      },
+      {
+        "id": "lf-03",
+        "name": "Insert Food Log",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          680,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO daily_intake_logs (\n  user_id, log_date, meal_type, description,\n  estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g\n)\nVALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7)\nRETURNING id, log_date, meal_type, description AS food_name, estimated_calories, estimated_protein_g;",
+          "options": {
+            "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.meal_type, $('Parse Input').first().json.description, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
+          }
+        }
+      },
+      {
+        "id": "lf-04",
+        "name": "Upsert Daily Targets",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          900,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,\n  meals_logged\n)\nSELECT\n  $1, CURRENT_DATE,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  $2, $3, $4, $5,\n  1\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO UPDATE SET\n  calories_consumed  = daily_targets.calories_consumed  + EXCLUDED.calories_consumed,\n  protein_consumed_g = daily_targets.protein_consumed_g + EXCLUDED.protein_consumed_g,\n  carbs_consumed_g   = daily_targets.carbs_consumed_g   + EXCLUDED.carbs_consumed_g,\n  fat_consumed_g     = daily_targets.fat_consumed_g     + EXCLUDED.fat_consumed_g,\n  meals_logged       = daily_targets.meals_logged + 1,\n  updated_at         = NOW()\nRETURNING\n  calories_consumed, protein_consumed_g,\n  caloric_target, protein_target_g;",
+          "options": {
+            "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
+          }
+        }
+      },
+      {
+        "id": "lf-05",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const targets = $('Upsert Daily Targets').first().json;\nconst log = $('Insert Food Log').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    registro: {\n      meal_type: log.meal_type,\n      calorias: log.estimated_calories,\n      proteina_g: log.estimated_protein_g,\n      descripcion: log.food_name,\n      fecha: log.log_date\n    },\n    balance_dia: {\n      calorias_consumidas: targets.calories_consumed,\n      calorias_meta: targets.caloric_target,\n      calorias_restantes: targets.caloric_target - targets.calories_consumed,\n      proteina_consumida_g: targets.protein_consumed_g,\n      proteina_meta_g: targets.protein_target_g,\n      proteina_restante_g: targets.protein_target_g - targets.protein_consumed_g\n    }\n  }\n}];\n"
+        }
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Parse Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Input": {
+        "main": [
+          [
+            {
+              "node": "Insert Food Log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Food Log": {
+        "main": [
+          [
+            {
+              "node": "Upsert Daily Targets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Daily Targets": {
+        "main": [
+          [
+            {
+              "node": "Build Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Mauro Ibarra ",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-01T19:51:39.107Z",
+        "id": 256,
+        "workflowId": "DQsnzXQWMSqJxigL",
+        "versionId": "5eb968d5-c9af-4f17-87ec-a893d51f13ff",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      }
+    ]
+  }
+}
