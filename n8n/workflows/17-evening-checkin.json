@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-01T20:46:11.313Z",
+  "updatedAt": "2026-04-02T14:49:24.748Z",
   "createdAt": "2026-04-01T20:41:20.487Z",
   "id": "ErIUGcIkS5Rim65L",
   "name": "FitAI - Evening Check-in",
@@ -46,7 +46,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.wake_up_time,\n       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n       dt.plan_adherence_pct\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE\nWHERE u.is_active = true\n  AND EXTRACT(HOUR FROM LOCALTIME) =\n    CASE\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 6 THEN 20\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 8 THEN 21\n      ELSE 22\n    END\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'evening_checkin' AND cl.created_at::date = CURRENT_DATE\n  );",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.wake_up_time,\n       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n       dt.plan_adherence_pct\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = (NOW() AT TIME ZONE 'America/Bogota')::date\nWHERE u.is_active = true\n  AND EXTRACT(HOUR FROM LOCALTIME) =\n    CASE\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 6 THEN 20\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 8 THEN 21\n      ELSE 22\n    END\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'evening_checkin' AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  );",
         "options": {}
       }
     },
@@ -214,9 +214,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "96750652-1c8d-42a1-b090-6f7182838c2c",
-  "activeVersionId": "96750652-1c8d-42a1-b090-6f7182838c2c",
-  "versionCounter": 8,
+  "versionId": "44aa66c0-c679-465c-9e54-1bd9e4d67b81",
+  "activeVersionId": "44aa66c0-c679-465c-9e54-1bd9e4d67b81",
+  "versionCounter": 13,
   "triggerCount": 1,
   "shared": [
     {
@@ -239,9 +239,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-01T20:46:11.314Z",
-    "createdAt": "2026-04-01T20:46:11.314Z",
-    "versionId": "96750652-1c8d-42a1-b090-6f7182838c2c",
+    "updatedAt": "2026-04-02T14:49:24.749Z",
+    "createdAt": "2026-04-02T14:49:24.749Z",
+    "versionId": "44aa66c0-c679-465c-9e54-1bd9e4d67b81",
     "workflowId": "ErIUGcIkS5Rim65L",
     "nodes": [
       {
@@ -283,7 +283,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.wake_up_time,\n       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n       dt.plan_adherence_pct\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE\nWHERE u.is_active = true\n  AND EXTRACT(HOUR FROM LOCALTIME) =\n    CASE\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 6 THEN 20\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 8 THEN 21\n      ELSE 22\n    END\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'evening_checkin' AND cl.created_at::date = CURRENT_DATE\n  );",
+          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.wake_up_time,\n       dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n       dt.plan_adherence_pct\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = (NOW() AT TIME ZONE 'America/Bogota')::date\nWHERE u.is_active = true\n  AND EXTRACT(HOUR FROM LOCALTIME) =\n    CASE\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 6 THEN 20\n      WHEN EXTRACT(HOUR FROM up.wake_up_time::time) <= 8 THEN 21\n      ELSE 22\n    END\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'evening_checkin' AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  );",
           "options": {}
         }
       },
@@ -444,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-01T20:46:12.364Z",
-        "id": 285,
+        "createdAt": "2026-04-02T14:49:25.365Z",
+        "id": 359,
         "workflowId": "ErIUGcIkS5Rim65L",
-        "versionId": "96750652-1c8d-42a1-b090-6f7182838c2c",
+        "versionId": "44aa66c0-c679-465c-9e54-1bd9e4d67b81",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

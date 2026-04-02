@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-01T20:46:09.689Z",
+  "updatedAt": "2026-04-02T14:49:23.463Z",
   "createdAt": "2026-04-01T20:41:18.858Z",
   "id": "NFhsChTrhIc05uyc",
   "name": "FitAI - Morning Briefing",
@@ -46,7 +46,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.wake_up_time, up.caloric_target, up.protein_target_g,\n       mp.plan_json, mp.total_calories,\n       g.target_weight, g.start_weight,\n       wl.weight_kg AS current_weight\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) wl ON true\nWHERE u.is_active = true\n  AND ABS(EXTRACT(EPOCH FROM (up.wake_up_time::time - LOCALTIME)) / 60) <= 15\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'morning_briefing' AND cl.created_at::date = CURRENT_DATE\n  );",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.wake_up_time, up.caloric_target, up.protein_target_g,\n       mp.plan_json, mp.total_calories,\n       g.target_weight, g.start_weight,\n       wl.weight_kg AS current_weight\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date AND mp.is_active = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) wl ON true\nWHERE u.is_active = true\n  AND ABS(EXTRACT(EPOCH FROM (up.wake_up_time::time - LOCALTIME)) / 60) <= 15\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'morning_briefing' AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  );",
         "options": {}
       }
     },
@@ -214,9 +214,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "5e09d581-5967-4ad2-8b10-a3bddb173cd1",
-  "activeVersionId": "5e09d581-5967-4ad2-8b10-a3bddb173cd1",
-  "versionCounter": 8,
+  "versionId": "607ca4db-fe4d-4f43-912e-893c34a82340",
+  "activeVersionId": "607ca4db-fe4d-4f43-912e-893c34a82340",
+  "versionCounter": 13,
   "triggerCount": 1,
   "shared": [
     {
@@ -239,9 +239,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-01T20:46:09.690Z",
-    "createdAt": "2026-04-01T20:46:09.690Z",
-    "versionId": "5e09d581-5967-4ad2-8b10-a3bddb173cd1",
+    "updatedAt": "2026-04-02T14:49:23.467Z",
+    "createdAt": "2026-04-02T14:49:23.467Z",
+    "versionId": "607ca4db-fe4d-4f43-912e-893c34a82340",
     "workflowId": "NFhsChTrhIc05uyc",
     "nodes": [
       {
@@ -283,7 +283,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.wake_up_time, up.caloric_target, up.protein_target_g,\n       mp.plan_json, mp.total_calories,\n       g.target_weight, g.start_weight,\n       wl.weight_kg AS current_weight\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) wl ON true\nWHERE u.is_active = true\n  AND ABS(EXTRACT(EPOCH FROM (up.wake_up_time::time - LOCALTIME)) / 60) <= 15\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'morning_briefing' AND cl.created_at::date = CURRENT_DATE\n  );",
+          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.wake_up_time, up.caloric_target, up.protein_target_g,\n       mp.plan_json, mp.total_calories,\n       g.target_weight, g.start_weight,\n       wl.weight_kg AS current_weight\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date AND mp.is_active = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) wl ON true\nWHERE u.is_active = true\n  AND ABS(EXTRACT(EPOCH FROM (up.wake_up_time::time - LOCALTIME)) / 60) <= 15\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'morning_briefing' AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  );",
           "options": {}
         }
       },
@@ -444,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-01T20:46:10.727Z",
-        "id": 283,
+        "createdAt": "2026-04-02T14:49:24.116Z",
+        "id": 357,
         "workflowId": "NFhsChTrhIc05uyc",
-        "versionId": "5e09d581-5967-4ad2-8b10-a3bddb173cd1",
+        "versionId": "607ca4db-fe4d-4f43-912e-893c34a82340",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

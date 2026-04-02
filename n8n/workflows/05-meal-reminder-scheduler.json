@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-01T20:46:08.033Z",
+  "updatedAt": "2026-04-02T14:49:25.988Z",
   "createdAt": "2026-03-27T16:33:56.395Z",
   "id": "SntGuE97yl9efvo5",
   "name": "FitAI - Meal Reminder Scheduler",
@@ -47,7 +47,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH user_meals AS (\n  SELECT u.id AS user_id, u.telegram_id, u.first_name,\n         up.caloric_target, up.protein_target_g,\n         mp.plan_json,\n         dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n         m.meal_type, m.meal_name, m.meal_time, m.meal_calories, m.meal_protein\n  FROM users u\n  JOIN memberships mb ON u.id = mb.user_id AND mb.status = 'active' AND mb.expires_at > NOW()\n  JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\n  JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true\n  LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE\n  CROSS JOIN LATERAL jsonb_array_elements(mp.plan_json::jsonb -> 'meals') AS meal_item\n  CROSS JOIN LATERAL (\n    SELECT\n      meal_item ->> 'meal_type' AS meal_type,\n      meal_item ->> 'name' AS meal_name,\n      (meal_item ->> 'time')::time AS meal_time,\n      (meal_item ->> 'calories')::int AS meal_calories,\n      (meal_item ->> 'protein_g')::int AS meal_protein\n  ) m\n  WHERE u.is_active = true\n    AND m.meal_time BETWEEN LOCALTIME AND LOCALTIME + INTERVAL '15 minutes'\n    AND NOT EXISTS (\n      SELECT 1 FROM conversation_logs cl\n      WHERE cl.user_id = u.id\n        AND cl.message_type = 'meal_reminder'\n        AND cl.assistant_response LIKE '%' || m.meal_name || '%'\n        AND cl.created_at::date = CURRENT_DATE\n    )\n)\nSELECT * FROM user_meals;",
+        "query": "WITH user_meals AS (\n  SELECT u.id AS user_id, u.telegram_id, u.first_name,\n         up.caloric_target, up.protein_target_g,\n         mp.plan_json,\n         dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n         m.meal_type, m.meal_name, m.meal_time, m.meal_calories, m.meal_protein\n  FROM users u\n  JOIN memberships mb ON u.id = mb.user_id AND mb.status = 'active' AND mb.expires_at > NOW()\n  JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\n  JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date AND mp.is_active = true\n  LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  CROSS JOIN LATERAL jsonb_array_elements(mp.plan_json::jsonb -> 'meals') AS meal_item\n  CROSS JOIN LATERAL (\n    SELECT\n      meal_item ->> 'meal_type' AS meal_type,\n      meal_item ->> 'name' AS meal_name,\n      (meal_item ->> 'time')::time AS meal_time,\n      (meal_item ->> 'calories')::int AS meal_calories,\n      (meal_item ->> 'protein_g')::int AS meal_protein\n  ) m\n  WHERE u.is_active = true\n    AND m.meal_time BETWEEN LOCALTIME AND LOCALTIME + INTERVAL '15 minutes'\n    AND NOT EXISTS (\n      SELECT 1 FROM conversation_logs cl\n      WHERE cl.user_id = u.id\n        AND cl.message_type = 'meal_reminder'\n        AND cl.assistant_response LIKE '%' || m.meal_name || '%'\n        AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n    )\n)\nSELECT * FROM user_meals;",
         "options": {}
       }
     },
@@ -218,9 +218,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "cb605318-b607-43c7-adb9-de16df8f4843",
-  "activeVersionId": "cb605318-b607-43c7-adb9-de16df8f4843",
-  "versionCounter": 37,
+  "versionId": "c4e54501-6f6c-4e32-8711-8e2bdb6dc0c3",
+  "activeVersionId": "c4e54501-6f6c-4e32-8711-8e2bdb6dc0c3",
+  "versionCounter": 42,
   "triggerCount": 1,
   "shared": [
     {
@@ -243,9 +243,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-01T20:46:08.034Z",
-    "createdAt": "2026-04-01T20:46:08.034Z",
-    "versionId": "cb605318-b607-43c7-adb9-de16df8f4843",
+    "updatedAt": "2026-04-02T14:49:25.989Z",
+    "createdAt": "2026-04-02T14:49:25.989Z",
+    "versionId": "c4e54501-6f6c-4e32-8711-8e2bdb6dc0c3",
     "workflowId": "SntGuE97yl9efvo5",
     "nodes": [
       {
@@ -288,7 +288,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "WITH user_meals AS (\n  SELECT u.id AS user_id, u.telegram_id, u.first_name,\n         up.caloric_target, up.protein_target_g,\n         mp.plan_json,\n         dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n         m.meal_type, m.meal_name, m.meal_time, m.meal_calories, m.meal_protein\n  FROM users u\n  JOIN memberships mb ON u.id = mb.user_id AND mb.status = 'active' AND mb.expires_at > NOW()\n  JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\n  JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = CURRENT_DATE AND mp.is_active = true\n  LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = CURRENT_DATE\n  CROSS JOIN LATERAL jsonb_array_elements(mp.plan_json::jsonb -> 'meals') AS meal_item\n  CROSS JOIN LATERAL (\n    SELECT\n      meal_item ->> 'meal_type' AS meal_type,\n      meal_item ->> 'name' AS meal_name,\n      (meal_item ->> 'time')::time AS meal_time,\n      (meal_item ->> 'calories')::int AS meal_calories,\n      (meal_item ->> 'protein_g')::int AS meal_protein\n  ) m\n  WHERE u.is_active = true\n    AND m.meal_time BETWEEN LOCALTIME AND LOCALTIME + INTERVAL '15 minutes'\n    AND NOT EXISTS (\n      SELECT 1 FROM conversation_logs cl\n      WHERE cl.user_id = u.id\n        AND cl.message_type = 'meal_reminder'\n        AND cl.assistant_response LIKE '%' || m.meal_name || '%'\n        AND cl.created_at::date = CURRENT_DATE\n    )\n)\nSELECT * FROM user_meals;",
+          "query": "WITH user_meals AS (\n  SELECT u.id AS user_id, u.telegram_id, u.first_name,\n         up.caloric_target, up.protein_target_g,\n         mp.plan_json,\n         dt.calories_consumed, dt.protein_consumed_g, dt.meals_logged,\n         m.meal_type, m.meal_name, m.meal_time, m.meal_calories, m.meal_protein\n  FROM users u\n  JOIN memberships mb ON u.id = mb.user_id AND mb.status = 'active' AND mb.expires_at > NOW()\n  JOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\n  JOIN meal_plans mp ON u.id = mp.user_id AND mp.plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date AND mp.is_active = true\n  LEFT JOIN daily_targets dt ON u.id = dt.user_id AND dt.target_date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  CROSS JOIN LATERAL jsonb_array_elements(mp.plan_json::jsonb -> 'meals') AS meal_item\n  CROSS JOIN LATERAL (\n    SELECT\n      meal_item ->> 'meal_type' AS meal_type,\n      meal_item ->> 'name' AS meal_name,\n      (meal_item ->> 'time')::time AS meal_time,\n      (meal_item ->> 'calories')::int AS meal_calories,\n      (meal_item ->> 'protein_g')::int AS meal_protein\n  ) m\n  WHERE u.is_active = true\n    AND m.meal_time BETWEEN LOCALTIME AND LOCALTIME + INTERVAL '15 minutes'\n    AND NOT EXISTS (\n      SELECT 1 FROM conversation_logs cl\n      WHERE cl.user_id = u.id\n        AND cl.message_type = 'meal_reminder'\n        AND cl.assistant_response LIKE '%' || m.meal_name || '%'\n        AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n    )\n)\nSELECT * FROM user_meals;",
           "options": {}
         }
       },
@@ -449,10 +449,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-01T20:46:09.101Z",
-        "id": 281,
+        "createdAt": "2026-04-02T14:49:26.573Z",
+        "id": 361,
         "workflowId": "SntGuE97yl9efvo5",
-        "versionId": "cb605318-b607-43c7-adb9-de16df8f4843",
+        "versionId": "c4e54501-6f6c-4e32-8711-8e2bdb6dc0c3",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

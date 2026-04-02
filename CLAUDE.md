@@ -440,6 +440,16 @@ new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
 new Date().toISOString()
 ```
 
+En **queries SQL de PostgreSQL**, `CURRENT_DATE` retorna la fecha UTC del servidor. Entre las 19:00 y 23:59 hora Colombia (00:00-04:59 UTC del día siguiente), un registro hecho "hoy en Colombia" se guarda con la fecha de "mañana UTC". Usar siempre:
+```sql
+-- CORRECTO — fecha en Colombia
+(NOW() AT TIME ZONE 'America/Bogota')::date
+
+-- INCORRECTO — fecha UTC, puede ser un día adelante respecto a Colombia
+CURRENT_DATE
+```
+Esto aplica a: `log_date` en INSERTs de `daily_intake_logs`, `target_date` en `daily_targets`, `plan_date` en `meal_plans`, y todos los filtros `WHERE ... = CURRENT_DATE` en los workflows de contexto (Load Daily Status, Load Today Meals, Load Today Plan, Get Daily Targets, Get Today Meals, Get Today Plan) y proactivos (Morning Briefing, Evening Check-in, Meal Reminder, Silence Detector, Weekly Report, Daily Plan Cron).
+
 ### RAG — estado actual
 - `knowledge_rag`: 106 puntos indexados (4 skills de business)
 - `user_rag`: eventos personales del usuario (indexados por el AI Agent automáticamente)

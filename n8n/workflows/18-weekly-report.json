@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-01T20:46:12.924Z",
+  "updatedAt": "2026-04-02T14:49:27.158Z",
   "createdAt": "2026-04-01T20:41:22.079Z",
   "id": "gsIQcXRlMznc3uJ8",
   "name": "FitAI - Weekly Report",
@@ -46,7 +46,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.height_cm, up.gender, up.age,\n       g.goal_type, g.target_weight, g.start_weight, g.start_date,\n       w_current.weight_kg AS current_weight,\n       w_current.logged_at AS current_weight_date,\n       w_prev.weight_kg AS previous_weight,\n       weekly.avg_calories, weekly.avg_protein, weekly.days_tracked,\n       weekly.avg_adherence,\n       workouts.completed AS workouts_completed,\n       up.training_days_per_week\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg, logged_at FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) w_current ON true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id AND logged_at < CURRENT_DATE - INTERVAL '5 days' ORDER BY logged_at DESC LIMIT 1\n) w_prev ON true\nLEFT JOIN LATERAL (\n  SELECT\n    ROUND(AVG(calories_consumed)) AS avg_calories,\n    ROUND(AVG(protein_consumed_g)) AS avg_protein,\n    COUNT(*) FILTER (WHERE meals_logged > 0) AS days_tracked,\n    ROUND(AVG(plan_adherence_pct)) AS avg_adherence\n  FROM daily_targets\n  WHERE user_id = u.id AND target_date >= CURRENT_DATE - INTERVAL '7 days' AND target_date < CURRENT_DATE\n) weekly ON true\nLEFT JOIN LATERAL (\n  SELECT COUNT(*) AS completed FROM conversation_logs\n  WHERE user_id = u.id AND message_type = 'workout_completed' AND created_at >= CURRENT_DATE - INTERVAL '7 days'\n) workouts ON true\nWHERE u.is_active = true\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id\n      AND cl.message_type = 'weekly_report'\n      AND cl.created_at::date = CURRENT_DATE\n  );",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.height_cm, up.gender, up.age,\n       g.goal_type, g.target_weight, g.start_weight, g.start_date,\n       w_current.weight_kg AS current_weight,\n       w_current.logged_at AS current_weight_date,\n       w_prev.weight_kg AS previous_weight,\n       weekly.avg_calories, weekly.avg_protein, weekly.days_tracked,\n       weekly.avg_adherence,\n       workouts.completed AS workouts_completed,\n       up.training_days_per_week\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg, logged_at FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) w_current ON true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id AND logged_at < (NOW() AT TIME ZONE 'America/Bogota')::date - INTERVAL '5 days' ORDER BY logged_at DESC LIMIT 1\n) w_prev ON true\nLEFT JOIN LATERAL (\n  SELECT\n    ROUND(AVG(calories_consumed)) AS avg_calories,\n    ROUND(AVG(protein_consumed_g)) AS avg_protein,\n    COUNT(*) FILTER (WHERE meals_logged > 0) AS days_tracked,\n    ROUND(AVG(plan_adherence_pct)) AS avg_adherence\n  FROM daily_targets\n  WHERE user_id = u.id AND target_date >= (NOW() AT TIME ZONE 'America/Bogota')::date - INTERVAL '7 days' AND target_date < (NOW() AT TIME ZONE 'America/Bogota')::date\n) weekly ON true\nLEFT JOIN LATERAL (\n  SELECT COUNT(*) AS completed FROM conversation_logs\n  WHERE user_id = u.id AND message_type = 'workout_completed' AND created_at >= (NOW() AT TIME ZONE 'America/Bogota')::date - INTERVAL '7 days'\n) workouts ON true\nWHERE u.is_active = true\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id\n      AND cl.message_type = 'weekly_report'\n      AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  );",
         "options": {}
       }
     },
@@ -214,9 +214,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "c61cf6f3-c3fc-411b-8748-ef8bc7c365ab",
-  "activeVersionId": "c61cf6f3-c3fc-411b-8748-ef8bc7c365ab",
-  "versionCounter": 12,
+  "versionId": "70b5cecd-9670-42ae-be68-f43fd2853b1b",
+  "activeVersionId": "70b5cecd-9670-42ae-be68-f43fd2853b1b",
+  "versionCounter": 17,
   "triggerCount": 1,
   "shared": [
     {
@@ -239,9 +239,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-01T20:46:12.925Z",
-    "createdAt": "2026-04-01T20:46:12.925Z",
-    "versionId": "c61cf6f3-c3fc-411b-8748-ef8bc7c365ab",
+    "updatedAt": "2026-04-02T14:49:27.159Z",
+    "createdAt": "2026-04-02T14:49:27.159Z",
+    "versionId": "70b5cecd-9670-42ae-be68-f43fd2853b1b",
     "workflowId": "gsIQcXRlMznc3uJ8",
     "nodes": [
       {
@@ -283,7 +283,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.height_cm, up.gender, up.age,\n       g.goal_type, g.target_weight, g.start_weight, g.start_date,\n       w_current.weight_kg AS current_weight,\n       w_current.logged_at AS current_weight_date,\n       w_prev.weight_kg AS previous_weight,\n       weekly.avg_calories, weekly.avg_protein, weekly.days_tracked,\n       weekly.avg_adherence,\n       workouts.completed AS workouts_completed,\n       up.training_days_per_week\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg, logged_at FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) w_current ON true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id AND logged_at < CURRENT_DATE - INTERVAL '5 days' ORDER BY logged_at DESC LIMIT 1\n) w_prev ON true\nLEFT JOIN LATERAL (\n  SELECT\n    ROUND(AVG(calories_consumed)) AS avg_calories,\n    ROUND(AVG(protein_consumed_g)) AS avg_protein,\n    COUNT(*) FILTER (WHERE meals_logged > 0) AS days_tracked,\n    ROUND(AVG(plan_adherence_pct)) AS avg_adherence\n  FROM daily_targets\n  WHERE user_id = u.id AND target_date >= CURRENT_DATE - INTERVAL '7 days' AND target_date < CURRENT_DATE\n) weekly ON true\nLEFT JOIN LATERAL (\n  SELECT COUNT(*) AS completed FROM conversation_logs\n  WHERE user_id = u.id AND message_type = 'workout_completed' AND created_at >= CURRENT_DATE - INTERVAL '7 days'\n) workouts ON true\nWHERE u.is_active = true\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id\n      AND cl.message_type = 'weekly_report'\n      AND cl.created_at::date = CURRENT_DATE\n  );",
+          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       up.caloric_target, up.protein_target_g, up.height_cm, up.gender, up.age,\n       g.goal_type, g.target_weight, g.start_weight, g.start_date,\n       w_current.weight_kg AS current_weight,\n       w_current.logged_at AS current_weight_date,\n       w_prev.weight_kg AS previous_weight,\n       weekly.avg_calories, weekly.avg_protein, weekly.days_tracked,\n       weekly.avg_adherence,\n       workouts.completed AS workouts_completed,\n       up.training_days_per_week\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nLEFT JOIN goals g ON u.id = g.user_id AND g.is_active = true\nLEFT JOIN LATERAL (\n  SELECT weight_kg, logged_at FROM weight_logs WHERE user_id = u.id ORDER BY logged_at DESC LIMIT 1\n) w_current ON true\nLEFT JOIN LATERAL (\n  SELECT weight_kg FROM weight_logs WHERE user_id = u.id AND logged_at < (NOW() AT TIME ZONE 'America/Bogota')::date - INTERVAL '5 days' ORDER BY logged_at DESC LIMIT 1\n) w_prev ON true\nLEFT JOIN LATERAL (\n  SELECT\n    ROUND(AVG(calories_consumed)) AS avg_calories,\n    ROUND(AVG(protein_consumed_g)) AS avg_protein,\n    COUNT(*) FILTER (WHERE meals_logged > 0) AS days_tracked,\n    ROUND(AVG(plan_adherence_pct)) AS avg_adherence\n  FROM daily_targets\n  WHERE user_id = u.id AND target_date >= (NOW() AT TIME ZONE 'America/Bogota')::date - INTERVAL '7 days' AND target_date < (NOW() AT TIME ZONE 'America/Bogota')::date\n) weekly ON true\nLEFT JOIN LATERAL (\n  SELECT COUNT(*) AS completed FROM conversation_logs\n  WHERE user_id = u.id AND message_type = 'workout_completed' AND created_at >= (NOW() AT TIME ZONE 'America/Bogota')::date - INTERVAL '7 days'\n) workouts ON true\nWHERE u.is_active = true\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id\n      AND cl.message_type = 'weekly_report'\n      AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  );",
           "options": {}
         }
       },
@@ -444,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-01T20:46:13.964Z",
-        "id": 287,
+        "createdAt": "2026-04-02T14:49:27.723Z",
+        "id": 363,
         "workflowId": "gsIQcXRlMznc3uJ8",
-        "versionId": "c61cf6f3-c3fc-411b-8748-ef8bc7c365ab",
+        "versionId": "70b5cecd-9670-42ae-be68-f43fd2853b1b",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T01:09:33.205Z",
+  "updatedAt": "2026-04-02T14:49:19.925Z",
   "createdAt": "2026-04-01T19:51:38.036Z",
   "id": "DQsnzXQWMSqJxigL",
   "name": "FitAI - Log Food Intake",
@@ -48,7 +48,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO daily_intake_logs (\n  user_id, log_date, meal_type, description,\n  estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g\n)\nVALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7)\nRETURNING id, log_date, meal_type, description AS food_name, estimated_calories, estimated_protein_g;",
+        "query": "INSERT INTO daily_intake_logs (\n  user_id, log_date, meal_type, description,\n  estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g\n)\nVALUES ($1, (NOW() AT TIME ZONE 'America/Bogota')::date, $2, $3, $4, $5, $6, $7)\nRETURNING id, log_date, meal_type, description AS food_name, estimated_calories, estimated_protein_g;",
         "options": {
           "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.meal_type, $('Parse Input').first().json.description, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
         }
@@ -72,7 +72,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,\n  meals_logged\n)\nSELECT\n  $1, CURRENT_DATE,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  $2, $3, $4, $5,\n  1\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO UPDATE SET\n  calories_consumed  = daily_targets.calories_consumed  + EXCLUDED.calories_consumed,\n  protein_consumed_g = daily_targets.protein_consumed_g + EXCLUDED.protein_consumed_g,\n  carbs_consumed_g   = daily_targets.carbs_consumed_g   + EXCLUDED.carbs_consumed_g,\n  fat_consumed_g     = daily_targets.fat_consumed_g     + EXCLUDED.fat_consumed_g,\n  meals_logged       = daily_targets.meals_logged + 1,\n  updated_at         = NOW()\nRETURNING\n  calories_consumed, protein_consumed_g,\n  caloric_target, protein_target_g;",
+        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,\n  meals_logged\n)\nSELECT\n  $1, (NOW() AT TIME ZONE 'America/Bogota')::date,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  $2, $3, $4, $5,\n  1\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO UPDATE SET\n  calories_consumed  = daily_targets.calories_consumed  + EXCLUDED.calories_consumed,\n  protein_consumed_g = daily_targets.protein_consumed_g + EXCLUDED.protein_consumed_g,\n  carbs_consumed_g   = daily_targets.carbs_consumed_g   + EXCLUDED.carbs_consumed_g,\n  fat_consumed_g     = daily_targets.fat_consumed_g     + EXCLUDED.fat_consumed_g,\n  meals_logged       = daily_targets.meals_logged + 1,\n  updated_at         = NOW()\nRETURNING\n  calories_consumed, protein_consumed_g,\n  caloric_target, protein_target_g;",
         "options": {
           "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
         }
@@ -147,9 +147,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "e151aac7-6395-4ca4-80be-6f8a58982228",
-  "activeVersionId": "e151aac7-6395-4ca4-80be-6f8a58982228",
-  "versionCounter": 7,
+  "versionId": "a753ef83-8a67-4bc5-a520-459f37fc4599",
+  "activeVersionId": "a753ef83-8a67-4bc5-a520-459f37fc4599",
+  "versionCounter": 12,
   "triggerCount": 0,
   "shared": [
     {
@@ -172,9 +172,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T01:09:33.206Z",
-    "createdAt": "2026-04-02T01:09:33.206Z",
-    "versionId": "e151aac7-6395-4ca4-80be-6f8a58982228",
+    "updatedAt": "2026-04-02T14:49:19.926Z",
+    "createdAt": "2026-04-02T14:49:19.926Z",
+    "versionId": "a753ef83-8a67-4bc5-a520-459f37fc4599",
     "workflowId": "DQsnzXQWMSqJxigL",
     "nodes": [
       {
@@ -218,7 +218,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO daily_intake_logs (\n  user_id, log_date, meal_type, description,\n  estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g\n)\nVALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7)\nRETURNING id, log_date, meal_type, description AS food_name, estimated_calories, estimated_protein_g;",
+          "query": "INSERT INTO daily_intake_logs (\n  user_id, log_date, meal_type, description,\n  estimated_calories, estimated_protein_g, estimated_carbs_g, estimated_fat_g\n)\nVALUES ($1, (NOW() AT TIME ZONE 'America/Bogota')::date, $2, $3, $4, $5, $6, $7)\nRETURNING id, log_date, meal_type, description AS food_name, estimated_calories, estimated_protein_g;",
           "options": {
             "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.meal_type, $('Parse Input').first().json.description, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
           }
@@ -242,7 +242,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,\n  meals_logged\n)\nSELECT\n  $1, CURRENT_DATE,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  $2, $3, $4, $5,\n  1\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO UPDATE SET\n  calories_consumed  = daily_targets.calories_consumed  + EXCLUDED.calories_consumed,\n  protein_consumed_g = daily_targets.protein_consumed_g + EXCLUDED.protein_consumed_g,\n  carbs_consumed_g   = daily_targets.carbs_consumed_g   + EXCLUDED.carbs_consumed_g,\n  fat_consumed_g     = daily_targets.fat_consumed_g     + EXCLUDED.fat_consumed_g,\n  meals_logged       = daily_targets.meals_logged + 1,\n  updated_at         = NOW()\nRETURNING\n  calories_consumed, protein_consumed_g,\n  caloric_target, protein_target_g;",
+          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,\n  meals_logged\n)\nSELECT\n  $1, (NOW() AT TIME ZONE 'America/Bogota')::date,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  $2, $3, $4, $5,\n  1\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO UPDATE SET\n  calories_consumed  = daily_targets.calories_consumed  + EXCLUDED.calories_consumed,\n  protein_consumed_g = daily_targets.protein_consumed_g + EXCLUDED.protein_consumed_g,\n  carbs_consumed_g   = daily_targets.carbs_consumed_g   + EXCLUDED.carbs_consumed_g,\n  fat_consumed_g     = daily_targets.fat_consumed_g     + EXCLUDED.fat_consumed_g,\n  meals_logged       = daily_targets.meals_logged + 1,\n  updated_at         = NOW()\nRETURNING\n  calories_consumed, protein_consumed_g,\n  caloric_target, protein_target_g;",
           "options": {
             "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
           }
@@ -315,10 +315,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T01:09:34.257Z",
-        "id": 333,
+        "createdAt": "2026-04-02T14:49:20.530Z",
+        "id": 351,
         "workflowId": "DQsnzXQWMSqJxigL",
-        "versionId": "e151aac7-6395-4ca4-80be-6f8a58982228",
+        "versionId": "a753ef83-8a67-4bc5-a520-459f37fc4599",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

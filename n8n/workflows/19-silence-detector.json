@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-01T20:46:14.559Z",
+  "updatedAt": "2026-04-02T14:49:28.295Z",
   "createdAt": "2026-04-01T20:41:23.657Z",
   "id": "ytuz6H8cdBm8oyTx",
   "name": "FitAI - Silence Detector",
@@ -46,7 +46,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       last_interaction.last_at,\n       EXTRACT(EPOCH FROM (NOW() - last_interaction.last_at)) / 3600 AS hours_silent\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nCROSS JOIN LATERAL (\n  SELECT MAX(created_at) AS last_at FROM conversation_logs WHERE user_id = u.id\n) last_interaction\nWHERE u.is_active = true\n  AND last_interaction.last_at < NOW() - INTERVAL '24 hours'\n  AND last_interaction.last_at > NOW() - INTERVAL '72 hours'\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'silence_check' AND cl.created_at::date = CURRENT_DATE\n  );",
+        "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       last_interaction.last_at,\n       EXTRACT(EPOCH FROM (NOW() - last_interaction.last_at)) / 3600 AS hours_silent\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nCROSS JOIN LATERAL (\n  SELECT MAX(created_at) AS last_at FROM conversation_logs WHERE user_id = u.id\n) last_interaction\nWHERE u.is_active = true\n  AND last_interaction.last_at < NOW() - INTERVAL '24 hours'\n  AND last_interaction.last_at > NOW() - INTERVAL '72 hours'\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'silence_check' AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  );",
         "options": {}
       }
     },
@@ -214,9 +214,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "0e4af1c9-ae90-4a1d-b2bc-13b572c1ec15",
-  "activeVersionId": "0e4af1c9-ae90-4a1d-b2bc-13b572c1ec15",
-  "versionCounter": 8,
+  "versionId": "7c2a1ace-26c3-43a0-afb7-7cd363a81e65",
+  "activeVersionId": "7c2a1ace-26c3-43a0-afb7-7cd363a81e65",
+  "versionCounter": 13,
   "triggerCount": 1,
   "shared": [
     {
@@ -239,9 +239,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-01T20:46:14.560Z",
-    "createdAt": "2026-04-01T20:46:14.560Z",
-    "versionId": "0e4af1c9-ae90-4a1d-b2bc-13b572c1ec15",
+    "updatedAt": "2026-04-02T14:49:28.295Z",
+    "createdAt": "2026-04-02T14:49:28.295Z",
+    "versionId": "7c2a1ace-26c3-43a0-afb7-7cd363a81e65",
     "workflowId": "ytuz6H8cdBm8oyTx",
     "nodes": [
       {
@@ -283,7 +283,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       last_interaction.last_at,\n       EXTRACT(EPOCH FROM (NOW() - last_interaction.last_at)) / 3600 AS hours_silent\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nCROSS JOIN LATERAL (\n  SELECT MAX(created_at) AS last_at FROM conversation_logs WHERE user_id = u.id\n) last_interaction\nWHERE u.is_active = true\n  AND last_interaction.last_at < NOW() - INTERVAL '24 hours'\n  AND last_interaction.last_at > NOW() - INTERVAL '72 hours'\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'silence_check' AND cl.created_at::date = CURRENT_DATE\n  );",
+          "query": "SELECT u.id AS user_id, u.telegram_id, u.first_name,\n       last_interaction.last_at,\n       EXTRACT(EPOCH FROM (NOW() - last_interaction.last_at)) / 3600 AS hours_silent\nFROM users u\nJOIN memberships m ON u.id = m.user_id AND m.status = 'active' AND m.expires_at > NOW()\nJOIN user_profiles up ON u.id = up.user_id AND up.onboarding_completed = true\nCROSS JOIN LATERAL (\n  SELECT MAX(created_at) AS last_at FROM conversation_logs WHERE user_id = u.id\n) last_interaction\nWHERE u.is_active = true\n  AND last_interaction.last_at < NOW() - INTERVAL '24 hours'\n  AND last_interaction.last_at > NOW() - INTERVAL '72 hours'\n  AND NOT EXISTS (\n    SELECT 1 FROM conversation_logs cl\n    WHERE cl.user_id = u.id AND cl.message_type = 'silence_check' AND cl.created_at::date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  );",
           "options": {}
         }
       },
@@ -444,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-01T20:46:15.607Z",
-        "id": 289,
+        "createdAt": "2026-04-02T14:49:28.850Z",
+        "id": 365,
         "workflowId": "ytuz6H8cdBm8oyTx",
-        "versionId": "0e4af1c9-ae90-4a1d-b2bc-13b572c1ec15",
+        "versionId": "7c2a1ace-26c3-43a0-afb7-7cd363a81e65",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

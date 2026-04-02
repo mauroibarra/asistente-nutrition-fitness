@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-01T20:30:04.261Z",
+  "updatedAt": "2026-04-02T14:49:22.272Z",
   "createdAt": "2026-04-01T20:25:42.453Z",
   "id": "xILhDSQy0ZP40jjt",
   "name": "FitAI - Daily Plan Generator Cron",
@@ -46,7 +46,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  u.id AS user_id,\n  u.telegram_id,\n  u.first_name,\n  up.wake_up_time,\n  up.caloric_target,\n  up.protein_target_g,\n  up.carb_target_g,\n  up.fat_target_g\nFROM users u\nJOIN memberships m\n  ON u.id = m.user_id\n  AND m.status = 'active'\n  AND m.expires_at > NOW()\nJOIN user_profiles up\n  ON u.id = up.user_id\n  AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp\n  ON u.id = mp.user_id\n  AND mp.plan_date = CURRENT_DATE + 1\n  AND mp.is_active = true\nWHERE mp.id IS NULL\nORDER BY u.id;",
+        "query": "SELECT\n  u.id AS user_id,\n  u.telegram_id,\n  u.first_name,\n  up.wake_up_time,\n  up.caloric_target,\n  up.protein_target_g,\n  up.carb_target_g,\n  up.fat_target_g\nFROM users u\nJOIN memberships m\n  ON u.id = m.user_id\n  AND m.status = 'active'\n  AND m.expires_at > NOW()\nJOIN user_profiles up\n  ON u.id = up.user_id\n  AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp\n  ON u.id = mp.user_id\n  AND mp.plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date + 1\n  AND mp.is_active = true\nWHERE mp.id IS NULL\nORDER BY u.id;",
         "options": {}
       }
     },
@@ -122,7 +122,7 @@
       },
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n)\nSELECT\n  up.user_id,\n  CURRENT_DATE + 1,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  0, 0, 0, 0\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO NOTHING;",
+        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n)\nSELECT\n  up.user_id,\n  (NOW() AT TIME ZONE 'America/Bogota')::date + 1,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  0, 0, 0, 0\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO NOTHING;",
         "options": {
           "queryReplacement": "={{ [$('Loop Over Users').item.json.user_id] }}"
         }
@@ -246,9 +246,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "db11cbe1-903a-4b25-afb5-f7882bc85bfb",
-  "activeVersionId": "db11cbe1-903a-4b25-afb5-f7882bc85bfb",
-  "versionCounter": 8,
+  "versionId": "c54490c2-65e3-48cc-b2d6-34e13991feb3",
+  "activeVersionId": "c54490c2-65e3-48cc-b2d6-34e13991feb3",
+  "versionCounter": 13,
   "triggerCount": 1,
   "shared": [
     {
@@ -271,9 +271,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-01T20:30:04.263Z",
-    "createdAt": "2026-04-01T20:30:04.263Z",
-    "versionId": "db11cbe1-903a-4b25-afb5-f7882bc85bfb",
+    "updatedAt": "2026-04-02T14:49:22.274Z",
+    "createdAt": "2026-04-02T14:49:22.274Z",
+    "versionId": "c54490c2-65e3-48cc-b2d6-34e13991feb3",
     "workflowId": "xILhDSQy0ZP40jjt",
     "nodes": [
       {
@@ -315,7 +315,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  u.id AS user_id,\n  u.telegram_id,\n  u.first_name,\n  up.wake_up_time,\n  up.caloric_target,\n  up.protein_target_g,\n  up.carb_target_g,\n  up.fat_target_g\nFROM users u\nJOIN memberships m\n  ON u.id = m.user_id\n  AND m.status = 'active'\n  AND m.expires_at > NOW()\nJOIN user_profiles up\n  ON u.id = up.user_id\n  AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp\n  ON u.id = mp.user_id\n  AND mp.plan_date = CURRENT_DATE + 1\n  AND mp.is_active = true\nWHERE mp.id IS NULL\nORDER BY u.id;",
+          "query": "SELECT\n  u.id AS user_id,\n  u.telegram_id,\n  u.first_name,\n  up.wake_up_time,\n  up.caloric_target,\n  up.protein_target_g,\n  up.carb_target_g,\n  up.fat_target_g\nFROM users u\nJOIN memberships m\n  ON u.id = m.user_id\n  AND m.status = 'active'\n  AND m.expires_at > NOW()\nJOIN user_profiles up\n  ON u.id = up.user_id\n  AND up.onboarding_completed = true\nLEFT JOIN meal_plans mp\n  ON u.id = mp.user_id\n  AND mp.plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date + 1\n  AND mp.is_active = true\nWHERE mp.id IS NULL\nORDER BY u.id;",
           "options": {}
         }
       },
@@ -391,7 +391,7 @@
         },
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n)\nSELECT\n  up.user_id,\n  CURRENT_DATE + 1,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  0, 0, 0, 0\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO NOTHING;",
+          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n)\nSELECT\n  up.user_id,\n  (NOW() AT TIME ZONE 'America/Bogota')::date + 1,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  0, 0, 0, 0\nFROM user_profiles up\nWHERE up.user_id = $1\nON CONFLICT (user_id, target_date) DO NOTHING;",
           "options": {
             "queryReplacement": "={{ [$('Loop Over Users').item.json.user_id] }}"
           }
@@ -508,10 +508,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-01T20:30:05.363Z",
-        "id": 271,
+        "createdAt": "2026-04-02T14:49:22.836Z",
+        "id": 355,
         "workflowId": "xILhDSQy0ZP40jjt",
-        "versionId": "db11cbe1-903a-4b25-afb5-f7882bc85bfb",
+        "versionId": "c54490c2-65e3-48cc-b2d6-34e13991feb3",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

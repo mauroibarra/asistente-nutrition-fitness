@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T02:31:22.872Z",
+  "updatedAt": "2026-04-02T14:49:17.494Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -1486,7 +1486,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  COALESCE(calories_consumed, 0) AS calories_consumed,\n  COALESCE(protein_consumed_g, 0) AS protein_consumed_g,\n  COALESCE(carbs_consumed_g, 0) AS carbs_consumed_g,\n  COALESCE(fat_consumed_g, 0) AS fat_consumed_g,\n  COALESCE(meals_logged, 0) AS meals_logged,\n  target_date\nFROM daily_targets\nWHERE user_id = $1 AND target_date = CURRENT_DATE\nLIMIT 1",
+        "query": "SELECT\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  COALESCE(calories_consumed, 0) AS calories_consumed,\n  COALESCE(protein_consumed_g, 0) AS protein_consumed_g,\n  COALESCE(carbs_consumed_g, 0) AS carbs_consumed_g,\n  COALESCE(fat_consumed_g, 0) AS fat_consumed_g,\n  COALESCE(meals_logged, 0) AS meals_logged,\n  target_date\nFROM daily_targets\nWHERE user_id = $1 AND target_date = (NOW() AT TIME ZONE 'America/Bogota')::date\nLIMIT 1",
         "options": {
           "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
         }
@@ -1510,7 +1510,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  description AS food_name, meal_type,\n  estimated_calories AS calories,\n  estimated_protein_g AS protein_g,\n  estimated_carbs_g AS carbs_g,\n  estimated_fat_g AS fat_g,\n  logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE\nORDER BY logged_at DESC\nLIMIT 20",
+        "query": "SELECT\n  description AS food_name, meal_type,\n  estimated_calories AS calories,\n  estimated_protein_g AS protein_g,\n  estimated_carbs_g AS carbs_g,\n  estimated_fat_g AS fat_g,\n  logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = (NOW() AT TIME ZONE 'America/Bogota')::date\nORDER BY logged_at DESC\nLIMIT 20",
         "options": {
           "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
         }
@@ -1534,7 +1534,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT plan_json, plan_date\nFROM meal_plans\nWHERE user_id = $1\n  AND plan_date = CURRENT_DATE\n  AND is_active = true\nLIMIT 1",
+        "query": "SELECT plan_json, plan_date\nFROM meal_plans\nWHERE user_id = $1\n  AND plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  AND is_active = true\nLIMIT 1",
         "options": {
           "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
         }
@@ -1582,7 +1582,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  ROUND(AVG(calories_consumed)::numeric, 0) AS avg_calories,\n  ROUND(AVG(protein_consumed_g)::numeric, 1) AS avg_protein,\n  COUNT(*) AS days_tracked\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= CURRENT_DATE - INTERVAL '7 days'\n  AND calories_consumed > 0",
+        "query": "SELECT\n  ROUND(AVG(calories_consumed)::numeric, 0) AS avg_calories,\n  ROUND(AVG(protein_consumed_g)::numeric, 1) AS avg_protein,\n  COUNT(*) AS days_tracked\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= (NOW() AT TIME ZONE 'America/Bogota')::date - INTERVAL '7 days'\n  AND calories_consumed > 0",
         "options": {
           "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
         }
@@ -2479,9 +2479,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "3443839e-043f-4d42-bab2-c8a61d922289",
-  "activeVersionId": "3443839e-043f-4d42-bab2-c8a61d922289",
-  "versionCounter": 558,
+  "versionId": "11ded34d-233b-4c46-8212-1c993a35f9fa",
+  "activeVersionId": "11ded34d-233b-4c46-8212-1c993a35f9fa",
+  "versionCounter": 562,
   "triggerCount": 1,
   "shared": [
     {
@@ -2504,9 +2504,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T02:31:22.889Z",
-    "createdAt": "2026-04-02T02:31:22.889Z",
-    "versionId": "3443839e-043f-4d42-bab2-c8a61d922289",
+    "updatedAt": "2026-04-02T14:49:17.498Z",
+    "createdAt": "2026-04-02T14:49:17.498Z",
+    "versionId": "11ded34d-233b-4c46-8212-1c993a35f9fa",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -3988,7 +3988,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  COALESCE(calories_consumed, 0) AS calories_consumed,\n  COALESCE(protein_consumed_g, 0) AS protein_consumed_g,\n  COALESCE(carbs_consumed_g, 0) AS carbs_consumed_g,\n  COALESCE(fat_consumed_g, 0) AS fat_consumed_g,\n  COALESCE(meals_logged, 0) AS meals_logged,\n  target_date\nFROM daily_targets\nWHERE user_id = $1 AND target_date = CURRENT_DATE\nLIMIT 1",
+          "query": "SELECT\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  COALESCE(calories_consumed, 0) AS calories_consumed,\n  COALESCE(protein_consumed_g, 0) AS protein_consumed_g,\n  COALESCE(carbs_consumed_g, 0) AS carbs_consumed_g,\n  COALESCE(fat_consumed_g, 0) AS fat_consumed_g,\n  COALESCE(meals_logged, 0) AS meals_logged,\n  target_date\nFROM daily_targets\nWHERE user_id = $1 AND target_date = (NOW() AT TIME ZONE 'America/Bogota')::date\nLIMIT 1",
           "options": {
             "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
           }
@@ -4012,7 +4012,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  description AS food_name, meal_type,\n  estimated_calories AS calories,\n  estimated_protein_g AS protein_g,\n  estimated_carbs_g AS carbs_g,\n  estimated_fat_g AS fat_g,\n  logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE\nORDER BY logged_at DESC\nLIMIT 20",
+          "query": "SELECT\n  description AS food_name, meal_type,\n  estimated_calories AS calories,\n  estimated_protein_g AS protein_g,\n  estimated_carbs_g AS carbs_g,\n  estimated_fat_g AS fat_g,\n  logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = (NOW() AT TIME ZONE 'America/Bogota')::date\nORDER BY logged_at DESC\nLIMIT 20",
           "options": {
             "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
           }
@@ -4036,7 +4036,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT plan_json, plan_date\nFROM meal_plans\nWHERE user_id = $1\n  AND plan_date = CURRENT_DATE\n  AND is_active = true\nLIMIT 1",
+          "query": "SELECT plan_json, plan_date\nFROM meal_plans\nWHERE user_id = $1\n  AND plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date\n  AND is_active = true\nLIMIT 1",
           "options": {
             "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
           }
@@ -4084,7 +4084,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  ROUND(AVG(calories_consumed)::numeric, 0) AS avg_calories,\n  ROUND(AVG(protein_consumed_g)::numeric, 1) AS avg_protein,\n  COUNT(*) AS days_tracked\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= CURRENT_DATE - INTERVAL '7 days'\n  AND calories_consumed > 0",
+          "query": "SELECT\n  ROUND(AVG(calories_consumed)::numeric, 0) AS avg_calories,\n  ROUND(AVG(protein_consumed_g)::numeric, 1) AS avg_protein,\n  COUNT(*) AS days_tracked\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= (NOW() AT TIME ZONE 'America/Bogota')::date - INTERVAL '7 days'\n  AND calories_consumed > 0",
           "options": {
             "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
           }
@@ -4977,10 +4977,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T02:31:25.290Z",
-        "id": 347,
+        "createdAt": "2026-04-02T14:49:19.263Z",
+        "id": 349,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "3443839e-043f-4d42-bab2-c8a61d922289",
+        "versionId": "11ded34d-233b-4c46-8212-1c993a35f9fa",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

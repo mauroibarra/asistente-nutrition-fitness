@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T00:49:24.444Z",
+  "updatedAt": "2026-04-02T14:49:21.120Z",
   "createdAt": "2026-04-01T19:51:40.142Z",
   "id": "J2y4wKYEugHe4Mkg",
   "name": "FitAI - Get Daily Status",
@@ -21,7 +21,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  dt.caloric_target,\n  dt.protein_target_g,\n  dt.carb_target_g,\n  dt.fat_target_g,\n  COALESCE(dt.calories_consumed, 0) AS calories_consumed,\n  COALESCE(dt.protein_consumed_g, 0) AS protein_consumed,\n  COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed,\n  COALESCE(dt.fat_consumed_g, 0) AS fat_consumed,\n  COALESCE(dt.meals_logged, 0) AS meals_logged,\n  dt.plan_adherence_pct\nFROM daily_targets dt\nWHERE dt.user_id = $1 AND dt.target_date = CURRENT_DATE;",
+        "query": "SELECT\n  dt.caloric_target,\n  dt.protein_target_g,\n  dt.carb_target_g,\n  dt.fat_target_g,\n  COALESCE(dt.calories_consumed, 0) AS calories_consumed,\n  COALESCE(dt.protein_consumed_g, 0) AS protein_consumed,\n  COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed,\n  COALESCE(dt.fat_consumed_g, 0) AS fat_consumed,\n  COALESCE(dt.meals_logged, 0) AS meals_logged,\n  dt.plan_adherence_pct\nFROM daily_targets dt\nWHERE dt.user_id = $1 AND dt.target_date = (NOW() AT TIME ZONE 'America/Bogota')::date;",
         "options": {
           "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
         }
@@ -45,7 +45,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE\nORDER BY logged_at ASC;",
+        "query": "SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = (NOW() AT TIME ZONE 'America/Bogota')::date\nORDER BY logged_at ASC;",
         "options": {
           "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
         }
@@ -69,7 +69,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT plan_json\nFROM meal_plans\nWHERE user_id = $1 AND is_active = true\nAND plan_date = CURRENT_DATE;",
+        "query": "SELECT plan_json\nFROM meal_plans\nWHERE user_id = $1 AND is_active = true\nAND plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date;",
         "options": {
           "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
         }
@@ -192,9 +192,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "e0fe5af5-1c5b-4303-b4a4-32c64e16ce7e",
-  "activeVersionId": "e0fe5af5-1c5b-4303-b4a4-32c64e16ce7e",
-  "versionCounter": 20,
+  "versionId": "55f2c075-2e94-4ca1-946d-63a339aca48e",
+  "activeVersionId": "55f2c075-2e94-4ca1-946d-63a339aca48e",
+  "versionCounter": 25,
   "triggerCount": 0,
   "shared": [
     {
@@ -217,9 +217,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T00:49:24.444Z",
-    "createdAt": "2026-04-02T00:49:24.444Z",
-    "versionId": "e0fe5af5-1c5b-4303-b4a4-32c64e16ce7e",
+    "updatedAt": "2026-04-02T14:49:21.121Z",
+    "createdAt": "2026-04-02T14:49:21.121Z",
+    "versionId": "55f2c075-2e94-4ca1-946d-63a339aca48e",
     "workflowId": "J2y4wKYEugHe4Mkg",
     "nodes": [
       {
@@ -236,7 +236,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  dt.caloric_target,\n  dt.protein_target_g,\n  dt.carb_target_g,\n  dt.fat_target_g,\n  COALESCE(dt.calories_consumed, 0) AS calories_consumed,\n  COALESCE(dt.protein_consumed_g, 0) AS protein_consumed,\n  COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed,\n  COALESCE(dt.fat_consumed_g, 0) AS fat_consumed,\n  COALESCE(dt.meals_logged, 0) AS meals_logged,\n  dt.plan_adherence_pct\nFROM daily_targets dt\nWHERE dt.user_id = $1 AND dt.target_date = CURRENT_DATE;",
+          "query": "SELECT\n  dt.caloric_target,\n  dt.protein_target_g,\n  dt.carb_target_g,\n  dt.fat_target_g,\n  COALESCE(dt.calories_consumed, 0) AS calories_consumed,\n  COALESCE(dt.protein_consumed_g, 0) AS protein_consumed,\n  COALESCE(dt.carbs_consumed_g, 0) AS carbs_consumed,\n  COALESCE(dt.fat_consumed_g, 0) AS fat_consumed,\n  COALESCE(dt.meals_logged, 0) AS meals_logged,\n  dt.plan_adherence_pct\nFROM daily_targets dt\nWHERE dt.user_id = $1 AND dt.target_date = (NOW() AT TIME ZONE 'America/Bogota')::date;",
           "options": {
             "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
           }
@@ -260,7 +260,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE\nORDER BY logged_at ASC;",
+          "query": "SELECT meal_type, description, estimated_calories, estimated_protein_g, logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = (NOW() AT TIME ZONE 'America/Bogota')::date\nORDER BY logged_at ASC;",
           "options": {
             "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
           }
@@ -284,7 +284,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT plan_json\nFROM meal_plans\nWHERE user_id = $1 AND is_active = true\nAND plan_date = CURRENT_DATE;",
+          "query": "SELECT plan_json\nFROM meal_plans\nWHERE user_id = $1 AND is_active = true\nAND plan_date = (NOW() AT TIME ZONE 'America/Bogota')::date;",
           "options": {
             "queryReplacement": "={{ [$('Execute Workflow Trigger').first().json.userId] }}"
           }
@@ -405,10 +405,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T00:49:25.561Z",
-        "id": 321,
+        "createdAt": "2026-04-02T14:49:21.694Z",
+        "id": 353,
         "workflowId": "J2y4wKYEugHe4Mkg",
-        "versionId": "e0fe5af5-1c5b-4303-b4a4-32c64e16ce7e",
+        "versionId": "55f2c075-2e94-4ca1-946d-63a339aca48e",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
