@@ -447,6 +447,40 @@ new Date().toISOString()
 - Docker image: `qdrant/qdrant:v1.13.0`
 - `embeddingsOpenAi` typeVersion: **1** (no 1.2), `model` como string plana `"text-embedding-3-small"`
 
+### AI Agent systemMessage — expresiones dinámicas REQUIEREN prefijo `=`
+El campo `options.systemMessage` del nodo AI Agent trata su contenido como **string estático** a menos que tenga el prefijo `=`. Sin ese prefijo, cualquier `{{variable}}` llega literal a GPT-4o.
+
+**Patrón correcto (v2):** construir el system prompt completo (reglas estáticas + contexto dinámico) en el nodo **Build Context** como `fullSystemPrompt`, y referenciarlo así en el AI Agent:
+```json
+"options": { "systemMessage": "={{ $json.fullSystemPrompt }}" }
+```
+El nodo Build Context retorna `fullSystemPrompt` como string que concatena las reglas de comportamiento con el bloque `CONTEXTO DEL USUARIO ACTUAL` (con números reales: `caloric_target`, `protein_target_g`, `tdee`, `bmr`, etc.).
+
+**NUNCA** usar `{{variable}}` directamente en `systemMessage` sin el `=` — no se evalúa.
+
+### memoryBufferWindow — memoria in-RAM, se pierde en restart
+El nodo `FitAI Memory` (`memoryBufferWindow`, typeVersion 1.3) almacena el historial de conversaciones **en RAM** del proceso n8n. No persiste en SQLite, Redis ni ninguna base de datos.
+
+Consecuencias:
+- La memoria se borra al reiniciar n8n (todos los usuarios)
+- No hay forma de limpiar la memoria de un usuario específico sin reiniciar n8n
+- En producción, considerar migrar a `memoryRedisChat` para persistencia y limpieza selectiva por `sessionId`
+
+**Limpiar memoria de todos los usuarios:** `docker restart n8n`
+
+### ⚠️ NOTA DE PRODUCCIÓN — Activar v2 con usuarios existentes
+Al desplegar v2 en producción sobre usuarios que ya tienen historial v1, la memoria del agente (in-RAM) tiene el tono y patrones del agente v1. Esto hace que el agente ignore las reglas del nuevo system prompt durante las primeras interacciones.
+
+**Acción requerida al activar v2 en producción:**
+```bash
+# 1. Reiniciar n8n para limpiar memoria de TODOS los usuarios
+docker restart n8n
+
+# 2. Verificar que los 18 workflows siguen activos
+# (n8n reactiva automáticamente los workflows marcados como active=true)
+```
+Ejecutar este restart durante una ventana de bajo tráfico (madrugada). El impacto es que las conversaciones activas perderán contexto de los últimos 10 mensajes — la próxima respuesta del agente arrancará fresco con el nuevo tono.
+
 ---
 
 ## Usuario de Prueba (E2E real)
