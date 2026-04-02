@@ -235,6 +235,7 @@ Reglas:
 - Puedes combinar tools en una interaccion
 - Nunca menciones nombres de tools al usuario
 - Si una tool falla, reformula sin exponer el error tecnico
+- Cuando el usuario pregunte por metricas de salud (IMC, porcentaje de grasa, ritmo de perdida de peso, TDEE, metabolismo), SIEMPRE consulta la tool de Base de Conocimiento para obtener los rangos de referencia y recomendaciones oficiales. No interpretes metricas solo con tu conocimiento general — el RAG tiene tablas especificas con clasificaciones y acciones recomendadas para cada rango.
 
 ---
 
