@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-01T19:51:38.036Z",
+  "updatedAt": "2026-04-02T01:09:33.205Z",
   "createdAt": "2026-04-01T19:51:38.036Z",
   "id": "DQsnzXQWMSqJxigL",
   "name": "FitAI - Log Food Intake",
@@ -52,7 +52,8 @@
         "options": {
           "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.meal_type, $('Parse Input').first().json.description, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "lf-04",
@@ -75,7 +76,8 @@
         "options": {
           "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "lf-05",
@@ -145,9 +147,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "5eb968d5-c9af-4f17-87ec-a893d51f13ff",
-  "activeVersionId": "5eb968d5-c9af-4f17-87ec-a893d51f13ff",
-  "versionCounter": 3,
+  "versionId": "e151aac7-6395-4ca4-80be-6f8a58982228",
+  "activeVersionId": "e151aac7-6395-4ca4-80be-6f8a58982228",
+  "versionCounter": 7,
   "triggerCount": 0,
   "shared": [
     {
@@ -170,9 +172,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-01T19:51:38.048Z",
-    "createdAt": "2026-04-01T19:51:38.048Z",
-    "versionId": "5eb968d5-c9af-4f17-87ec-a893d51f13ff",
+    "updatedAt": "2026-04-02T01:09:33.206Z",
+    "createdAt": "2026-04-02T01:09:33.206Z",
+    "versionId": "e151aac7-6395-4ca4-80be-6f8a58982228",
     "workflowId": "DQsnzXQWMSqJxigL",
     "nodes": [
       {
@@ -220,7 +222,8 @@
           "options": {
             "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.meal_type, $('Parse Input').first().json.description, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "id": "lf-04",
@@ -243,7 +246,8 @@
           "options": {
             "queryReplacement": "={{ [$('Parse Input').first().json.userId, $('Parse Input').first().json.estimated_calories, $('Parse Input').first().json.estimated_protein_g, $('Parse Input').first().json.estimated_carbs_g, $('Parse Input').first().json.estimated_fat_g] }}"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "id": "lf-05",
@@ -311,10 +315,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-01T19:51:39.107Z",
-        "id": 256,
+        "createdAt": "2026-04-02T01:09:34.257Z",
+        "id": 333,
         "workflowId": "DQsnzXQWMSqJxigL",
-        "versionId": "5eb968d5-c9af-4f17-87ec-a893d51f13ff",
+        "versionId": "e151aac7-6395-4ca4-80be-6f8a58982228",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

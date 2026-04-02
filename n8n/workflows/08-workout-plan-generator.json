@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-28T01:59:08.030Z",
+  "updatedAt": "2026-04-02T01:09:31.889Z",
   "createdAt": "2026-03-27T16:34:01.770Z",
   "id": "ETjiYAUhXfsVSyWQ",
   "name": "FitAI - Workout Plan Generator",
@@ -44,7 +44,8 @@
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "node-w8-3",
@@ -125,7 +126,8 @@
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "node-w8-8",
@@ -151,7 +153,8 @@
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "id": "node-w8-9",
@@ -342,9 +345,9 @@
   "staticData": null,
   "meta": null,
   "pinData": null,
-  "versionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
-  "activeVersionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
-  "versionCounter": 27,
+  "versionId": "65ae4fe1-c827-4941-af1c-1022b34f5f32",
+  "activeVersionId": "65ae4fe1-c827-4941-af1c-1022b34f5f32",
+  "versionCounter": 31,
   "triggerCount": 0,
   "shared": [
     {
@@ -367,9 +370,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-28T01:59:08.035Z",
-    "createdAt": "2026-03-28T01:59:08.035Z",
-    "versionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
+    "updatedAt": "2026-04-02T01:09:31.893Z",
+    "createdAt": "2026-04-02T01:09:31.893Z",
+    "versionId": "65ae4fe1-c827-4941-af1c-1022b34f5f32",
     "workflowId": "ETjiYAUhXfsVSyWQ",
     "nodes": [
       {
@@ -409,7 +412,8 @@
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "id": "node-w8-3",
@@ -490,7 +494,8 @@
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "id": "node-w8-8",
@@ -516,7 +521,8 @@
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "id": "node-w8-9",
@@ -705,19 +711,11 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-28T01:59:08.092Z",
-        "id": 96,
+        "createdAt": "2026-04-02T01:09:32.975Z",
+        "id": 331,
         "workflowId": "ETjiYAUhXfsVSyWQ",
-        "versionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
+        "versionId": "65ae4fe1-c827-4941-af1c-1022b34f5f32",
         "event": "activated",
-        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
-      },
-      {
-        "createdAt": "2026-03-28T01:59:08.083Z",
-        "id": 95,
-        "workflowId": "ETjiYAUhXfsVSyWQ",
-        "versionId": "ca74c8a6-7dc8-43c1-aca8-91a11c1a3ab4",
-        "event": "deactivated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
     ]

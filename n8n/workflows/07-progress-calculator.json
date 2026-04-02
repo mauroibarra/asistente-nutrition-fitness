@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-30T16:26:45.181Z",
+  "updatedAt": "2026-04-02T01:11:36.524Z",
   "createdAt": "2026-03-27T16:33:48.593Z",
   "id": "bhJ8qqZXr68Id3pH",
   "name": "FitAI - Progress Calculator",
@@ -39,7 +39,8 @@
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -62,7 +63,8 @@
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -85,11 +87,12 @@
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "parameters": {
-        "jsCode": "const triggerData = $('Execute Workflow Trigger').first().json;\nconst userData = $('Get User Data').first().json;\nconst goalData = $('Get Goals').first().json;\nconst weightHistory = $('Get Weight History').all().map(i => i.json);\n\nlet totalChange = 0;\nlet weeklyRate = 0;\nlet percentProgress = 0;\nlet projectedDate = null;\n\nif (weightHistory.length >= 2) {\n  const latest = parseFloat(weightHistory[0].weight_kg);\n  const oldest = parseFloat(weightHistory[weightHistory.length - 1].weight_kg);\n  totalChange = latest - oldest;\n\n  const latestDate = new Date(weightHistory[0].logged_at);\n  const oldestDate = new Date(weightHistory[weightHistory.length - 1].logged_at);\n  const weeks = (latestDate - oldestDate) / (1000 * 60 * 60 * 24 * 7);\n  weeklyRate = weeks > 0 ? totalChange / weeks : 0;\n}\n\nif (goalData && goalData.target_weight && userData.weight_kg) {\n  const startWeight = parseFloat(goalData.start_weight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1].weight_kg : userData.weight_kg));\n  const targetWeight = parseFloat(goalData.target_weight);\n  const currentWeight = weightHistory.length > 0 ? parseFloat(weightHistory[0].weight_kg) : parseFloat(userData.weight_kg);\n  const totalNeeded = startWeight - targetWeight;\n  const achieved = startWeight - currentWeight;\n  percentProgress = totalNeeded !== 0 ? Math.round((achieved / totalNeeded) * 100) : 0;\n\n  if (weeklyRate !== 0) {\n    const remainingKg = currentWeight - targetWeight;\n    const weeksNeeded = Math.abs(remainingKg / weeklyRate);\n    const projDate = new Date();\n    projDate.setDate(projDate.getDate() + Math.round(weeksNeeded * 7));\n    projectedDate = projDate.toISOString().split('T')[0];\n  }\n}\n\nreturn [{\n  json: {\n    userId: triggerData.userId,\n    chatId: triggerData.chatId,\n    firstName: userData.first_name,\n    currentWeight: weightHistory.length > 0 ? weightHistory[0].weight_kg : userData.weight_kg,\n    targetWeight: goalData ? goalData.target_weight : null,\n    totalChange: Math.round(totalChange * 100) / 100,\n    weeklyRate: Math.round(weeklyRate * 100) / 100,\n    percentProgress,\n    projectedDate\n  }\n}];"
+        "jsCode": "const userData = $('Get User Data').first().json;\nconst goalRow = $('Get Goals').first()?.json;\nconst weightHistory = $('Get Weight History').all().map(i => i.json).filter(i => i && i.weight_kg);\n\nconst currentWeight = parseFloat(userData.weight_kg) || null;\nconst targetWeight = goalRow?.target_weight ? parseFloat(goalRow.target_weight) : null;\nconst goalType = goalRow?.goal_type || userData.goal || 'general';\n\nlet totalChange = 0, weeklyRate = 0, percentProgress = 0, projectedDate = null;\n\nif (weightHistory.length >= 2) {\n  const latest = parseFloat(weightHistory[0].weight_kg);\n  const oldest = parseFloat(weightHistory[weightHistory.length - 1].weight_kg);\n  totalChange = parseFloat((latest - oldest).toFixed(1));\n  const days = weightHistory.length > 1\n    ? (new Date(weightHistory[0].logged_at) - new Date(weightHistory[weightHistory.length-1].logged_at)) / (1000*60*60*24)\n    : 7;\n  weeklyRate = days > 0 ? parseFloat(((totalChange / days) * 7).toFixed(2)) : 0;\n}\n\nif (targetWeight && currentWeight && weeklyRate !== 0) {\n  const remaining = targetWeight - currentWeight;\n  percentProgress = totalChange !== 0\n    ? Math.min(100, Math.round(Math.abs(totalChange) / Math.abs((userData.start_weight || currentWeight) - targetWeight) * 100))\n    : 0;\n  const weeksLeft = Math.abs(remaining / weeklyRate);\n  const projDate = new Date();\n  projDate.setDate(projDate.getDate() + Math.round(weeksLeft * 7));\n  projectedDate = projDate.toLocaleDateString('es-CO', { timeZone: 'America/Bogota' });\n}\n\nreturn [{\n  json: {\n    userId: userData.user_id,\n    firstName: userData.first_name,\n    currentWeight,\n    targetWeight,\n    goalType,\n    totalChange,\n    weeklyRate,\n    percentProgress,\n    projectedDate,\n    weightHistory: weightHistory.slice(0, 5),\n    daysTracked: weightHistory.length,\n    hasGoal: !!goalRow?.goal_type,\n    hasWeightData: weightHistory.length > 0\n  }\n}];\n"
       },
       "id": "node-w7-5",
       "name": "Calculate Progress",
@@ -112,31 +115,6 @@
         1344,
         304
       ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $json.chatId }}",
-        "text": "={{ $json.message }}",
-        "additionalFields": {
-          "parse_mode": "Markdown",
-          "appendAttribution": false
-        }
-      },
-      "id": "node-w7-7",
-      "name": "Send Progress",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1568,
-        304
-      ],
-      "webhookId": "36e79a55-0a17-41b1-9b42-409692918800",
-      "credentials": {
-        "telegramApi": {
-          "id": "1duS64x2hsrz3moJ",
-          "name": "Telegram account fitia"
-        }
-      }
     }
   ],
   "connections": {
@@ -197,13 +175,7 @@
     },
     "Format Progress Message": {
       "main": [
-        [
-          {
-            "node": "Send Progress",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     }
   },
@@ -215,9 +187,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "fff498ed-94e9-4f97-9380-6f422e91dc43",
-  "activeVersionId": "fff498ed-94e9-4f97-9380-6f422e91dc43",
-  "versionCounter": 25,
+  "versionId": "0ef1594a-299d-4789-976a-efbf22c33376",
+  "activeVersionId": "0ef1594a-299d-4789-976a-efbf22c33376",
+  "versionCounter": 33,
   "triggerCount": 0,
   "shared": [
     {
@@ -240,9 +212,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-30T16:26:45.181Z",
-    "createdAt": "2026-03-30T16:26:45.181Z",
-    "versionId": "fff498ed-94e9-4f97-9380-6f422e91dc43",
+    "updatedAt": "2026-04-02T01:11:36.525Z",
+    "createdAt": "2026-04-02T01:11:36.525Z",
+    "versionId": "0ef1594a-299d-4789-976a-efbf22c33376",
     "workflowId": "bhJ8qqZXr68Id3pH",
     "nodes": [
       {
@@ -277,7 +249,8 @@
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "parameters": {
@@ -300,7 +273,8 @@
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "parameters": {
@@ -323,11 +297,12 @@
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        }
+        },
+        "alwaysOutputData": true
       },
       {
         "parameters": {
-          "jsCode": "const triggerData = $('Execute Workflow Trigger').first().json;\nconst userData = $('Get User Data').first().json;\nconst goalData = $('Get Goals').first().json;\nconst weightHistory = $('Get Weight History').all().map(i => i.json);\n\nlet totalChange = 0;\nlet weeklyRate = 0;\nlet percentProgress = 0;\nlet projectedDate = null;\n\nif (weightHistory.length >= 2) {\n  const latest = parseFloat(weightHistory[0].weight_kg);\n  const oldest = parseFloat(weightHistory[weightHistory.length - 1].weight_kg);\n  totalChange = latest - oldest;\n\n  const latestDate = new Date(weightHistory[0].logged_at);\n  const oldestDate = new Date(weightHistory[weightHistory.length - 1].logged_at);\n  const weeks = (latestDate - oldestDate) / (1000 * 60 * 60 * 24 * 7);\n  weeklyRate = weeks > 0 ? totalChange / weeks : 0;\n}\n\nif (goalData && goalData.target_weight && userData.weight_kg) {\n  const startWeight = parseFloat(goalData.start_weight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1].weight_kg : userData.weight_kg));\n  const targetWeight = parseFloat(goalData.target_weight);\n  const currentWeight = weightHistory.length > 0 ? parseFloat(weightHistory[0].weight_kg) : parseFloat(userData.weight_kg);\n  const totalNeeded = startWeight - targetWeight;\n  const achieved = startWeight - currentWeight;\n  percentProgress = totalNeeded !== 0 ? Math.round((achieved / totalNeeded) * 100) : 0;\n\n  if (weeklyRate !== 0) {\n    const remainingKg = currentWeight - targetWeight;\n    const weeksNeeded = Math.abs(remainingKg / weeklyRate);\n    const projDate = new Date();\n    projDate.setDate(projDate.getDate() + Math.round(weeksNeeded * 7));\n    projectedDate = projDate.toISOString().split('T')[0];\n  }\n}\n\nreturn [{\n  json: {\n    userId: triggerData.userId,\n    chatId: triggerData.chatId,\n    firstName: userData.first_name,\n    currentWeight: weightHistory.length > 0 ? weightHistory[0].weight_kg : userData.weight_kg,\n    targetWeight: goalData ? goalData.target_weight : null,\n    totalChange: Math.round(totalChange * 100) / 100,\n    weeklyRate: Math.round(weeklyRate * 100) / 100,\n    percentProgress,\n    projectedDate\n  }\n}];"
+          "jsCode": "const userData = $('Get User Data').first().json;\nconst goalRow = $('Get Goals').first()?.json;\nconst weightHistory = $('Get Weight History').all().map(i => i.json).filter(i => i && i.weight_kg);\n\nconst currentWeight = parseFloat(userData.weight_kg) || null;\nconst targetWeight = goalRow?.target_weight ? parseFloat(goalRow.target_weight) : null;\nconst goalType = goalRow?.goal_type || userData.goal || 'general';\n\nlet totalChange = 0, weeklyRate = 0, percentProgress = 0, projectedDate = null;\n\nif (weightHistory.length >= 2) {\n  const latest = parseFloat(weightHistory[0].weight_kg);\n  const oldest = parseFloat(weightHistory[weightHistory.length - 1].weight_kg);\n  totalChange = parseFloat((latest - oldest).toFixed(1));\n  const days = weightHistory.length > 1\n    ? (new Date(weightHistory[0].logged_at) - new Date(weightHistory[weightHistory.length-1].logged_at)) / (1000*60*60*24)\n    : 7;\n  weeklyRate = days > 0 ? parseFloat(((totalChange / days) * 7).toFixed(2)) : 0;\n}\n\nif (targetWeight && currentWeight && weeklyRate !== 0) {\n  const remaining = targetWeight - currentWeight;\n  percentProgress = totalChange !== 0\n    ? Math.min(100, Math.round(Math.abs(totalChange) / Math.abs((userData.start_weight || currentWeight) - targetWeight) * 100))\n    : 0;\n  const weeksLeft = Math.abs(remaining / weeklyRate);\n  const projDate = new Date();\n  projDate.setDate(projDate.getDate() + Math.round(weeksLeft * 7));\n  projectedDate = projDate.toLocaleDateString('es-CO', { timeZone: 'America/Bogota' });\n}\n\nreturn [{\n  json: {\n    userId: userData.user_id,\n    firstName: userData.first_name,\n    currentWeight,\n    targetWeight,\n    goalType,\n    totalChange,\n    weeklyRate,\n    percentProgress,\n    projectedDate,\n    weightHistory: weightHistory.slice(0, 5),\n    daysTracked: weightHistory.length,\n    hasGoal: !!goalRow?.goal_type,\n    hasWeightData: weightHistory.length > 0\n  }\n}];\n"
         },
         "id": "node-w7-5",
         "name": "Calculate Progress",
@@ -350,31 +325,6 @@
           1344,
           304
         ]
-      },
-      {
-        "parameters": {
-          "chatId": "={{ $json.chatId }}",
-          "text": "={{ $json.message }}",
-          "additionalFields": {
-            "parse_mode": "Markdown",
-            "appendAttribution": false
-          }
-        },
-        "id": "node-w7-7",
-        "name": "Send Progress",
-        "type": "n8n-nodes-base.telegram",
-        "typeVersion": 1.2,
-        "position": [
-          1568,
-          304
-        ],
-        "webhookId": "36e79a55-0a17-41b1-9b42-409692918800",
-        "credentials": {
-          "telegramApi": {
-            "id": "1duS64x2hsrz3moJ",
-            "name": "Telegram account fitia"
-          }
-        }
       }
     ],
     "connections": {
@@ -435,13 +385,7 @@
       },
       "Format Progress Message": {
         "main": [
-          [
-            {
-              "node": "Send Progress",
-              "type": "main",
-              "index": 0
-            }
-          ]
+          []
         ]
       }
     },
@@ -451,10 +395,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-30T16:26:45.742Z",
-        "id": 168,
+        "createdAt": "2026-04-02T01:11:38.562Z",
+        "id": 337,
         "workflowId": "bhJ8qqZXr68Id3pH",
-        "versionId": "fff498ed-94e9-4f97-9380-6f422e91dc43",
+        "versionId": "0ef1594a-299d-4789-976a-efbf22c33376",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

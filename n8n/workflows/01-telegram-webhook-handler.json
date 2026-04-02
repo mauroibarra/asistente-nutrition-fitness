@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T00:00:04.088Z",
+  "updatedAt": "2026-04-02T01:22:28.545Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -389,8 +389,8 @@
       "typeVersion": 2,
       "name": "FitAI Main AI Agent",
       "position": [
-        3280,
-        -320
+        3664,
+        -656
       ]
     },
     {
@@ -411,8 +411,8 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model",
       "position": [
-        3136,
-        -176
+        3520,
+        -512
       ],
       "credentials": {
         "openAiApi": {
@@ -432,8 +432,8 @@
       "typeVersion": 1.3,
       "name": "FitAI Memory",
       "position": [
-        3280,
-        -176
+        3664,
+        -512
       ]
     },
     {
@@ -516,8 +516,8 @@
       "typeVersion": 1.2,
       "name": "Send Response",
       "position": [
-        4320,
-        -304
+        4704,
+        -640
       ],
       "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
       "retryOnFail": true,
@@ -559,8 +559,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3824,
-        -32
+        4208,
+        -368
       ]
     },
     {
@@ -586,7 +586,6 @@
             },
             {
               "name": "planDate",
-              "type": "stringValue",
               "stringValue": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); })() }}"
             }
           ]
@@ -597,8 +596,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3504,
-        -32
+        3888,
+        -368
       ]
     },
     {
@@ -630,8 +629,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3664,
-        -32
+        4048,
+        -368
       ]
     },
     {
@@ -666,8 +665,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3344,
-        -32
+        3728,
+        -368
       ]
     },
     {
@@ -687,8 +686,8 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1.3,
       "position": [
-        3952,
-        -32
+        4336,
+        -368
       ],
       "credentials": {
         "qdrantApi": {
@@ -707,8 +706,8 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1,
       "position": [
-        3952,
-        144
+        4336,
+        -192
       ],
       "credentials": {
         "openAiApi": {
@@ -1336,7 +1335,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2448,
+        2544,
         304
       ]
     },
@@ -1368,8 +1367,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2768,
-        288
+        3184,
+        224
       ]
     },
     {
@@ -1423,8 +1422,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2768,
-        208
+        2800,
+        304
       ]
     },
     {
@@ -1461,174 +1460,163 @@
       ]
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  up.user_id, u.first_name,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  up.weight_kg, up.height_cm, up.age, up.gender, up.activity_level,\n  up.goal AS goal_type, up.wake_up_time, up.training_days_per_week,\n  up.onboarding_completed, up.tdee, up.bmr,\n  g.goal_type AS active_goal_type, g.target_weight, g.start_weight, g.start_date\nFROM users u\nJOIN user_profiles up ON up.user_id = u.id\nLEFT JOIN goals g ON g.user_id = u.id AND g.is_active = true\nWHERE u.id = $1;",
+        "options": {
+          "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+        }
+      },
       "id": "22222222-0001-4000-8000-000000000001",
       "name": "Load User Profile",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2500,
-        -440
+        2544,
+        -784
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      },
+      }
+    },
+    {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  up.user_id, u.first_name,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  up.weight_kg, up.height_cm, up.age, up.gender, up.activity_level,\n  up.goal AS goal_type, up.wake_up_time, up.training_days_per_week,\n  up.onboarding_completed, up.tdee, up.bmr,\n  g.goal_type AS active_goal_type, g.target_weight, g.start_weight, g.start_date\nFROM users u\nJOIN user_profiles up ON up.user_id = u.id\nLEFT JOIN goals g ON g.user_id = u.id AND g.is_active = true\nWHERE u.id = $1;",
-        "additionalFields": {
-          "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-        },
+        "query": "SELECT\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  COALESCE(calories_consumed, 0) AS calories_consumed,\n  COALESCE(protein_consumed_g, 0) AS protein_consumed_g,\n  COALESCE(carbs_consumed_g, 0) AS carbs_consumed_g,\n  COALESCE(fat_consumed_g, 0) AS fat_consumed_g,\n  COALESCE(meals_logged, 0) AS meals_logged,\n  target_date\nFROM daily_targets\nWHERE user_id = $1 AND target_date = CURRENT_DATE\nLIMIT 1",
         "options": {
           "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
         }
       },
-      "alwaysOutputData": true
-    },
-    {
       "id": "22222222-0002-4000-8000-000000000002",
       "name": "Load Daily Status",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2500,
-        -280
+        2544,
+        -624
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      },
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT\n  calories_target, protein_target_g, carbs_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,\n  target_date\nFROM daily_targets\nWHERE user_id = $1 AND target_date = CURRENT_DATE AT TIME ZONE 'America/Bogota'\nLIMIT 1",
-        "additionalFields": {
-          "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-        }
-      },
-      "alwaysOutputData": true
+      }
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  description AS food_name, meal_type,\n  estimated_calories AS calories,\n  estimated_protein_g AS protein_g,\n  estimated_carbs_g AS carbs_g,\n  estimated_fat_g AS fat_g,\n  logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE\nORDER BY logged_at DESC\nLIMIT 20",
+        "options": {
+          "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+        }
+      },
       "id": "22222222-0003-4000-8000-000000000003",
       "name": "Load Today Meals",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2500,
-        -120
+        2544,
+        -464
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      },
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT\n  food_name, meal_type, calories, protein_g, carbs_g, fat_g, logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE AT TIME ZONE 'America/Bogota'\nORDER BY logged_at DESC\nLIMIT 20",
-        "additionalFields": {
-          "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-        }
-      },
-      "alwaysOutputData": true
+      }
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT plan_json, plan_date\nFROM meal_plans\nWHERE user_id = $1\n  AND plan_date = CURRENT_DATE\n  AND is_active = true\nLIMIT 1",
+        "options": {
+          "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+        }
+      },
       "id": "22222222-0004-4000-8000-000000000004",
       "name": "Load Today Plan",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2500,
-        40
+        2544,
+        -288
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      },
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT plan_json, plan_date\nFROM meal_plans\nWHERE user_id = $1\n  AND plan_date = CURRENT_DATE AT TIME ZONE 'America/Bogota'\n  AND is_active = true\nLIMIT 1",
-        "additionalFields": {
-          "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-        }
-      },
-      "alwaysOutputData": true
+      }
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT weight_kg, logged_at::date AS record_date\nFROM weight_logs\nWHERE user_id = $1\nORDER BY logged_at DESC\nLIMIT 7",
+        "options": {
+          "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+        }
+      },
       "id": "22222222-0005-4000-8000-000000000005",
       "name": "Load Weight Trend",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2500,
-        200
+        2544,
+        -128
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      },
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT weight_kg, recorded_at::date AS record_date\nFROM weight_logs\nWHERE user_id = $1\nORDER BY recorded_at DESC\nLIMIT 7",
-        "additionalFields": {
-          "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-        }
-      },
-      "alwaysOutputData": true
+      }
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  ROUND(AVG(calories_consumed)::numeric, 0) AS avg_calories,\n  ROUND(AVG(protein_consumed_g)::numeric, 1) AS avg_protein,\n  COUNT(*) AS days_tracked\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= CURRENT_DATE - INTERVAL '7 days'\n  AND calories_consumed > 0",
+        "options": {
+          "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+        }
+      },
       "id": "22222222-0006-4000-8000-000000000006",
       "name": "Load Weekly Average",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2500,
-        360
+        2544,
+        32
       ],
+      "alwaysOutputData": true,
       "credentials": {
         "postgres": {
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      },
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT\n  ROUND(AVG(calories_consumed)::numeric, 0) AS avg_calories,\n  ROUND(AVG(protein_consumed_g)::numeric, 1) AS avg_protein,\n  COUNT(*) AS days_tracked\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= CURRENT_DATE AT TIME ZONE 'America/Bogota' - INTERVAL '7 days'\n  AND calories_consumed > 0",
-        "additionalFields": {
-          "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-        }
-      },
-      "alwaysOutputData": true
+      }
     },
     {
+      "parameters": {
+        "jsCode": "// Build Context v2 — assembles dynamic variables for AI Agent system prompt\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\n// ── User Profile ──\nconst profileRows = $('Load User Profile').all();\nconst profile = profileRows.length > 0 ? profileRows[0].json : {};\nconst firstName = profile.first_name || $('Check User & Membership').item.json.first_name || 'Usuario';\nconst currentWeight = profile.current_weight_kg;\nconst targetWeight = profile.target_weight_kg || profile.goal_target_weight;\nconst height = profile.height_cm;\nconst age = profile.age;\nconst gender = profile.gender;\nconst activityLevel = profile.activity_level;\nconst goalType = profile.goal_type;\nconst membershipStatus = profile.membership_status;\n\n// Build userProfile string\nlet profileParts = [];\nif (currentWeight) profileParts.push(`Peso actual: ${currentWeight}kg`);\nif (targetWeight) profileParts.push(`Meta: ${targetWeight}kg`);\nif (height) profileParts.push(`Talla: ${height}cm`);\nif (age) profileParts.push(`Edad: ${age} años`);\nif (gender) profileParts.push(`Género: ${gender}`);\nif (activityLevel) profileParts.push(`Actividad: ${activityLevel}`);\nif (goalType) profileParts.push(`Objetivo: ${goalType}`);\nif (membershipStatus) profileParts.push(`Membresía: ${membershipStatus}`);\nconst userProfile = profileParts.length > 0 ? profileParts.join(' | ') : 'Perfil no disponible';\n\n// ── Daily Status ──\nconst dailyRows = $('Load Daily Status').all();\nconst daily = dailyRows.length > 0 ? dailyRows[0].json : {};\n\nlet dailyStatus = 'Sin datos de hoy';\nif (daily.calories_target) {\n  const calConsumed = daily.calories_consumed || 0;\n  const calTarget = daily.calories_target;\n  const calRemaining = calTarget - calConsumed;\n  const protConsumed = daily.protein_consumed_g || 0;\n  const protTarget = daily.protein_target_g || 0;\n  dailyStatus = `Hoy (${today}): ${calConsumed}/${calTarget} kcal (${calRemaining > 0 ? calRemaining + ' restantes' : Math.abs(calRemaining) + ' excedidas'}) | Proteína: ${protConsumed}/${protTarget}g`;\n} else {\n  dailyStatus = `Hoy (${today}): sin registro de targets (usa get_daily_status para ver el estado)`;\n}\n\n// ── Today Meals ──\nconst mealsRows = $('Load Today Meals').all();\nlet mealsLogged = [];\nif (mealsRows.length > 0 && mealsRows[0].json && mealsRows[0].json.food_name) {\n  mealsLogged = mealsRows.map(r => r.json.food_name).filter(Boolean);\n  if (mealsLogged.length > 0) {\n    dailyStatus += ` | Alimentos: ${mealsLogged.slice(0, 5).join(', ')}${mealsLogged.length > 5 ? ' (+' + (mealsLogged.length - 5) + ' más)' : ''}`;\n  }\n}\n\n// ── Weight Trend ──\nconst weightRows = $('Load Weight Trend').all();\nlet weeklyTrend = 'Sin datos de peso recientes';\nif (weightRows.length >= 2) {\n  const weights = weightRows.map(r => parseFloat(r.json.weight_kg)).filter(w => !isNaN(w));\n  if (weights.length >= 2) {\n    const latest = weights[0];\n    const oldest = weights[weights.length - 1];\n    const diff = (latest - oldest).toFixed(1);\n    const direction = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';\n    weeklyTrend = `Peso: ${latest}kg (${direction}${Math.abs(diff)}kg en ${weights.length} registros)`;\n\n    // Add weekly average context\n    const weeklyRows = $('Load Weekly Average').all();\n    if (weeklyRows.length > 0 && weeklyRows[0].json) {\n      const wa = weeklyRows[0].json;\n      if (wa.avg_calories && wa.days_tracked > 0) {\n        weeklyTrend += ` | Promedio semanal: ${wa.avg_calories} kcal/día (${wa.days_tracked} días registrados)`;\n      }\n    }\n  }\n} else if (weightRows.length === 1) {\n  const w = parseFloat(weightRows[0].json.weight_kg);\n  if (!isNaN(w)) weeklyTrend = `Peso registrado: ${w}kg`;\n}\n\n// ── Next Action ──\nlet nextAction = 'Continuar con el plan';\nif (!daily.calories_target) {\n  nextAction = 'Sugerir generar plan de comidas para hoy';\n} else {\n  const calConsumed = daily.calories_consumed || 0;\n  const calTarget = daily.calories_target;\n  const pct = calTarget > 0 ? (calConsumed / calTarget * 100) : 0;\n  if (mealsLogged.length === 0) {\n    nextAction = 'Recordar registrar primera comida del día';\n  } else if (pct > 95) {\n    nextAction = 'Objetivo calórico casi cumplido — enfocarse en proteína e hidratación';\n  } else if (pct < 40 && new Date().getHours() > 15) {\n    nextAction = 'Recordar que quedan muchas calorías por consumir hoy';\n  }\n}\n\n// ── Message text ──\nconst messageText = $('Set User Context').item.json.message?.text || '';\nconst currentDate = today;\n\nreturn [{\n  json: {\n    userName: firstName,\n    userProfile,\n    dailyStatus,\n    weeklyTrend,\n    nextAction,\n    currentDate,\n    text: messageText\n  }\n}];\n"
+      },
       "id": "22222222-0007-4000-8000-000000000007",
       "name": "Build Context",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2850,
-        -100
-      ],
-      "parameters": {
-        "jsCode": "// Build Context v2 — assembles dynamic variables for AI Agent system prompt\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\n// ── User Profile ──\nconst profileRows = $('Load User Profile').all();\nconst profile = profileRows.length > 0 ? profileRows[0].json : {};\nconst firstName = profile.first_name || $('Check User & Membership').item.json.first_name || 'Usuario';\nconst currentWeight = profile.current_weight_kg;\nconst targetWeight = profile.target_weight_kg || profile.goal_target_weight;\nconst height = profile.height_cm;\nconst age = profile.age;\nconst gender = profile.gender;\nconst activityLevel = profile.activity_level;\nconst goalType = profile.goal_type;\nconst membershipStatus = profile.membership_status;\n\n// Build userProfile string\nlet profileParts = [];\nif (currentWeight) profileParts.push(`Peso actual: ${currentWeight}kg`);\nif (targetWeight) profileParts.push(`Meta: ${targetWeight}kg`);\nif (height) profileParts.push(`Talla: ${height}cm`);\nif (age) profileParts.push(`Edad: ${age} años`);\nif (gender) profileParts.push(`Género: ${gender}`);\nif (activityLevel) profileParts.push(`Actividad: ${activityLevel}`);\nif (goalType) profileParts.push(`Objetivo: ${goalType}`);\nif (membershipStatus) profileParts.push(`Membresía: ${membershipStatus}`);\nconst userProfile = profileParts.length > 0 ? profileParts.join(' | ') : 'Perfil no disponible';\n\n// ── Daily Status ──\nconst dailyRows = $('Load Daily Status').all();\nconst daily = dailyRows.length > 0 ? dailyRows[0].json : {};\n\nlet dailyStatus = 'Sin datos de hoy';\nif (daily.calories_target) {\n  const calConsumed = daily.calories_consumed || 0;\n  const calTarget = daily.calories_target;\n  const calRemaining = calTarget - calConsumed;\n  const protConsumed = daily.protein_consumed_g || 0;\n  const protTarget = daily.protein_target_g || 0;\n  dailyStatus = `Hoy (${today}): ${calConsumed}/${calTarget} kcal (${calRemaining > 0 ? calRemaining + ' restantes' : Math.abs(calRemaining) + ' excedidas'}) | Proteína: ${protConsumed}/${protTarget}g`;\n} else {\n  dailyStatus = `Hoy (${today}): sin registro de targets (usa get_daily_status para ver el estado)`;\n}\n\n// ── Today Meals ──\nconst mealsRows = $('Load Today Meals').all();\nlet mealsLogged = [];\nif (mealsRows.length > 0 && mealsRows[0].json && mealsRows[0].json.food_name) {\n  mealsLogged = mealsRows.map(r => r.json.food_name).filter(Boolean);\n  if (mealsLogged.length > 0) {\n    dailyStatus += ` | Alimentos: ${mealsLogged.slice(0, 5).join(', ')}${mealsLogged.length > 5 ? ' (+' + (mealsLogged.length - 5) + ' más)' : ''}`;\n  }\n}\n\n// ── Weight Trend ──\nconst weightRows = $('Load Weight Trend').all();\nlet weeklyTrend = 'Sin datos de peso recientes';\nif (weightRows.length >= 2) {\n  const weights = weightRows.map(r => parseFloat(r.json.weight_kg)).filter(w => !isNaN(w));\n  if (weights.length >= 2) {\n    const latest = weights[0];\n    const oldest = weights[weights.length - 1];\n    const diff = (latest - oldest).toFixed(1);\n    const direction = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';\n    weeklyTrend = `Peso: ${latest}kg (${direction}${Math.abs(diff)}kg en ${weights.length} registros)`;\n\n    // Add weekly average context\n    const weeklyRows = $('Load Weekly Average').all();\n    if (weeklyRows.length > 0 && weeklyRows[0].json) {\n      const wa = weeklyRows[0].json;\n      if (wa.avg_calories && wa.days_tracked > 0) {\n        weeklyTrend += ` | Promedio semanal: ${wa.avg_calories} kcal/día (${wa.days_tracked} días registrados)`;\n      }\n    }\n  }\n} else if (weightRows.length === 1) {\n  const w = parseFloat(weightRows[0].json.weight_kg);\n  if (!isNaN(w)) weeklyTrend = `Peso registrado: ${w}kg`;\n}\n\n// ── Next Action ──\nlet nextAction = 'Continuar con el plan';\nif (!daily.calories_target) {\n  nextAction = 'Sugerir generar plan de comidas para hoy';\n} else {\n  const calConsumed = daily.calories_consumed || 0;\n  const calTarget = daily.calories_target;\n  const pct = calTarget > 0 ? (calConsumed / calTarget * 100) : 0;\n  if (mealsLogged.length === 0) {\n    nextAction = 'Recordar registrar primera comida del día';\n  } else if (pct > 95) {\n    nextAction = 'Objetivo calórico casi cumplido — enfocarse en proteína e hidratación';\n  } else if (pct < 40 && new Date().getHours() > 15) {\n    nextAction = 'Recordar que quedan muchas calorías por consumir hoy';\n  }\n}\n\n// ── Message text ──\nconst messageText = $('Set User Context').item.json.message?.text || '';\nconst currentDate = today;\n\nreturn [{\n  json: {\n    userName: firstName,\n    userProfile,\n    dailyStatus,\n    weeklyTrend,\n    nextAction,\n    currentDate,\n    text: messageText\n  }\n}];\n"
-      }
+        3232,
+        -432
+      ]
     },
     {
-      "id": "22222222-0008-4000-8000-000000000008",
-      "name": "Tool: Log Food Intake",
-      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        3504,
-        128
-      ],
       "parameters": {
         "name": "log_food_intake",
         "description": "Registra un alimento consumido por el usuario en su log diario. Usa esta tool cuando el usuario mencione que comió, consumió, tomó o ingirió algo. Pasa la información como JSON en el campo 'query' con este formato exacto: {\"food_name\": \"nombre del alimento\", \"meal_type\": \"breakfast|lunch|dinner|snack\", \"calories\": 350, \"protein_g\": 25, \"carbs_g\": 30, \"fat_g\": 8}. Si el usuario no menciona las calorías, estímalas razonablemente. meal_type debe ser: breakfast (desayuno), lunch (almuerzo), dinner (cena), snack (merienda/snack).",
@@ -1651,17 +1639,17 @@
             }
           ]
         }
-      }
-    },
-    {
-      "id": "22222222-0009-4000-8000-000000000009",
-      "name": "Tool: Get Daily Status",
+      },
+      "id": "22222222-0008-4000-8000-000000000008",
+      "name": "Tool: Log Food Intake",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3664,
-        128
-      ],
+        3888,
+        -208
+      ]
+    },
+    {
       "parameters": {
         "name": "get_daily_status",
         "description": "Obtiene el resumen detallado del estado nutricional del usuario para hoy: calorías consumidas vs objetivo, macros (proteína, carbohidratos, grasas), lista de alimentos registrados y porcentaje de cumplimiento. Usa esta tool cuando el usuario pregunte cómo va su día, qué ha comido, cuántas calorías le quedan, o pida un resumen de su día.",
@@ -1684,17 +1672,17 @@
             }
           ]
         }
-      }
+      },
+      "id": "22222222-0009-4000-8000-000000000009",
+      "name": "Tool: Get Daily Status",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        4048,
+        -208
+      ]
     },
     {
-      "id": "ob-call-v2",
-      "name": "Call Onboarding Flow v2",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.1,
-      "position": [
-        2704,
-        608
-      ],
       "parameters": {
         "workflowId": {
           "__rl": true,
@@ -1703,40 +1691,74 @@
         },
         "options": {
           "waitForSubWorkflow": true
+        }
+      },
+      "id": "ob-call-v2",
+      "name": "Call Onboarding Flow v2",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        2704,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 6
+      },
+      "id": "merge-context-barrier",
+      "name": "Merge Context",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2928,
+        -416
+      ]
+    },
+    {
+      "id": "vs-knowledge-rag-tool",
+      "name": "Tool: Conocimiento Nutricional",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        4616,
+        -368
+      ],
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Base de conocimiento experta en nutricion, fitness, entrenamiento, suplementacion y habitos saludables. Usala para responder preguntas tecnicas del usuario sobre nutricion, ejercicio, suplementos o principios de entrenamiento.",
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "id",
+          "value": "knowledge_rag"
         },
-        "fields": {
-          "values": [
-            {
-              "name": "userId",
-              "type": "numberValue",
-              "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
-            },
-            {
-              "name": "telegramId",
-              "type": "numberValue",
-              "numberValue": "={{ $('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id }}"
-            },
-            {
-              "name": "chatId",
-              "type": "numberValue",
-              "numberValue": "={{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}"
-            },
-            {
-              "name": "firstName",
-              "type": "stringValue",
-              "stringValue": "={{ $('Check User & Membership').item.json.first_name }}"
-            },
-            {
-              "name": "text",
-              "type": "stringValue",
-              "stringValue": "={{ $('Set User Context').item.json.message?.text || '' }}"
-            },
-            {
-              "name": "callbackData",
-              "type": "stringValue",
-              "stringValue": "={{ $('Telegram Trigger').item.json.callback_query?.data || null }}"
-            }
-          ]
+        "topK": 4,
+        "options": {}
+      },
+      "credentials": {
+        "qdrantApi": {
+          "id": "ZgvYkNPmxRynoz3F",
+          "name": "Qdrant account Fitia"
+        }
+      }
+    },
+    {
+      "id": "embeddings-knowledge-rag",
+      "name": "OpenAI Embeddings (Knowledge RAG)",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        4616,
+        -192
+      ],
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "credentials": {
+        "openAiApi": {
+          "id": "NOJoPVNWDXiywRgw",
+          "name": "OpenAi account"
         }
       }
     }
@@ -2318,7 +2340,7 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Merge Context",
             "type": "main",
             "index": 0
           }
@@ -2329,9 +2351,9 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Merge Context",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -2340,9 +2362,9 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Merge Context",
             "type": "main",
-            "index": 0
+            "index": 2
           }
         ]
       ]
@@ -2351,9 +2373,9 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Merge Context",
             "type": "main",
-            "index": 0
+            "index": 3
           }
         ]
       ]
@@ -2362,9 +2384,9 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Merge Context",
             "type": "main",
-            "index": 0
+            "index": 4
           }
         ]
       ]
@@ -2373,9 +2395,9 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Merge Context",
             "type": "main",
-            "index": 0
+            "index": 5
           }
         ]
       ]
@@ -2412,6 +2434,39 @@
           }
         ]
       ]
+    },
+    "Merge Context": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Embeddings (Knowledge RAG)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Tool: Conocimiento Nutricional",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Conocimiento Nutricional": {
+      "ai_tool": [
+        [
+          {
+            "node": "FitAI Main AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2424,9 +2479,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "edade9db-d242-434d-81fb-4f13c67c89ab",
-  "activeVersionId": "edade9db-d242-434d-81fb-4f13c67c89ab",
-  "versionCounter": 501,
+  "versionId": "e5c5bfcf-fb79-4686-999c-0970d7032f56",
+  "activeVersionId": "e5c5bfcf-fb79-4686-999c-0970d7032f56",
+  "versionCounter": 541,
   "triggerCount": 1,
   "shared": [
     {
@@ -2449,9 +2504,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T00:00:04.096Z",
-    "createdAt": "2026-04-02T00:00:04.096Z",
-    "versionId": "edade9db-d242-434d-81fb-4f13c67c89ab",
+    "updatedAt": "2026-04-02T01:22:28.548Z",
+    "createdAt": "2026-04-02T01:22:28.548Z",
+    "versionId": "e5c5bfcf-fb79-4686-999c-0970d7032f56",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -2836,8 +2891,8 @@
         "typeVersion": 2,
         "name": "FitAI Main AI Agent",
         "position": [
-          3280,
-          -320
+          3664,
+          -656
         ]
       },
       {
@@ -2858,8 +2913,8 @@
         "typeVersion": 1.2,
         "name": "OpenAI Chat Model",
         "position": [
-          3136,
-          -176
+          3520,
+          -512
         ],
         "credentials": {
           "openAiApi": {
@@ -2879,8 +2934,8 @@
         "typeVersion": 1.3,
         "name": "FitAI Memory",
         "position": [
-          3280,
-          -176
+          3664,
+          -512
         ]
       },
       {
@@ -2963,8 +3018,8 @@
         "typeVersion": 1.2,
         "name": "Send Response",
         "position": [
-          4320,
-          -304
+          4704,
+          -640
         ],
         "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
         "retryOnFail": true,
@@ -3006,8 +3061,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3824,
-          -32
+          4208,
+          -368
         ]
       },
       {
@@ -3033,7 +3088,6 @@
               },
               {
                 "name": "planDate",
-                "type": "stringValue",
                 "stringValue": "={{ (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); })() }}"
               }
             ]
@@ -3044,8 +3098,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3504,
-          -32
+          3888,
+          -368
         ]
       },
       {
@@ -3077,8 +3131,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3664,
-          -32
+          4048,
+          -368
         ]
       },
       {
@@ -3113,8 +3167,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3344,
-          -32
+          3728,
+          -368
         ]
       },
       {
@@ -3134,8 +3188,8 @@
         "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
         "typeVersion": 1.3,
         "position": [
-          3952,
-          -32
+          4336,
+          -368
         ],
         "credentials": {
           "qdrantApi": {
@@ -3154,8 +3208,8 @@
         "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
         "typeVersion": 1,
         "position": [
-          3952,
-          144
+          4336,
+          -192
         ],
         "credentials": {
           "openAiApi": {
@@ -3783,7 +3837,7 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          2448,
+          2544,
           304
         ]
       },
@@ -3815,8 +3869,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2768,
-          288
+          3184,
+          224
         ]
       },
       {
@@ -3870,8 +3924,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          2768,
-          208
+          2800,
+          304
         ]
       },
       {
@@ -3908,174 +3962,163 @@
         ]
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  up.user_id, u.first_name,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  up.weight_kg, up.height_cm, up.age, up.gender, up.activity_level,\n  up.goal AS goal_type, up.wake_up_time, up.training_days_per_week,\n  up.onboarding_completed, up.tdee, up.bmr,\n  g.goal_type AS active_goal_type, g.target_weight, g.start_weight, g.start_date\nFROM users u\nJOIN user_profiles up ON up.user_id = u.id\nLEFT JOIN goals g ON g.user_id = u.id AND g.is_active = true\nWHERE u.id = $1;",
+          "options": {
+            "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+          }
+        },
         "id": "22222222-0001-4000-8000-000000000001",
         "name": "Load User Profile",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2500,
-          -440
+          2544,
+          -784
         ],
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        },
+        }
+      },
+      {
         "parameters": {
           "operation": "executeQuery",
-          "query": "SELECT\n  up.user_id, u.first_name,\n  up.caloric_target, up.protein_target_g, up.carb_target_g, up.fat_target_g,\n  up.weight_kg, up.height_cm, up.age, up.gender, up.activity_level,\n  up.goal AS goal_type, up.wake_up_time, up.training_days_per_week,\n  up.onboarding_completed, up.tdee, up.bmr,\n  g.goal_type AS active_goal_type, g.target_weight, g.start_weight, g.start_date\nFROM users u\nJOIN user_profiles up ON up.user_id = u.id\nLEFT JOIN goals g ON g.user_id = u.id AND g.is_active = true\nWHERE u.id = $1;",
-          "additionalFields": {
-            "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-          },
+          "query": "SELECT\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  COALESCE(calories_consumed, 0) AS calories_consumed,\n  COALESCE(protein_consumed_g, 0) AS protein_consumed_g,\n  COALESCE(carbs_consumed_g, 0) AS carbs_consumed_g,\n  COALESCE(fat_consumed_g, 0) AS fat_consumed_g,\n  COALESCE(meals_logged, 0) AS meals_logged,\n  target_date\nFROM daily_targets\nWHERE user_id = $1 AND target_date = CURRENT_DATE\nLIMIT 1",
           "options": {
             "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
           }
         },
-        "alwaysOutputData": true
-      },
-      {
         "id": "22222222-0002-4000-8000-000000000002",
         "name": "Load Daily Status",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2500,
-          -280
+          2544,
+          -624
         ],
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        },
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT\n  calories_target, protein_target_g, carbs_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g,\n  target_date\nFROM daily_targets\nWHERE user_id = $1 AND target_date = CURRENT_DATE AT TIME ZONE 'America/Bogota'\nLIMIT 1",
-          "additionalFields": {
-            "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-          }
-        },
-        "alwaysOutputData": true
+        }
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  description AS food_name, meal_type,\n  estimated_calories AS calories,\n  estimated_protein_g AS protein_g,\n  estimated_carbs_g AS carbs_g,\n  estimated_fat_g AS fat_g,\n  logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE\nORDER BY logged_at DESC\nLIMIT 20",
+          "options": {
+            "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+          }
+        },
         "id": "22222222-0003-4000-8000-000000000003",
         "name": "Load Today Meals",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2500,
-          -120
+          2544,
+          -464
         ],
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        },
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT\n  food_name, meal_type, calories, protein_g, carbs_g, fat_g, logged_at\nFROM daily_intake_logs\nWHERE user_id = $1 AND log_date = CURRENT_DATE AT TIME ZONE 'America/Bogota'\nORDER BY logged_at DESC\nLIMIT 20",
-          "additionalFields": {
-            "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-          }
-        },
-        "alwaysOutputData": true
+        }
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT plan_json, plan_date\nFROM meal_plans\nWHERE user_id = $1\n  AND plan_date = CURRENT_DATE\n  AND is_active = true\nLIMIT 1",
+          "options": {
+            "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+          }
+        },
         "id": "22222222-0004-4000-8000-000000000004",
         "name": "Load Today Plan",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2500,
-          40
+          2544,
+          -288
         ],
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        },
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT plan_json, plan_date\nFROM meal_plans\nWHERE user_id = $1\n  AND plan_date = CURRENT_DATE AT TIME ZONE 'America/Bogota'\n  AND is_active = true\nLIMIT 1",
-          "additionalFields": {
-            "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-          }
-        },
-        "alwaysOutputData": true
+        }
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT weight_kg, logged_at::date AS record_date\nFROM weight_logs\nWHERE user_id = $1\nORDER BY logged_at DESC\nLIMIT 7",
+          "options": {
+            "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+          }
+        },
         "id": "22222222-0005-4000-8000-000000000005",
         "name": "Load Weight Trend",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2500,
-          200
+          2544,
+          -128
         ],
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        },
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT weight_kg, recorded_at::date AS record_date\nFROM weight_logs\nWHERE user_id = $1\nORDER BY recorded_at DESC\nLIMIT 7",
-          "additionalFields": {
-            "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-          }
-        },
-        "alwaysOutputData": true
+        }
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT\n  ROUND(AVG(calories_consumed)::numeric, 0) AS avg_calories,\n  ROUND(AVG(protein_consumed_g)::numeric, 1) AS avg_protein,\n  COUNT(*) AS days_tracked\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= CURRENT_DATE - INTERVAL '7 days'\n  AND calories_consumed > 0",
+          "options": {
+            "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id] }}"
+          }
+        },
         "id": "22222222-0006-4000-8000-000000000006",
         "name": "Load Weekly Average",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2500,
-          360
+          2544,
+          32
         ],
+        "alwaysOutputData": true,
         "credentials": {
           "postgres": {
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        },
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT\n  ROUND(AVG(calories_consumed)::numeric, 0) AS avg_calories,\n  ROUND(AVG(protein_consumed_g)::numeric, 1) AS avg_protein,\n  COUNT(*) AS days_tracked\nFROM daily_targets\nWHERE user_id = $1\n  AND target_date >= CURRENT_DATE AT TIME ZONE 'America/Bogota' - INTERVAL '7 days'\n  AND calories_consumed > 0",
-          "additionalFields": {
-            "queryParams": "={{ $('Check User & Membership').item.json.user_id }}"
-          }
-        },
-        "alwaysOutputData": true
+        }
       },
       {
+        "parameters": {
+          "jsCode": "// Build Context v2 — assembles dynamic variables for AI Agent system prompt\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\n// ── User Profile ──\nconst profileRows = $('Load User Profile').all();\nconst profile = profileRows.length > 0 ? profileRows[0].json : {};\nconst firstName = profile.first_name || $('Check User & Membership').item.json.first_name || 'Usuario';\nconst currentWeight = profile.current_weight_kg;\nconst targetWeight = profile.target_weight_kg || profile.goal_target_weight;\nconst height = profile.height_cm;\nconst age = profile.age;\nconst gender = profile.gender;\nconst activityLevel = profile.activity_level;\nconst goalType = profile.goal_type;\nconst membershipStatus = profile.membership_status;\n\n// Build userProfile string\nlet profileParts = [];\nif (currentWeight) profileParts.push(`Peso actual: ${currentWeight}kg`);\nif (targetWeight) profileParts.push(`Meta: ${targetWeight}kg`);\nif (height) profileParts.push(`Talla: ${height}cm`);\nif (age) profileParts.push(`Edad: ${age} años`);\nif (gender) profileParts.push(`Género: ${gender}`);\nif (activityLevel) profileParts.push(`Actividad: ${activityLevel}`);\nif (goalType) profileParts.push(`Objetivo: ${goalType}`);\nif (membershipStatus) profileParts.push(`Membresía: ${membershipStatus}`);\nconst userProfile = profileParts.length > 0 ? profileParts.join(' | ') : 'Perfil no disponible';\n\n// ── Daily Status ──\nconst dailyRows = $('Load Daily Status').all();\nconst daily = dailyRows.length > 0 ? dailyRows[0].json : {};\n\nlet dailyStatus = 'Sin datos de hoy';\nif (daily.calories_target) {\n  const calConsumed = daily.calories_consumed || 0;\n  const calTarget = daily.calories_target;\n  const calRemaining = calTarget - calConsumed;\n  const protConsumed = daily.protein_consumed_g || 0;\n  const protTarget = daily.protein_target_g || 0;\n  dailyStatus = `Hoy (${today}): ${calConsumed}/${calTarget} kcal (${calRemaining > 0 ? calRemaining + ' restantes' : Math.abs(calRemaining) + ' excedidas'}) | Proteína: ${protConsumed}/${protTarget}g`;\n} else {\n  dailyStatus = `Hoy (${today}): sin registro de targets (usa get_daily_status para ver el estado)`;\n}\n\n// ── Today Meals ──\nconst mealsRows = $('Load Today Meals').all();\nlet mealsLogged = [];\nif (mealsRows.length > 0 && mealsRows[0].json && mealsRows[0].json.food_name) {\n  mealsLogged = mealsRows.map(r => r.json.food_name).filter(Boolean);\n  if (mealsLogged.length > 0) {\n    dailyStatus += ` | Alimentos: ${mealsLogged.slice(0, 5).join(', ')}${mealsLogged.length > 5 ? ' (+' + (mealsLogged.length - 5) + ' más)' : ''}`;\n  }\n}\n\n// ── Weight Trend ──\nconst weightRows = $('Load Weight Trend').all();\nlet weeklyTrend = 'Sin datos de peso recientes';\nif (weightRows.length >= 2) {\n  const weights = weightRows.map(r => parseFloat(r.json.weight_kg)).filter(w => !isNaN(w));\n  if (weights.length >= 2) {\n    const latest = weights[0];\n    const oldest = weights[weights.length - 1];\n    const diff = (latest - oldest).toFixed(1);\n    const direction = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';\n    weeklyTrend = `Peso: ${latest}kg (${direction}${Math.abs(diff)}kg en ${weights.length} registros)`;\n\n    // Add weekly average context\n    const weeklyRows = $('Load Weekly Average').all();\n    if (weeklyRows.length > 0 && weeklyRows[0].json) {\n      const wa = weeklyRows[0].json;\n      if (wa.avg_calories && wa.days_tracked > 0) {\n        weeklyTrend += ` | Promedio semanal: ${wa.avg_calories} kcal/día (${wa.days_tracked} días registrados)`;\n      }\n    }\n  }\n} else if (weightRows.length === 1) {\n  const w = parseFloat(weightRows[0].json.weight_kg);\n  if (!isNaN(w)) weeklyTrend = `Peso registrado: ${w}kg`;\n}\n\n// ── Next Action ──\nlet nextAction = 'Continuar con el plan';\nif (!daily.calories_target) {\n  nextAction = 'Sugerir generar plan de comidas para hoy';\n} else {\n  const calConsumed = daily.calories_consumed || 0;\n  const calTarget = daily.calories_target;\n  const pct = calTarget > 0 ? (calConsumed / calTarget * 100) : 0;\n  if (mealsLogged.length === 0) {\n    nextAction = 'Recordar registrar primera comida del día';\n  } else if (pct > 95) {\n    nextAction = 'Objetivo calórico casi cumplido — enfocarse en proteína e hidratación';\n  } else if (pct < 40 && new Date().getHours() > 15) {\n    nextAction = 'Recordar que quedan muchas calorías por consumir hoy';\n  }\n}\n\n// ── Message text ──\nconst messageText = $('Set User Context').item.json.message?.text || '';\nconst currentDate = today;\n\nreturn [{\n  json: {\n    userName: firstName,\n    userProfile,\n    dailyStatus,\n    weeklyTrend,\n    nextAction,\n    currentDate,\n    text: messageText\n  }\n}];\n"
+        },
         "id": "22222222-0007-4000-8000-000000000007",
         "name": "Build Context",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2850,
-          -100
-        ],
-        "parameters": {
-          "jsCode": "// Build Context v2 — assembles dynamic variables for AI Agent system prompt\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\n// ── User Profile ──\nconst profileRows = $('Load User Profile').all();\nconst profile = profileRows.length > 0 ? profileRows[0].json : {};\nconst firstName = profile.first_name || $('Check User & Membership').item.json.first_name || 'Usuario';\nconst currentWeight = profile.current_weight_kg;\nconst targetWeight = profile.target_weight_kg || profile.goal_target_weight;\nconst height = profile.height_cm;\nconst age = profile.age;\nconst gender = profile.gender;\nconst activityLevel = profile.activity_level;\nconst goalType = profile.goal_type;\nconst membershipStatus = profile.membership_status;\n\n// Build userProfile string\nlet profileParts = [];\nif (currentWeight) profileParts.push(`Peso actual: ${currentWeight}kg`);\nif (targetWeight) profileParts.push(`Meta: ${targetWeight}kg`);\nif (height) profileParts.push(`Talla: ${height}cm`);\nif (age) profileParts.push(`Edad: ${age} años`);\nif (gender) profileParts.push(`Género: ${gender}`);\nif (activityLevel) profileParts.push(`Actividad: ${activityLevel}`);\nif (goalType) profileParts.push(`Objetivo: ${goalType}`);\nif (membershipStatus) profileParts.push(`Membresía: ${membershipStatus}`);\nconst userProfile = profileParts.length > 0 ? profileParts.join(' | ') : 'Perfil no disponible';\n\n// ── Daily Status ──\nconst dailyRows = $('Load Daily Status').all();\nconst daily = dailyRows.length > 0 ? dailyRows[0].json : {};\n\nlet dailyStatus = 'Sin datos de hoy';\nif (daily.calories_target) {\n  const calConsumed = daily.calories_consumed || 0;\n  const calTarget = daily.calories_target;\n  const calRemaining = calTarget - calConsumed;\n  const protConsumed = daily.protein_consumed_g || 0;\n  const protTarget = daily.protein_target_g || 0;\n  dailyStatus = `Hoy (${today}): ${calConsumed}/${calTarget} kcal (${calRemaining > 0 ? calRemaining + ' restantes' : Math.abs(calRemaining) + ' excedidas'}) | Proteína: ${protConsumed}/${protTarget}g`;\n} else {\n  dailyStatus = `Hoy (${today}): sin registro de targets (usa get_daily_status para ver el estado)`;\n}\n\n// ── Today Meals ──\nconst mealsRows = $('Load Today Meals').all();\nlet mealsLogged = [];\nif (mealsRows.length > 0 && mealsRows[0].json && mealsRows[0].json.food_name) {\n  mealsLogged = mealsRows.map(r => r.json.food_name).filter(Boolean);\n  if (mealsLogged.length > 0) {\n    dailyStatus += ` | Alimentos: ${mealsLogged.slice(0, 5).join(', ')}${mealsLogged.length > 5 ? ' (+' + (mealsLogged.length - 5) + ' más)' : ''}`;\n  }\n}\n\n// ── Weight Trend ──\nconst weightRows = $('Load Weight Trend').all();\nlet weeklyTrend = 'Sin datos de peso recientes';\nif (weightRows.length >= 2) {\n  const weights = weightRows.map(r => parseFloat(r.json.weight_kg)).filter(w => !isNaN(w));\n  if (weights.length >= 2) {\n    const latest = weights[0];\n    const oldest = weights[weights.length - 1];\n    const diff = (latest - oldest).toFixed(1);\n    const direction = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';\n    weeklyTrend = `Peso: ${latest}kg (${direction}${Math.abs(diff)}kg en ${weights.length} registros)`;\n\n    // Add weekly average context\n    const weeklyRows = $('Load Weekly Average').all();\n    if (weeklyRows.length > 0 && weeklyRows[0].json) {\n      const wa = weeklyRows[0].json;\n      if (wa.avg_calories && wa.days_tracked > 0) {\n        weeklyTrend += ` | Promedio semanal: ${wa.avg_calories} kcal/día (${wa.days_tracked} días registrados)`;\n      }\n    }\n  }\n} else if (weightRows.length === 1) {\n  const w = parseFloat(weightRows[0].json.weight_kg);\n  if (!isNaN(w)) weeklyTrend = `Peso registrado: ${w}kg`;\n}\n\n// ── Next Action ──\nlet nextAction = 'Continuar con el plan';\nif (!daily.calories_target) {\n  nextAction = 'Sugerir generar plan de comidas para hoy';\n} else {\n  const calConsumed = daily.calories_consumed || 0;\n  const calTarget = daily.calories_target;\n  const pct = calTarget > 0 ? (calConsumed / calTarget * 100) : 0;\n  if (mealsLogged.length === 0) {\n    nextAction = 'Recordar registrar primera comida del día';\n  } else if (pct > 95) {\n    nextAction = 'Objetivo calórico casi cumplido — enfocarse en proteína e hidratación';\n  } else if (pct < 40 && new Date().getHours() > 15) {\n    nextAction = 'Recordar que quedan muchas calorías por consumir hoy';\n  }\n}\n\n// ── Message text ──\nconst messageText = $('Set User Context').item.json.message?.text || '';\nconst currentDate = today;\n\nreturn [{\n  json: {\n    userName: firstName,\n    userProfile,\n    dailyStatus,\n    weeklyTrend,\n    nextAction,\n    currentDate,\n    text: messageText\n  }\n}];\n"
-        }
+          3232,
+          -432
+        ]
       },
       {
-        "id": "22222222-0008-4000-8000-000000000008",
-        "name": "Tool: Log Food Intake",
-        "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          3504,
-          128
-        ],
         "parameters": {
           "name": "log_food_intake",
           "description": "Registra un alimento consumido por el usuario en su log diario. Usa esta tool cuando el usuario mencione que comió, consumió, tomó o ingirió algo. Pasa la información como JSON en el campo 'query' con este formato exacto: {\"food_name\": \"nombre del alimento\", \"meal_type\": \"breakfast|lunch|dinner|snack\", \"calories\": 350, \"protein_g\": 25, \"carbs_g\": 30, \"fat_g\": 8}. Si el usuario no menciona las calorías, estímalas razonablemente. meal_type debe ser: breakfast (desayuno), lunch (almuerzo), dinner (cena), snack (merienda/snack).",
@@ -4098,17 +4141,17 @@
               }
             ]
           }
-        }
-      },
-      {
-        "id": "22222222-0009-4000-8000-000000000009",
-        "name": "Tool: Get Daily Status",
+        },
+        "id": "22222222-0008-4000-8000-000000000008",
+        "name": "Tool: Log Food Intake",
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3664,
-          128
-        ],
+          3888,
+          -208
+        ]
+      },
+      {
         "parameters": {
           "name": "get_daily_status",
           "description": "Obtiene el resumen detallado del estado nutricional del usuario para hoy: calorías consumidas vs objetivo, macros (proteína, carbohidratos, grasas), lista de alimentos registrados y porcentaje de cumplimiento. Usa esta tool cuando el usuario pregunte cómo va su día, qué ha comido, cuántas calorías le quedan, o pida un resumen de su día.",
@@ -4131,17 +4174,17 @@
               }
             ]
           }
-        }
+        },
+        "id": "22222222-0009-4000-8000-000000000009",
+        "name": "Tool: Get Daily Status",
+        "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          4048,
+          -208
+        ]
       },
       {
-        "id": "ob-call-v2",
-        "name": "Call Onboarding Flow v2",
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.1,
-        "position": [
-          2704,
-          608
-        ],
         "parameters": {
           "workflowId": {
             "__rl": true,
@@ -4150,40 +4193,74 @@
           },
           "options": {
             "waitForSubWorkflow": true
+          }
+        },
+        "id": "ob-call-v2",
+        "name": "Call Onboarding Flow v2",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          2704,
+          608
+        ]
+      },
+      {
+        "parameters": {
+          "numberInputs": 6
+        },
+        "id": "merge-context-barrier",
+        "name": "Merge Context",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3.1,
+        "position": [
+          2928,
+          -416
+        ]
+      },
+      {
+        "id": "vs-knowledge-rag-tool",
+        "name": "Tool: Conocimiento Nutricional",
+        "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+        "typeVersion": 1.3,
+        "position": [
+          4616,
+          -368
+        ],
+        "parameters": {
+          "mode": "retrieve-as-tool",
+          "toolDescription": "Base de conocimiento experta en nutricion, fitness, entrenamiento, suplementacion y habitos saludables. Usala para responder preguntas tecnicas del usuario sobre nutricion, ejercicio, suplementos o principios de entrenamiento.",
+          "qdrantCollection": {
+            "__rl": true,
+            "mode": "id",
+            "value": "knowledge_rag"
           },
-          "fields": {
-            "values": [
-              {
-                "name": "userId",
-                "type": "numberValue",
-                "numberValue": "={{ $('Check User & Membership').item.json.user_id }}"
-              },
-              {
-                "name": "telegramId",
-                "type": "numberValue",
-                "numberValue": "={{ $('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id }}"
-              },
-              {
-                "name": "chatId",
-                "type": "numberValue",
-                "numberValue": "={{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}"
-              },
-              {
-                "name": "firstName",
-                "type": "stringValue",
-                "stringValue": "={{ $('Check User & Membership').item.json.first_name }}"
-              },
-              {
-                "name": "text",
-                "type": "stringValue",
-                "stringValue": "={{ $('Set User Context').item.json.message?.text || '' }}"
-              },
-              {
-                "name": "callbackData",
-                "type": "stringValue",
-                "stringValue": "={{ $('Telegram Trigger').item.json.callback_query?.data || null }}"
-              }
-            ]
+          "topK": 4,
+          "options": {}
+        },
+        "credentials": {
+          "qdrantApi": {
+            "id": "ZgvYkNPmxRynoz3F",
+            "name": "Qdrant account Fitia"
+          }
+        }
+      },
+      {
+        "id": "embeddings-knowledge-rag",
+        "name": "OpenAI Embeddings (Knowledge RAG)",
+        "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+        "typeVersion": 1,
+        "position": [
+          4616,
+          -192
+        ],
+        "parameters": {
+          "model": "text-embedding-3-small",
+          "options": {}
+        },
+        "credentials": {
+          "openAiApi": {
+            "id": "NOJoPVNWDXiywRgw",
+            "name": "OpenAi account"
           }
         }
       }
@@ -4765,7 +4842,7 @@
         "main": [
           [
             {
-              "node": "Build Context",
+              "node": "Merge Context",
               "type": "main",
               "index": 0
             }
@@ -4776,9 +4853,9 @@
         "main": [
           [
             {
-              "node": "Build Context",
+              "node": "Merge Context",
               "type": "main",
-              "index": 0
+              "index": 1
             }
           ]
         ]
@@ -4787,9 +4864,9 @@
         "main": [
           [
             {
-              "node": "Build Context",
+              "node": "Merge Context",
               "type": "main",
-              "index": 0
+              "index": 2
             }
           ]
         ]
@@ -4798,9 +4875,9 @@
         "main": [
           [
             {
-              "node": "Build Context",
+              "node": "Merge Context",
               "type": "main",
-              "index": 0
+              "index": 3
             }
           ]
         ]
@@ -4809,9 +4886,9 @@
         "main": [
           [
             {
-              "node": "Build Context",
+              "node": "Merge Context",
               "type": "main",
-              "index": 0
+              "index": 4
             }
           ]
         ]
@@ -4820,9 +4897,9 @@
         "main": [
           [
             {
-              "node": "Build Context",
+              "node": "Merge Context",
               "type": "main",
-              "index": 0
+              "index": 5
             }
           ]
         ]
@@ -4859,6 +4936,39 @@
             }
           ]
         ]
+      },
+      "Merge Context": {
+        "main": [
+          [
+            {
+              "node": "Build Context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Embeddings (Knowledge RAG)": {
+        "ai_embedding": [
+          [
+            {
+              "node": "Tool: Conocimiento Nutricional",
+              "type": "ai_embedding",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tool: Conocimiento Nutricional": {
+        "ai_tool": [
+          [
+            {
+              "node": "FitAI Main AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Mauro Ibarra ",
@@ -4867,10 +4977,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T00:00:06.306Z",
-        "id": 293,
+        "createdAt": "2026-04-02T01:22:31.760Z",
+        "id": 339,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "edade9db-d242-434d-81fb-4f13c67c89ab",
+        "versionId": "e5c5bfcf-fb79-4686-999c-0970d7032f56",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
