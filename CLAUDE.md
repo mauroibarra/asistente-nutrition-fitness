@@ -442,13 +442,26 @@ new Date().toISOString()
 
 En **queries SQL de PostgreSQL**, `CURRENT_DATE` retorna la fecha UTC del servidor. Entre las 19:00 y 23:59 hora Colombia (00:00-04:59 UTC del día siguiente), un registro hecho "hoy en Colombia" se guarda con la fecha de "mañana UTC". Usar siempre:
 ```sql
--- CORRECTO — fecha en Colombia
+-- CORRECTO — fecha actual en Colombia
 (NOW() AT TIME ZONE 'America/Bogota')::date
+
+-- CORRECTO — mañana en Colombia (ej: Daily Plan Cron que corre a las 9pm)
+(NOW() AT TIME ZONE 'America/Bogota')::date + 1
 
 -- INCORRECTO — fecha UTC, puede ser un día adelante respecto a Colombia
 CURRENT_DATE
+
+-- INCORRECTO — aplicar AT TIME ZONE a DATE (no a timestamptz)
+-- Esto interpreta la fecha como medianoche UTC → da ayer Colombia
+CURRENT_DATE AT TIME ZONE 'America/Bogota'
+
+-- INCORRECTO — parecía fix pero falla a las 9pm Colombia
+-- A esa hora CURRENT_DATE UTC ya es mañana Colombia → +1 da pasado mañana
+CURRENT_DATE + 1
 ```
-Esto aplica a: `log_date` en INSERTs de `daily_intake_logs`, `target_date` en `daily_targets`, `plan_date` en `meal_plans`, y todos los filtros `WHERE ... = CURRENT_DATE` en los workflows de contexto (Load Daily Status, Load Today Meals, Load Today Plan, Get Daily Targets, Get Today Meals, Get Today Plan) y proactivos (Morning Briefing, Evening Check-in, Meal Reminder, Silence Detector, Weekly Report, Daily Plan Cron).
+El Daily Plan Generator Cron corre a las 9pm Colombia (2am UTC del día siguiente). `CURRENT_DATE + 1` a esa hora daría "pasado mañana Colombia" en vez de "mañana Colombia". `(NOW() AT TIME ZONE 'America/Bogota')::date + 1` siempre da correctamente "mañana Colombia".
+
+Aplica a: `log_date` en INSERTs de `daily_intake_logs`, `target_date` en `daily_targets`, `plan_date` en `meal_plans`, y todos los filtros `WHERE ... = CURRENT_DATE` en los workflows de contexto (Load Daily Status, Load Today Meals, Load Today Plan, Get Daily Targets, Get Today Meals, Get Today Plan) y proactivos (Morning Briefing, Evening Check-in, Meal Reminder, Silence Detector, Weekly Report, Daily Plan Cron).
 
 ### RAG — estado actual
 - `knowledge_rag`: 106 puntos indexados (4 skills de business)
