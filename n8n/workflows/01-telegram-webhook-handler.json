@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T15:23:13.824Z",
+  "updatedAt": "2026-04-02T16:24:58.438Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -1761,6 +1761,62 @@
           "name": "OpenAi account"
         }
       }
+    },
+    {
+      "id": "rag-log-conv-001",
+      "name": "Log Conversation",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4924,
+        -640
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversation_logs (user_id, message_type, message_text)\nVALUES ($1, 'text', $2)\nRETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$('Check User & Membership').first().json.user_id, ($('Set User Context').first().json.message && $('Set User Context').first().json.message.text) ? $('Set User Context').first().json.message.text : '[no text]'] }}"
+        }
+      }
+    },
+    {
+      "id": "rag-build-payload-001",
+      "name": "Build RAG Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5144,
+        -640
+      ],
+      "parameters": {
+        "jsCode": "// Assembles payload for the async RAG indexer\nconst userId = $('Check User & Membership').first().json.user_id;\nconst ctx = $('Set User Context').first().json;\nconst userMessage = (ctx.message && ctx.message.text) ? ctx.message.text : '';\nconst agentResponse = $('FitAI Main AI Agent').first().json.output || '';\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nreturn [{\n  json: {\n    userId,\n    query: JSON.stringify({\n      eventType: 'conversation',\n      userMessage: userMessage.substring(0, 300),\n      agentResponse: agentResponse.substring(0, 500),\n      date: today\n    })\n  }\n}];"
+      }
+    },
+    {
+      "id": "rag-trigger-001",
+      "name": "Trigger RAG Indexer",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        5364,
+        -640
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "vAqqjXg2IE1ldgg3",
+          "mode": "id"
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      }
     }
   ],
   "connections": {
@@ -2467,6 +2523,39 @@
           }
         ]
       ]
+    },
+    "Send Response": {
+      "main": [
+        [
+          {
+            "node": "Log Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Conversation": {
+      "main": [
+        [
+          {
+            "node": "Build RAG Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build RAG Payload": {
+      "main": [
+        [
+          {
+            "node": "Trigger RAG Indexer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2479,9 +2568,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "0f4c6306-1be3-4b60-9e78-509dd01261cb",
-  "activeVersionId": "0f4c6306-1be3-4b60-9e78-509dd01261cb",
-  "versionCounter": 572,
+  "versionId": "18cc5279-1644-41ce-8bb1-6d004169e022",
+  "activeVersionId": "18cc5279-1644-41ce-8bb1-6d004169e022",
+  "versionCounter": 589,
   "triggerCount": 1,
   "shared": [
     {
@@ -2504,9 +2593,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T15:23:13.829Z",
-    "createdAt": "2026-04-02T15:23:13.829Z",
-    "versionId": "0f4c6306-1be3-4b60-9e78-509dd01261cb",
+    "updatedAt": "2026-04-02T16:24:58.441Z",
+    "createdAt": "2026-04-02T16:24:58.441Z",
+    "versionId": "18cc5279-1644-41ce-8bb1-6d004169e022",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -4263,6 +4352,62 @@
             "name": "OpenAi account"
           }
         }
+      },
+      {
+        "id": "rag-log-conv-001",
+        "name": "Log Conversation",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          4924,
+          -640
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO conversation_logs (user_id, message_type, message_text)\nVALUES ($1, 'text', $2)\nRETURNING id",
+          "options": {
+            "queryReplacement": "={{ [$('Check User & Membership').first().json.user_id, ($('Set User Context').first().json.message && $('Set User Context').first().json.message.text) ? $('Set User Context').first().json.message.text : '[no text]'] }}"
+          }
+        }
+      },
+      {
+        "id": "rag-build-payload-001",
+        "name": "Build RAG Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5144,
+          -640
+        ],
+        "parameters": {
+          "jsCode": "// Assembles payload for the async RAG indexer\nconst userId = $('Check User & Membership').first().json.user_id;\nconst ctx = $('Set User Context').first().json;\nconst userMessage = (ctx.message && ctx.message.text) ? ctx.message.text : '';\nconst agentResponse = $('FitAI Main AI Agent').first().json.output || '';\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nreturn [{\n  json: {\n    userId,\n    query: JSON.stringify({\n      eventType: 'conversation',\n      userMessage: userMessage.substring(0, 300),\n      agentResponse: agentResponse.substring(0, 500),\n      date: today\n    })\n  }\n}];"
+        }
+      },
+      {
+        "id": "rag-trigger-001",
+        "name": "Trigger RAG Indexer",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          5364,
+          -640
+        ],
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "vAqqjXg2IE1ldgg3",
+            "mode": "id"
+          },
+          "options": {
+            "waitForSubWorkflow": false
+          }
+        }
       }
     ],
     "connections": {
@@ -4969,6 +5114,39 @@
             }
           ]
         ]
+      },
+      "Send Response": {
+        "main": [
+          [
+            {
+              "node": "Log Conversation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Log Conversation": {
+        "main": [
+          [
+            {
+              "node": "Build RAG Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build RAG Payload": {
+        "main": [
+          [
+            {
+              "node": "Trigger RAG Indexer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Mauro Ibarra ",
@@ -4977,10 +5155,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T15:23:16.202Z",
-        "id": 369,
+        "createdAt": "2026-04-02T16:25:00.627Z",
+        "id": 379,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "0f4c6306-1be3-4b60-9e78-509dd01261cb",
+        "versionId": "18cc5279-1644-41ce-8bb1-6d004169e022",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
