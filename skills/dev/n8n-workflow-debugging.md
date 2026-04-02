@@ -23,29 +23,39 @@ Antes de modificar cualquier nodo o workflow para corregir un comportamiento ine
 
 **Fix — ciclo correcto de actualización:**
 ```python
-import urllib.request, json
+import urllib.request, json, time
 
 BASE = "http://localhost:5678"
 API_KEY = "..."
 WF_ID = "..."
+HEADERS = {"X-N8N-API-KEY": API_KEY, "Content-Type": "application/json"}
+
+def api(method, path, body=None):
+    data = json.dumps(body, ensure_ascii=False).encode() if body else None
+    req = urllib.request.Request(f"{BASE}{path}", data=data, headers=HEADERS, method=method)
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read())
+
+# 0. Cargar workflow actual
+wf = api("GET", f"/api/v1/workflows/{WF_ID}")
 
 # 1. Desactivar
-req = urllib.request.Request(f"{BASE}/api/v1/workflows/{WF_ID}/deactivate",
-    data=b'{}', headers={"X-N8N-API-KEY": API_KEY, "Content-Type": "application/json"}, method="POST")
-urllib.request.urlopen(req)
+api("POST", f"/api/v1/workflows/{WF_ID}/deactivate", {})
 
-# 2. Guardar cambios
-payload = {"name": wf["name"], "nodes": wf["nodes"], "connections": wf["connections"],
-           "settings": wf.get("settings") or {"executionOrder": "v1"}, "staticData": wf.get("staticData")}
-req = urllib.request.Request(f"{BASE}/api/v1/workflows/{WF_ID}",
-    data=json.dumps(payload).encode(), headers={"X-N8N-API-KEY": API_KEY, "Content-Type": "application/json"}, method="PUT")
-urllib.request.urlopen(req)
+# 2. Guardar cambios — SOLO estas 4 claves. Cualquier clave adicional (staticData,
+#    pinData, versionId, etc.) causa 400 "must NOT have additional properties".
+payload = {
+    "name": wf["name"],
+    "nodes": wf["nodes"],          # lista modificada
+    "connections": wf["connections"],  # dict modificado
+    "settings": wf.get("settings") or {"executionOrder": "v1"}
+}
+result = api("PUT", f"/api/v1/workflows/{WF_ID}", payload)
+print(f"PUT OK — {len(result.get('nodes', []))} nodes")
 
-# 3. Reactivar (esto crea una nueva entrada en workflow_publish_history)
-import time; time.sleep(1)
-req = urllib.request.Request(f"{BASE}/api/v1/workflows/{WF_ID}/activate",
-    data=b'{}', headers={"X-N8N-API-KEY": API_KEY, "Content-Type": "application/json"}, method="POST")
-urllib.request.urlopen(req)
+# 3. Reactivar (crea nueva entrada en workflow_publish_history)
+time.sleep(1)
+api("POST", f"/api/v1/workflows/{WF_ID}/activate", {})
 ```
 
 ---
@@ -411,27 +421,33 @@ El false branch no tiene conexión → n8n termina la ejecución con éxito sin 
 
 Cuando un workflow no funciona como se espera:
 
-1. ✅ ¿Los cambios están "publicados"? (ciclo deactivate → PUT → activate)
-2. ✅ ¿El nodo anterior puede devolver 0 items? (`alwaysOutputData`)
-3. ✅ ¿`$json` apunta al nodo correcto? (revisar cadena de conexiones)
-4. ✅ ¿Las credenciales tienen valores reales? (no `__n8n_BLANK_VALUE_`)
-5. ✅ ¿El tipo del nodo está disponible? (no "install this node")
-6. ✅ Ver `lastNodeExecuted` en la ejecución para saber dónde se detuvo
-7. ✅ Buscar el error exacto en los datos de la ejecución (SQLite o UI)
-8. ✅ ¿`Split In Batches` tiene loop-back? (output[0] → proceso → loop-back → Split In Batches)
-9. ✅ ¿IF node con fechas de PG usa `typeValidation: loose`? (no strict con Date objects)
-10. ✅ ¿`documentDefaultDataLoader` tiene text splitter sub-nodo? (`ai_textSplitter` → `Document Loader`)
-11. ✅ ¿`$fromAI()` retorna `"undefined"` string? → usar JSON-in-query: instruir al AI a formatear `query` como JSON
-12. ✅ ¿httpRequest typeVersion 4.2 con body JSON? → usar `specifyBody: "json"` + `jsonBody`, NO `body.mode: "raw"` + `rawBody`
-13. ✅ ¿`vectorStoreQdrant` retrieve-as-tool lanza "Not Found"? → bug en n8n 2.11.3, reemplazar con `toolWorkflow` + sub-workflow HTTP (ver `skills/dev/n8n-ai-agent-tools.md`)
-14. ✅ ¿`telegramTrigger` no recibe mensajes después de activar? → Verificar URL `{WEBHOOK_URL}/webhook/{webhookId}/webhook` y que la credencial tiene token real (no `__n8n_BLANK_VALUE_`). Si la URL está mal, llamar `setWebhook` manualmente con secret = `{workflowId}_{nodeId}` (ver sección 11)
-15. ✅ ¿Postgres `executeQuery` CTE retorna `{success:'True'}` en lugar de datos? → la CTE eliminó 0 filas (otro escritor ganó el `last_ts`). Agregar IF node "Is Last Writer?" después — `$json.text notEmpty` → continuar; false → stop limpio
-16. ✅ ¿Debounce con múltiples mensajes simultáneos? → NO usar `$getWorkflowStaticData` (race condition en memoria). Usar tabla PostgreSQL `message_buffer` con `INSERT ... ON CONFLICT` + `GREATEST(last_ts)` (ver sección 11)
-17. ✅ ¿Flujo con IF nodes o state machine? → **Validar TODAS las combinaciones de estado antes de implementar** (ver regla E2E abajo)
+1. ✅ ¿La ejecución que analizas es **posterior al último deploy**? (`startedAt > workflow.updatedAt` — ver sección 20)
+2. ✅ ¿Los cambios están "publicados"? (ciclo deactivate → PUT → activate)
+3. ✅ ¿El PUT payload tiene solo las 4 claves permitidas? (`name`, `nodes`, `connections`, `settings` — ver sección 19)
+4. ✅ ¿El nodo anterior puede devolver 0 items? (`alwaysOutputData`)
+5. ✅ ¿`$json` apunta al nodo correcto? (revisar cadena de conexiones)
+6. ✅ ¿Las credenciales tienen valores reales? (no `__n8n_BLANK_VALUE_`)
+7. ✅ ¿El tipo del nodo está disponible? (no "install this node")
+8. ✅ Ver `lastNodeExecuted` en la ejecución para saber dónde se detuvo
+9. ✅ Buscar el error exacto en los datos de la ejecución (SQLite o UI)
+10. ✅ ¿`Split In Batches` tiene loop-back? (output[0] → proceso → loop-back → Split In Batches)
+11. ✅ ¿IF node con fechas de PG usa `typeValidation: loose`? (no strict con Date objects)
+12. ✅ ¿`documentDefaultDataLoader` tiene text splitter sub-nodo? (`ai_textSplitter` → `Document Loader`)
+13. ✅ ¿`$fromAI()` retorna `"undefined"` string? → usar JSON-in-query: instruir al AI a formatear `query` como JSON
+14. ✅ ¿httpRequest typeVersion 4.2 con body JSON? → usar `specifyBody: "json"` + `jsonBody`, NO `body.mode: "raw"` + `rawBody`
+15. ✅ ¿`vectorStoreQdrant` retrieve-as-tool lanza "Not Found"? → bug en n8n 2.11.3, reemplazar con `toolWorkflow` + sub-workflow HTTP (ver `skills/dev/n8n-ai-agent-tools.md`)
+16. ✅ ¿`telegramTrigger` no recibe mensajes después de activar? → Verificar URL `{WEBHOOK_URL}/webhook/{webhookId}/webhook` y que la credencial tiene token real. Si la URL está mal, llamar `setWebhook` manualmente (ver sección 11)
+17. ✅ ¿Postgres `executeQuery` CTE retorna `{success:'True'}` en lugar de datos? → la CTE eliminó 0 filas. Agregar IF node "Is Last Writer?" después (ver sección 12)
+18. ✅ ¿Debounce con múltiples mensajes simultáneos? → NO usar `$getWorkflowStaticData`. Usar PostgreSQL `message_buffer` (ver sección 12)
+19. ✅ ¿Flujo con IF nodes o state machine? → **Validar TODAS las combinaciones de estado antes de implementar** (ver sección 14)
+20. ✅ ¿Queries SQL con fechas usan `CURRENT_DATE`? → Reemplazar con `(NOW() AT TIME ZONE 'America/Bogota')::date` (ver sección 15)
+21. ✅ ¿Nodo downstream lejano usa `.item.json` para referencias upstream? → Cambiar a `.first().json` (ver sección 17)
+22. ✅ ¿Campo de Set node tiene punto en el nombre (ej: `message.text`)? → El output es anidado: `json.message.text`, no `json.text` (ver sección 18)
+23. ✅ ¿`systemMessage` del AI Agent no evalúa expresiones? → El campo necesita prefijo `=`. Usar `={{ $json.fullSystemPrompt }}` y construir el prompt en Build Context (ver CLAUDE.md)
 
 ---
 
-## 14. Regla E2E — Validar todas las combinaciones de estado
+## 14. Regla E2E — Validar todas las combinaciones de estado (OBLIGATORIO)
 
 **OBLIGATORIO antes de implementar cualquier flujo con IF nodes, routing condicional o state machines.**
 
@@ -463,23 +479,47 @@ La solución final usa `profile_saved` (derivado de `goal IS NOT NULL`) + `phone
 
 ---
 
-## 13. Timezone bug: `CURRENT_DATE AT TIME ZONE` en DB con UTC
+## 15. Timezone bug en PostgreSQL con servidor UTC — historial completo
 
-**Síntoma:** Un INSERT con `target_date = (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day'` guarda la fecha de *hoy* en lugar de mañana.
+**Síntoma 1:** `log_date` de un INSERT hechos a las 19:31 Colombia aparece como el día siguiente (fecha UTC).
 
-**Causa:** Cuando la DB corre en UTC, `CURRENT_DATE AT TIME ZONE 'America/Bogota'` convierte la medianoche UTC (`2026-04-01 00:00:00 UTC`) a la hora local en Bogota (`2026-03-31 19:00:00`) y devuelve ese valor como `timestamp without time zone`. Al sumar `1 day` se obtiene `2026-04-01 19:00:00`, que al castear a `DATE` da `2026-04-01` (hoy).
+**Síntoma 2:** `target_date = (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day'` guarda *hoy* en lugar de mañana.
 
-**Fix:** Para calcular la fecha de mañana en SQL, usar siempre:
+**Síntoma 3:** `CURRENT_DATE + 1` en un cron que corre a las 9pm Colombia guarda *pasado mañana* en lugar de mañana.
+
+**Causa raíz:** PostgreSQL en Docker (UTC) tiene `CURRENT_DATE = fecha UTC`. A las 19:00-23:59 Colombia (UTC+5), `CURRENT_DATE` ya es el día siguiente en UTC. Los tres síntomas tienen el mismo origen.
+
+**Tabla completa de patrones:**
+
+| Expresión SQL | Resultado (ejemplo: 9pm Colombia = 2am UTC next day) | Veredicto |
+|---|---|---|
+| `(NOW() AT TIME ZONE 'America/Bogota')::date` | Fecha Colombia correcta | ✅ CORRECTO |
+| `(NOW() AT TIME ZONE 'America/Bogota')::date + 1` | Mañana Colombia correcta | ✅ CORRECTO |
+| `CURRENT_DATE` | Fecha UTC (puede ser 1 día adelante) | ❌ MAL |
+| `CURRENT_DATE + 1` | UTC+1 (puede ser pasado mañana Colombia) | ❌ MAL |
+| `CURRENT_DATE AT TIME ZONE 'America/Bogota'` | AT TIME ZONE sobre DATE → interpreta como medianoche UTC → ayer Colombia | ❌ MAL |
+| `(CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day'` | Misma trampa → hoy Colombia | ❌ MAL |
+
+**Fix definitivo — usar siempre `NOW() AT TIME ZONE`:**
 ```sql
-CURRENT_DATE + 1
-```
-No usar `AT TIME ZONE` para aritmética de fechas relativas. El AT TIME ZONE solo es útil para convertir timestamps a string en una zona horaria específica.
+-- Fecha de hoy en Colombia
+(NOW() AT TIME ZONE 'America/Bogota')::date
 
-**Dónde se encontró:** `Create Tomorrow Daily Targets` en `FitAI - Daily Plan Generator Cron` (workflow `xILhDSQy0ZP40jjt`).
+-- Fecha de mañana en Colombia (para crons nocturnos)
+(NOW() AT TIME ZONE 'America/Bogota')::date + 1
+```
+
+**Por qué `CURRENT_DATE AT TIME ZONE` es trampa:** `AT TIME ZONE` aplicado a `DATE` (no a `timestamptz`) interpreta el DATE como medianoche UTC y lo convierte a Colombia → devuelve ayer por la tarde. No hace lo que parece.
+
+**Workflows afectados y sus correcciones (aplicadas en 2026-04-02):**
+- `log_date` en `daily_intake_logs` (Log Food Intake workflow)
+- `target_date` en `daily_targets` (Log Food Intake + Daily Plan Cron)
+- `plan_date` en `meal_plans` (Daily Plan Cron)
+- Todos los filtros `WHERE ... = CURRENT_DATE` en contexto y proactivos (16 ocurrencias en 9 workflows)
 
 ---
 
-## 14. `conversation_logs.message_text` es NOT NULL
+## 16. `conversation_logs.message_text` es NOT NULL
 
 **Síntoma:** `INSERT INTO conversation_logs (user_id, message_type, assistant_response, ...)` falla con `null value in column "message_text" violates not-null constraint`.
 
@@ -492,3 +532,106 @@ VALUES ($1, 'meal_reminder', '[proactive]', $2, NOW());
 ```
 
 **Aplica a:** Todos los workflows proactivos (meal_reminder, morning_briefing, evening_checkin, weekly_report, silence_check, etc.).
+
+**Aplica también al Log Conversation post-respuesta:** El nodo "Log Conversation" en el handler usa `message_text = $('Set User Context').first().json.message.text`. Si esa expresión retorna null (ej: por usar `.item` en vez de `.first()`, o por un path incorrecto), el INSERT falla. Siempre añadir `|| '[no text]'` como fallback:
+```
+={{ ($('Set User Context').first().json.message && $('Set User Context').first().json.message.text) ? $('Set User Context').first().json.message.text : '[no text]' }}
+```
+
+---
+
+## 17. `.item` vs `.first()` — referencias a nodos upstream lejanos
+
+**Síntoma:** Un campo como `userMessage` llega como string vacío `''` aunque el nodo referenciado sí tenía datos.
+
+**Causa:** El accessor `.item` solo resuelve correctamente en nodos que están en el **path directo de ejecución** del item actual. En nodos que corren tarde en la cadena (ej: después de `Send Response`), `.item` no puede navegar hacia upstream nodes que no son el padre inmediato.
+
+**Ejemplo concreto:** En el nodo "Build RAG Payload" (que corre 4 nodos después de Set User Context):
+```javascript
+// MAL — .item falla para nodos lejanos
+$('Set User Context').item.json.message.text  // → ''
+
+// BIEN — .first() siempre funciona para nodos lejanos
+$('Set User Context').first().json.message.text  // → 'texto real'
+```
+
+**Regla general:**
+- Nodo inmediatamente anterior → `.item.json` funciona
+- Cualquier nodo anterior más lejano en la cadena → siempre usar `.first().json`
+
+**Aplica a:** Code nodes, Postgres `queryReplacement`, y cualquier expresión `={{ }}` que referencie un nodo que no es el padre directo del nodo actual.
+
+---
+
+## 18. Set node — dot-notation crea objetos anidados
+
+**Síntoma:** `$('Set User Context').first().json.text` retorna `undefined` aunque el Set node definitivamente tiene ese campo.
+
+**Causa:** En el nodo Set (n8n-nodes-base.set), si el nombre del campo contiene un punto (ej: `message.text`), n8n crea un objeto **anidado**: `{ message: { text: "..." } }`. El campo NO se llama `text` — se accede como `json.message.text`.
+
+**Ejemplo:**
+```json
+// Set node assignments:
+{ "name": "message.text", "value": "={{ $json.message?.text }}" }
+{ "name": "chatId", "value": "={{ $json.chatId }}" }
+
+// Output JSON resultante:
+{
+  "message": { "text": "hola" },
+  "chatId": "1435522255"
+}
+```
+
+**Acceso correcto:**
+```javascript
+// MAL
+$('Set User Context').first().json.text  // undefined
+
+// BIEN
+$('Set User Context').first().json.message.text  // 'hola'
+$('Set User Context').first().json.chatId        // '1435522255'
+```
+
+**Dónde aplica en FitAI:** Set User Context tiene `message.text` (nested), `chatId`, `telegramId`, `firstName`. Cualquier nodo que lea el texto del usuario debe usar `.message.text`.
+
+---
+
+## 19. n8n PUT API — `request/body must NOT have additional properties`
+
+**Síntoma:** `HTTP 400: {"message":"request/body must NOT have additional properties"}` al hacer PUT a `/api/v1/workflows/{id}`.
+
+**Causa:** El endpoint `PUT /api/v1/workflows/{id}` solo acepta exactamente 4 claves en el body. Cualquier otra clave (incluyendo `staticData`, `pinData`, `versionId`, `meta`, `tags`, `activeVersion`, etc.) causa el 400.
+
+**Claves permitidas:**
+```python
+payload = {
+    "name": wf["name"],
+    "nodes": wf["nodes"],
+    "connections": wf["connections"],
+    "settings": wf.get("settings") or {"executionOrder": "v1"}
+}
+# NO incluir: staticData, pinData, versionId, meta, tags, id, active, etc.
+```
+
+**Diagnóstico rápido:** Si estás pasando `{k: v for k, v in wf.items() if k not in [...]}`, asegúrate de que el conjunto de exclusión incluya todo menos las 4 claves permitidas. Más seguro: construir el payload explícitamente con solo las 4 claves.
+
+---
+
+## 20. Validar timestamp de ejecución antes de concluir que un nodo no corrió
+
+**Síntoma:** Se verifica una ejecución y se concluye que los nodos nuevos "no corrieron", pero la ejecución era anterior al deploy del fix.
+
+**Regla obligatoria:** Antes de analizar cualquier ejecución para validar un fix:
+1. Verificar `startedAt` de la ejecución
+2. Comparar con `updatedAt` del workflow (obtenible via `GET /api/v1/workflows/{id}`)
+3. Solo las ejecuciones con `startedAt > updatedAt` del workflow reflejan los cambios
+
+```python
+# Verificar que la ejecución es post-fix
+import urllib.request, json
+wf = api("GET", f"/api/v1/workflows/{WF_ID}")
+print("Workflow updatedAt:", wf["updatedAt"])
+# Luego comparar con la startedAt de la ejecución analizada
+```
+
+**Consecuencia de ignorar esto:** Se declara un fix como "fallando" cuando en realidad nunca fue probado, desperdiciando tiempo en debuggear un problema que no existe.

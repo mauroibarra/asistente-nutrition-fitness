@@ -332,18 +332,26 @@ import urllib.request, json, time
 BASE = "http://localhost:5678"
 API_KEY = "..."  # X-N8N-API-KEY
 
-def update_workflow(wf_id, payload):
-    headers = {"X-N8N-API-KEY": API_KEY, "Content-Type": "application/json"}
-    # 1. Desactivar
-    urllib.request.urlopen(urllib.request.Request(
-        f"{BASE}/api/v1/workflows/{wf_id}/deactivate", data=b'{}', headers=headers, method="POST"))
-    # 2. Guardar
-    urllib.request.urlopen(urllib.request.Request(
-        f"{BASE}/api/v1/workflows/{wf_id}", data=json.dumps(payload).encode(), headers=headers, method="PUT"))
-    # 3. Reactivar
+def api(method, path, body=None):
+    data = json.dumps(body, ensure_ascii=False).encode() if body else None
+    req = urllib.request.Request(f"{BASE}{path}", data=data, headers={"X-N8N-API-KEY": API_KEY, "Content-Type": "application/json"}, method=method)
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read())
+
+def update_workflow(wf_id, modified_nodes, modified_connections):
+    wf = api("GET", f"/api/v1/workflows/{wf_id}")
+    # ⚠️ SOLO estas 4 claves. Cualquier clave extra causa HTTP 400.
+    payload = {
+        "name": wf["name"],
+        "nodes": modified_nodes,
+        "connections": modified_connections,
+        "settings": wf.get("settings") or {"executionOrder": "v1"}
+    }
+    api("POST", f"/api/v1/workflows/{wf_id}/deactivate", {})
+    result = api("PUT", f"/api/v1/workflows/{wf_id}", payload)
     time.sleep(1)
-    urllib.request.urlopen(urllib.request.Request(
-        f"{BASE}/api/v1/workflows/{wf_id}/activate", data=b'{}', headers=headers, method="POST"))
+    api("POST", f"/api/v1/workflows/{wf_id}/activate", {})
+    return result
 ```
 
 ### Desarrollo del Panel Admin
@@ -421,6 +429,19 @@ El handler tiene dos paths para obtener el texto del usuario:
 
 Ambos paths convergen en `Set User Context` (Set node). **Todos los nodos downstream deben referenciar `$('Set User Context').item.json.*`** para obtener `message.text`, `chatId`, `telegramId`, `firstName`. Nunca referenciar `$('Call process text message').item.json.*` — ese nodo no existe en el path de voz.
 
+**Estructura real del output de Set User Context:** El campo se llama `message.text` en el Set node, lo que crea un objeto anidado. El acceso correcto es `json.message.text`, NO `json.text`:
+```javascript
+// CORRECTO
+$('Set User Context').first().json.message.text  // 'texto del usuario'
+$('Set User Context').first().json.chatId        // '1435522255'
+
+// INCORRECTO — undefined
+$('Set User Context').first().json.text
+```
+
+**Nodos post-respuesta (lejanos en la cadena) deben usar `.first()`, no `.item()`:**
+En nodos que corren después de `Send Response` (Log Conversation, Build RAG Payload), `.item.json` no resuelve correctamente para nodos upstream lejanos. Usar `.first().json` para cualquier nodo que no sea el padre directo.
+
 ### Debounce multi-mensaje — subprocess `FitAI - Process text message`
 El handler delega el texto a `CCkMv75zwDDoj513` via `executeWorkflow`. Este subprocess:
 1. Escribe el texto en la tabla `message_buffer` (PostgreSQL) con `INSERT ... ON CONFLICT ... GREATEST(last_ts)`
@@ -463,10 +484,28 @@ El Daily Plan Generator Cron corre a las 9pm Colombia (2am UTC del día siguient
 
 Aplica a: `log_date` en INSERTs de `daily_intake_logs`, `target_date` en `daily_targets`, `plan_date` en `meal_plans`, y todos los filtros `WHERE ... = CURRENT_DATE` en los workflows de contexto (Load Daily Status, Load Today Meals, Load Today Plan, Get Daily Targets, Get Today Meals, Get Today Plan) y proactivos (Morning Briefing, Evening Check-in, Meal Reminder, Silence Detector, Weekly Report, Daily Plan Cron).
 
-### RAG — estado actual
-- `knowledge_rag`: 106 puntos indexados (4 skills de business)
-- `user_rag`: eventos personales del usuario (indexados por el AI Agent automáticamente)
-- Requiere **Qdrant ≥ 1.10.0** — el paquete `@langchain/qdrant@1.0.1` usa `POST /points/query` que no existe en ≤1.7.4
+### RAG — estado actual y flujo de indexación automática
+
+**Colecciones:**
+- `knowledge_rag`: 106 puntos (4 skills de business indexados)
+- `user_rag`: conversaciones y eventos del usuario — indexados **automáticamente** después de cada respuesta
+
+**Flujo automático post-conversación (handler, post Send Response):**
+```
+FitAI Main AI Agent → Send Response
+                           ↓
+              Log Conversation (Postgres → conversation_logs)
+                           ↓
+              Build RAG Payload (Code → {userId, query: JSON con eventType:'conversation'})
+                           ↓
+              Trigger RAG Indexer (executeWorkflow async → vAqqjXg2IE1ldgg3)
+```
+Este chain se dispara automáticamente en cada conversación. El RAG Indexer clasifica el `eventType` (`conversation`, `meal_reported`, `weight_log`, `goal_set`) y upserta en Qdrant con el texto apropiado.
+
+**Tool: Registrar Evento** sigue existiendo como complemento — el agente puede forzar indexado de algo específico, pero ya NO es el único mecanismo.
+
+**Requisitos de infraestructura:**
+- Requiere **Qdrant ≥ 1.10.0** — `@langchain/qdrant@1.0.1` usa `POST /points/query` (no existe en ≤1.7.4)
 - Docker image: `qdrant/qdrant:v1.13.0`
 - `embeddingsOpenAi` typeVersion: **1** (no 1.2), `model` como string plana `"text-embedding-3-small"`
 

@@ -1,6 +1,6 @@
 # Estado del Proyecto — FitAI Assistant
 
-**Última actualización:** 2026-04-02
+**Última actualización:** 2026-04-02 (v2.1 post-sesión)
 
 ---
 
@@ -29,7 +29,7 @@
 
 | ID | Nombre | Nodos | Estado | Notas |
 |----|--------|-------|--------|-------|
-| `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | 59 | ✅ Activo | v2: 6 nodos contexto paralelos, Build Context (dailyStatus/weeklyTrend/nextAction), 2 nuevas tools, planDate en Tool: Plan Comidas |
+| `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | 65 | ✅ Activo | v2.1: fullSystemPrompt dinámico, anti-hallucination rules, cadena post-respuesta (Log Conversation + Build RAG Payload + Trigger RAG Indexer), timezone fix |
 | `CCkMv75zwDDoj513` | FitAI - Process text message | 7 | ✅ Activo | Debounce multi-mensaje via message_buffer |
 | `yiUgnJ6gCoaIFVXe` | FitAI - Onboarding Flow | 19 | ✅ Activo | v2: Redis state machine, 21 pasos, TTL 48h, fórmulas v2 (TDEE×%), post-completion automático |
 | `KQhP9lQNxCKeOsbJ` | FitAI - Meal Plan Generator | 13 | ✅ Activo | v2: plan diario (plan_date), 4 contextos paralelos, gpt-4o temp=0.85 max_tokens=2048 |
@@ -107,6 +107,16 @@
 ### Phase 7: Proactive Workflows
 - **Weekly Report dedup**: faltaba cláusula `NOT EXISTS` — añadida en segunda iteración.
 - **appendAttribution=false**: todos los nodos Telegram de los 5 workflows proactivos.
+
+### Post-v2: Fixes de Sesión 2026-04-02
+
+- **systemMessage sin `=` prefix**: El campo `options.systemMessage` del AI Agent trata el contenido como string estático sin el prefijo `=`. `{{variable}}` llegaba literal a GPT-4o. Fix: cambiar a `={{ $json.fullSystemPrompt }}` y construir el prompt completo en Build Context.
+- **fullSystemPrompt pattern**: Build Context construye un string que concatena las REGLAS CRÍTICAS estáticas + bloque `CONTEXTO DEL USUARIO ACTUAL` dinámico. El AI Agent lo consume con `={{ $json.fullSystemPrompt }}`.
+- **memoryBufferWindow contamina con tono viejo**: Al actualizar el system prompt, la RAM tenía historial del agente anterior. Fix: `docker restart n8n`. Para producción: migrar a `memoryRedisChat`.
+- **Timezone bug masivo — CURRENT_DATE**: 16 ocurrencias en 9 workflows usaban `CURRENT_DATE` (UTC) en vez de `(NOW() AT TIME ZONE 'America/Bogota')::date`. A las 19:00-23:59 Colombia, `CURRENT_DATE` ya es mañana en UTC. Corregido en: handler (4 nodos de contexto), Log Food Intake, Get Daily Status, Daily Plan Cron, Morning Briefing, Evening Check-in, Meal Reminder, Weekly Report, Silence Detector.
+- **Agente inventaba planes de comida**: Cuando `dailyStatus = "sin targets"`, GPT-4o inventaba arepa, pollo, batido, pescado. Fix: regla #1 `NUNCA INVENTES DATOS` + sección `REGLA ABSOLUTA SOBRE DATOS FALTANTES` en el system prompt. Validado: bot responde "Hoy no tienes plan generado y no me has reportado nada. Con tu meta de *2,217 kcal*...".
+- **RAG Personal no se alimentaba automáticamente**: `Send Response` no tenía conexiones salientes — el flujo moría ahí. Solo `Tool: Registrar Evento` indexaba (si el agente decidía llamarla). Fix: cadena post-respuesta `Send Response → Log Conversation → Build RAG Payload → Trigger RAG Indexer (async)`. RAG Indexer actualizado para manejar `eventType: 'conversation'`.
+- **JS double-escape en template literals**: Al construir `STATIC_RULES` con backtick en nombres de tools (`` `log_food_intake` ``), una pasada `.replace('`', r'\`')` sobre texto ya pre-escapado generaba `\\``. Fix: definir con backticks literales y hacer una sola pasada de escape. Validar con `node --check` antes de enviar.
 
 ---
 
