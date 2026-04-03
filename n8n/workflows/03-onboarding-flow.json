@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T17:49:31.760Z",
+  "updatedAt": "2026-04-03T18:03:54.946Z",
   "createdAt": "2026-04-01T20:02:43.200Z",
   "id": "yiUgnJ6gCoaIFVXe",
   "name": "FitAI - Onboarding Flow",
@@ -21,9 +21,9 @@
     {
       "parameters": {
         "operation": "get",
+        "propertyName": "value",
         "key": "=onboarding:{{ $json.telegramId }}",
-        "options": {},
-        "propertyName": "value"
+        "options": {}
       },
       "id": "ob-02",
       "name": "Get Onboarding State",
@@ -173,8 +173,7 @@
         "text": "={{ $json.choices[0].message.content }}",
         "additionalFields": {
           "appendAttribution": false,
-          "parse_mode": "Markdown",
-          "reply_markup": "={{ $('Prepare AI Message Input').first().json.replyMarkup ? JSON.stringify($('Prepare AI Message Input').first().json.replyMarkup) : undefined }}"
+          "parse_mode": "Markdown"
         }
       },
       "id": "ob-09",
@@ -182,7 +181,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2260,
+        2272,
         640
       ],
       "webhookId": "dc041c40-9464-4c4c-ada3-1f9f266a9ba6",
@@ -422,53 +421,53 @@
       ]
     },
     {
+      "parameters": {
+        "jsCode": "const state = $json.state || {};\nconst stateData = state.data || {};\nconst replyMarkup = $json.replyMarkup !== undefined ? $json.replyMarkup : null;\nconst isNewUser = $json.isNewUser === true;\nconst isValidationError = !isNewUser && ($json.isValid === false);\n\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = $('Parse Onboarding State').first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\nconst userMessage = JSON.stringify({\n  step: state.step,\n  user_response: userResponse,\n  validation_error: isValidationError,\n  user_name: stateData.first_name || null,\n  collected_data: {\n    gender: stateData.gender || null,\n    age: stateData.age || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\n// Special reply markup for ask_phone: regular keyboard (request_contact)\nlet finalReplyMarkup = replyMarkup;\nif (state.step === 'ask_phone') {\n  finalReplyMarkup = {\n    keyboard: [[{ text: 'Compartir mi numero', request_contact: true }]],\n    resize_keyboard: true,\n    one_time_keyboard: true\n  };\n}\n\nreturn [{\n  json: {\n    userMessage,\n    replyMarkup: finalReplyMarkup,\n    chatId: $('Execute Workflow Trigger').first().json.chatId\n  }\n}];"
+      },
       "id": "ob-ai-01",
       "name": "Prepare AI Message Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1780,
+        1792,
         640
-      ],
-      "parameters": {
-        "jsCode": "const state = $json.state || {};\nconst stateData = state.data || {};\nconst replyMarkup = $json.replyMarkup !== undefined ? $json.replyMarkup : null;\nconst isNewUser = $json.isNewUser === true;\nconst isValidationError = !isNewUser && ($json.isValid === false);\n\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = $('Parse Onboarding State').first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\nconst userMessage = JSON.stringify({\n  step: state.step,\n  user_response: userResponse,\n  validation_error: isValidationError,\n  user_name: stateData.first_name || null,\n  collected_data: {\n    gender: stateData.gender || null,\n    age: stateData.age || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\n// Special reply markup for ask_phone: regular keyboard (request_contact)\nlet finalReplyMarkup = replyMarkup;\nif (state.step === 'ask_phone') {\n  finalReplyMarkup = {\n    keyboard: [[{ text: 'Compartir mi numero', request_contact: true }]],\n    resize_keyboard: true,\n    one_time_keyboard: true\n  };\n}\n\nreturn [{\n  json: {\n    userMessage,\n    replyMarkup: finalReplyMarkup,\n    chatId: $('Execute Workflow Trigger').first().json.chatId\n  }\n}];"
-      }
+      ]
     },
     {
-      "id": "ob-ai-02",
-      "name": "Generate Onboarding Message",
-      "type": "n8n-nodes-base.openAi",
-      "typeVersion": 1.1,
-      "position": [
-        2020,
-        640
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "NOJoPVNWDXiywRgw",
-          "name": "OpenAi account"
-        }
-      },
       "parameters": {
         "resource": "chat",
-        "operation": "complete",
-        "chatModel": "gpt-4o",
+        "chatModel": "gpt-4o-mini",
         "prompt": {
           "messages": [
             {
               "role": "system",
-              "content": "Eres el coach FitAI completando el registro inicial de un usuario en Telegram. Tu único trabajo: hacer la pregunta del paso actual de forma natural y breve.\n\nREGLAS ABSOLUTAS:\n1. CERO emojis — ninguno, en ningún mensaje\n2. Máximo 2 oraciones por mensaje\n3. NUNCA digas \"Hola [nombre]\" después del primer mensaje\n4. NUNCA digas \"respuesta inválida\", \"usa los botones\", \"no entiendo\"\n5. Si validation_error=true → escribe SOLO la re-pregunta en 1 oración, nada más\n6. Si validation_error=false → una sola palabra de ack (Va / Ok / Bien / Listo) + la pregunta\n7. Si hay opciones (botones), mencionarlas brevemente en el texto por si no se ven\n\nTONO: amigo, tuteo, directo, sin relleno"
+              "content": "Eres el coach personal de nutricion y fitness en el registro inicial de un usuario nuevo por Telegram.\nTu trabajo: recopilar sus datos haciendo preguntas breves y naturales, como un amigo que sabe del tema.\n\nTONO (igual que en todo el sistema):\n- Tuteas siempre, lenguaje coloquial pero no vulgar\n- Vas al grano: la primera oracion ya hace la pregunta\n- Varias expresiones al acusar recibo: \"Va\", \"Listo\", \"Ok\", \"Dale\", \"Sale\", \"Bien\", \"Anotado\"\n- Emojis: maximo 1, solo si aporta. Ninguno si no suma nada.\n- Nunca repitas lo que el usuario dijo en modo confirmacion\n\nANTI-PATRONES (NUNCA hagas esto):\n- \"Entendido, has seleccionado Hombre\" — suena a formulario\n- \"Perfecto! Tu edad de 28 anos ha sido registrada\" — robotico\n- \"Excelente eleccion!\" — adulacion vacia  \n- \"Gracias por compartir esa informacion\" — robotico\n- Saludar con \"Hola [nombre]\" en cada respuesta — solo en el primer mensaje\n\nREGLAS DE FORMATO:\n- Maximo 2 oraciones por mensaje (es Telegram, no un formulario)\n- Si hay opciones con botones, mencionalas brevemente en el texto por si los botones no se ven\n- Si validation_error=true: solo re-pregunta de forma natural en 1 oracion. Nada de \"respuesta invalida\" ni \"usa los botones\".\n- Si validation_error=false: una sola palabra de ack + la pregunta\n\nEJEMPLOS CORRECTOS:\nask_gender primera vez: \"Genero biologico? Hombre o mujer.\"\nask_gender error (escribio \"biologico\"): \"Hombre o mujer?\"  \nask_age primera vez: \"Cuantos anos tenes?\"\nask_age error: \"Dame un numero entre 14 y 100.\"\nask_weight error (escribio \"muchos\"): \"Tu peso en kilos. Ej: 75\"\nask_goal primera vez: \"Cual es tu objetivo? Perder grasa, ganar musculo, mantener peso o recomposicion corporal.\"\nask_phone primera vez: \"Para terminar, necesito tu numero. Presiona el boton de abajo para compartirlo.\"\nask_phone error (escribio texto): \"Usa el boton de abajo para compartir tu numero de telefono.\"\n"
             },
             {
-              "role": "user",
               "content": "={{ $('Prepare AI Message Input').first().json.userMessage }}"
             }
           ]
         },
         "simplifyOutput": false,
         "options": {
-          "temperature": 0.7,
-          "maxTokens": 100
+          "maxTokens": 100,
+          "temperature": 0.7
+        },
+        "requestOptions": {},
+        "operation": "complete"
+      },
+      "id": "ob-ai-02",
+      "name": "Generate Onboarding Message",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.1,
+      "position": [
+        2032,
+        640
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "NOJoPVNWDXiywRgw",
+          "name": "OpenAi account"
         }
       }
     }
@@ -732,9 +731,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "2a659111-324a-44e3-8408-ac1ad7122f02",
-  "activeVersionId": "2a659111-324a-44e3-8408-ac1ad7122f02",
-  "versionCounter": 47,
+  "versionId": "ca6dc6c8-3954-4d52-97c9-e5f1725c9a3a",
+  "activeVersionId": "ca6dc6c8-3954-4d52-97c9-e5f1725c9a3a",
+  "versionCounter": 54,
   "triggerCount": 0,
   "shared": [
     {
@@ -757,9 +756,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T17:49:31.773Z",
-    "createdAt": "2026-04-03T17:49:31.773Z",
-    "versionId": "2a659111-324a-44e3-8408-ac1ad7122f02",
+    "updatedAt": "2026-04-03T18:03:54.950Z",
+    "createdAt": "2026-04-03T18:03:54.950Z",
+    "versionId": "ca6dc6c8-3954-4d52-97c9-e5f1725c9a3a",
     "workflowId": "yiUgnJ6gCoaIFVXe",
     "nodes": [
       {
@@ -776,9 +775,9 @@
       {
         "parameters": {
           "operation": "get",
+          "propertyName": "value",
           "key": "=onboarding:{{ $json.telegramId }}",
-          "options": {},
-          "propertyName": "value"
+          "options": {}
         },
         "id": "ob-02",
         "name": "Get Onboarding State",
@@ -928,8 +927,7 @@
           "text": "={{ $json.choices[0].message.content }}",
           "additionalFields": {
             "appendAttribution": false,
-            "parse_mode": "Markdown",
-            "reply_markup": "={{ $('Prepare AI Message Input').first().json.replyMarkup ? JSON.stringify($('Prepare AI Message Input').first().json.replyMarkup) : undefined }}"
+            "parse_mode": "Markdown"
           }
         },
         "id": "ob-09",
@@ -937,7 +935,7 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          2260,
+          2272,
           640
         ],
         "webhookId": "dc041c40-9464-4c4c-ada3-1f9f266a9ba6",
@@ -1177,53 +1175,53 @@
         ]
       },
       {
+        "parameters": {
+          "jsCode": "const state = $json.state || {};\nconst stateData = state.data || {};\nconst replyMarkup = $json.replyMarkup !== undefined ? $json.replyMarkup : null;\nconst isNewUser = $json.isNewUser === true;\nconst isValidationError = !isNewUser && ($json.isValid === false);\n\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = $('Parse Onboarding State').first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\nconst userMessage = JSON.stringify({\n  step: state.step,\n  user_response: userResponse,\n  validation_error: isValidationError,\n  user_name: stateData.first_name || null,\n  collected_data: {\n    gender: stateData.gender || null,\n    age: stateData.age || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\n// Special reply markup for ask_phone: regular keyboard (request_contact)\nlet finalReplyMarkup = replyMarkup;\nif (state.step === 'ask_phone') {\n  finalReplyMarkup = {\n    keyboard: [[{ text: 'Compartir mi numero', request_contact: true }]],\n    resize_keyboard: true,\n    one_time_keyboard: true\n  };\n}\n\nreturn [{\n  json: {\n    userMessage,\n    replyMarkup: finalReplyMarkup,\n    chatId: $('Execute Workflow Trigger').first().json.chatId\n  }\n}];"
+        },
         "id": "ob-ai-01",
         "name": "Prepare AI Message Input",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1780,
+          1792,
           640
-        ],
-        "parameters": {
-          "jsCode": "const state = $json.state || {};\nconst stateData = state.data || {};\nconst replyMarkup = $json.replyMarkup !== undefined ? $json.replyMarkup : null;\nconst isNewUser = $json.isNewUser === true;\nconst isValidationError = !isNewUser && ($json.isValid === false);\n\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = $('Parse Onboarding State').first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\nconst userMessage = JSON.stringify({\n  step: state.step,\n  user_response: userResponse,\n  validation_error: isValidationError,\n  user_name: stateData.first_name || null,\n  collected_data: {\n    gender: stateData.gender || null,\n    age: stateData.age || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\n// Special reply markup for ask_phone: regular keyboard (request_contact)\nlet finalReplyMarkup = replyMarkup;\nif (state.step === 'ask_phone') {\n  finalReplyMarkup = {\n    keyboard: [[{ text: 'Compartir mi numero', request_contact: true }]],\n    resize_keyboard: true,\n    one_time_keyboard: true\n  };\n}\n\nreturn [{\n  json: {\n    userMessage,\n    replyMarkup: finalReplyMarkup,\n    chatId: $('Execute Workflow Trigger').first().json.chatId\n  }\n}];"
-        }
+        ]
       },
       {
-        "id": "ob-ai-02",
-        "name": "Generate Onboarding Message",
-        "type": "n8n-nodes-base.openAi",
-        "typeVersion": 1.1,
-        "position": [
-          2020,
-          640
-        ],
-        "credentials": {
-          "openAiApi": {
-            "id": "NOJoPVNWDXiywRgw",
-            "name": "OpenAi account"
-          }
-        },
         "parameters": {
           "resource": "chat",
-          "operation": "complete",
-          "chatModel": "gpt-4o",
+          "chatModel": "gpt-4o-mini",
           "prompt": {
             "messages": [
               {
                 "role": "system",
-                "content": "Eres el coach FitAI completando el registro inicial de un usuario en Telegram. Tu único trabajo: hacer la pregunta del paso actual de forma natural y breve.\n\nREGLAS ABSOLUTAS:\n1. CERO emojis — ninguno, en ningún mensaje\n2. Máximo 2 oraciones por mensaje\n3. NUNCA digas \"Hola [nombre]\" después del primer mensaje\n4. NUNCA digas \"respuesta inválida\", \"usa los botones\", \"no entiendo\"\n5. Si validation_error=true → escribe SOLO la re-pregunta en 1 oración, nada más\n6. Si validation_error=false → una sola palabra de ack (Va / Ok / Bien / Listo) + la pregunta\n7. Si hay opciones (botones), mencionarlas brevemente en el texto por si no se ven\n\nTONO: amigo, tuteo, directo, sin relleno"
+                "content": "Eres el coach personal de nutricion y fitness en el registro inicial de un usuario nuevo por Telegram.\nTu trabajo: recopilar sus datos haciendo preguntas breves y naturales, como un amigo que sabe del tema.\n\nTONO (igual que en todo el sistema):\n- Tuteas siempre, lenguaje coloquial pero no vulgar\n- Vas al grano: la primera oracion ya hace la pregunta\n- Varias expresiones al acusar recibo: \"Va\", \"Listo\", \"Ok\", \"Dale\", \"Sale\", \"Bien\", \"Anotado\"\n- Emojis: maximo 1, solo si aporta. Ninguno si no suma nada.\n- Nunca repitas lo que el usuario dijo en modo confirmacion\n\nANTI-PATRONES (NUNCA hagas esto):\n- \"Entendido, has seleccionado Hombre\" — suena a formulario\n- \"Perfecto! Tu edad de 28 anos ha sido registrada\" — robotico\n- \"Excelente eleccion!\" — adulacion vacia  \n- \"Gracias por compartir esa informacion\" — robotico\n- Saludar con \"Hola [nombre]\" en cada respuesta — solo en el primer mensaje\n\nREGLAS DE FORMATO:\n- Maximo 2 oraciones por mensaje (es Telegram, no un formulario)\n- Si hay opciones con botones, mencionalas brevemente en el texto por si los botones no se ven\n- Si validation_error=true: solo re-pregunta de forma natural en 1 oracion. Nada de \"respuesta invalida\" ni \"usa los botones\".\n- Si validation_error=false: una sola palabra de ack + la pregunta\n\nEJEMPLOS CORRECTOS:\nask_gender primera vez: \"Genero biologico? Hombre o mujer.\"\nask_gender error (escribio \"biologico\"): \"Hombre o mujer?\"  \nask_age primera vez: \"Cuantos anos tenes?\"\nask_age error: \"Dame un numero entre 14 y 100.\"\nask_weight error (escribio \"muchos\"): \"Tu peso en kilos. Ej: 75\"\nask_goal primera vez: \"Cual es tu objetivo? Perder grasa, ganar musculo, mantener peso o recomposicion corporal.\"\nask_phone primera vez: \"Para terminar, necesito tu numero. Presiona el boton de abajo para compartirlo.\"\nask_phone error (escribio texto): \"Usa el boton de abajo para compartir tu numero de telefono.\"\n"
               },
               {
-                "role": "user",
                 "content": "={{ $('Prepare AI Message Input').first().json.userMessage }}"
               }
             ]
           },
           "simplifyOutput": false,
           "options": {
-            "temperature": 0.7,
-            "maxTokens": 100
+            "maxTokens": 100,
+            "temperature": 0.7
+          },
+          "requestOptions": {},
+          "operation": "complete"
+        },
+        "id": "ob-ai-02",
+        "name": "Generate Onboarding Message",
+        "type": "n8n-nodes-base.openAi",
+        "typeVersion": 1.1,
+        "position": [
+          2032,
+          640
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "NOJoPVNWDXiywRgw",
+            "name": "OpenAi account"
           }
         }
       }
@@ -1485,10 +1483,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T17:49:32.945Z",
-        "id": 425,
+        "createdAt": "2026-04-03T18:03:56.017Z",
+        "id": 431,
         "workflowId": "yiUgnJ6gCoaIFVXe",
-        "versionId": "2a659111-324a-44e3-8408-ac1ad7122f02",
+        "versionId": "ca6dc6c8-3954-4d52-97c9-e5f1725c9a3a",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
