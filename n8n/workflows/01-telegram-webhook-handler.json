@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T17:52:08.211Z",
+  "updatedAt": "2026-04-03T19:12:22.849Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -438,72 +438,6 @@
     },
     {
       "parameters": {
-        "promptType": "define",
-        "text": "={{ $('Set User Context').item.json.message.text }}",
-        "options": {
-          "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\n{{ $('Load Onboarding Progress').item.json.last_step > 0 ? '⚠️ RETOMANDO SESION PREVIA: El usuario ya respondio ' + $('Load Onboarding Progress').item.json.last_step + ' de 20 preguntas. Revisa el historial de esta conversacion y continua desde la siguiente pregunta pendiente. NO repitas preguntas ya respondidas.' : 'Empieza desde la pregunta 1.' }}\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n18. Pais de residencia (ej: Colombia, Mexico, Espana)\n19. Ciudad de residencia\n20. Numero de documento de identidad (cedula, DNI, pasaporte) — opcional, puedes indicar 'prefiero no dar'\n\nFLUJO DE CIERRE (MUY IMPORTANTE — sigue este orden exacto):\nPASO 1: Cuando tengas los 20 datos, presenta un resumen y pregunta \"¿Todo correcto o deseas cambiar algo?\"\nPASO 2: Si el usuario confirma que esta correcto (dice si, correcto, listo, ok, etc.):\n  - Escribe tu mensaje de bienvenida al asistente\n  - INMEDIATAMENTE despues, en el MISMO mensaje, agrega el bloque [PERFIL_COMPLETO] con todos los datos\n  - Este es el unico momento en que debes incluir el bloque\n\nEl bloque debe tener este formato exacto:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\", \"pais\": \"...\", \"ciudad\": \"...\", \"documento\": \"...\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- NO incluyas el bloque [PERFIL_COMPLETO] en el resumen ni en ningun mensaje previo a la confirmacion\n- El bloque [PERFIL_COMPLETO] nunca es visible para el usuario — es una senal interna del sistema"
-        }
-      },
-      "id": "11111111-0015-4000-8000-000000000015",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 2,
-      "name": "Onboarding Agent",
-      "position": [
-        3632,
-        896
-      ]
-    },
-    {
-      "parameters": {
-        "model": {
-          "__rl": true,
-          "mode": "list",
-          "value": "gpt-4o-mini",
-          "cachedResultName": "gpt-4o-mini"
-        },
-        "options": {
-          "temperature": 0.5
-        }
-      },
-      "id": "11111111-0016-4000-8000-000000000016",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
-      "name": "OpenAI Chat Model Onboarding",
-      "position": [
-        3488,
-        1104
-      ],
-      "credentials": {
-        "openAiApi": {
-          "id": "NOJoPVNWDXiywRgw",
-          "name": "OpenAi account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "=onboarding_{{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "tableName": "n8n_onboarding_memory",
-        "contextWindowLength": 30
-      },
-      "id": "11111111-0017-4000-8000-000000000017",
-      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
-      "typeVersion": 1.1,
-      "name": "Onboarding Memory",
-      "position": [
-        3728,
-        1104
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
         "chatId": "={{ $('Set User Context').item.json.chatId }}",
         "text": "={{ $json.output }}",
         "additionalFields": {
@@ -776,191 +710,6 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}",
-        "text": "✅ ¡Perfecto! Ya tienes todo configurado. Puedes escribirme cuando quieras.",
-        "additionalFields": {
-          "appendAttribution": false
-        }
-      },
-      "id": "contact-ack-001",
-      "name": "Phone ACK",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1104,
-        864
-      ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "webhookId": "7cdd84ef-4e51-42fe-94f1-9681163a8a62",
-      "credentials": {
-        "telegramApi": {
-          "id": "1duS64x2hsrz3moJ",
-          "name": "Telegram account fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n\n    // Construir resumen legible del perfil para mostrar al usuario\n    const goalLabels = { lose_weight:'Bajar de peso', gain_muscle:'Ganar músculo', maintain:'Mantener peso', recomposition:'Recomposición' };\n    const actLabels  = { sedentary:'Sedentario', lightly_active:'Poco activo', moderately_active:'Moderadamente activo', very_active:'Muy activo', extra_active:'Extremadamente activo' };\n    const fitLabels  = { beginner:'Principiante', intermediate:'Intermedio', advanced:'Avanzado' };\n\n    const restrictions = JSON.parse(profile.dietary_restrictions);\n    const restrictStr  = restrictions.length > 0 ? restrictions.join(', ') : 'Ninguna';\n\n    const profileSummary = [\n      '',\n      `🎯 *Objetivo:* ${goalLabels[profile.goal] || profile.goal}`,\n      `⚖️ *Peso:* ${profile.weight_kg} kg | *Altura:* ${profile.height_cm} cm`,\n      `🏃 *Actividad:* ${actLabels[profile.activity_level] || profile.activity_level}`,\n      `💪 *Nivel fitness:* ${fitLabels[profile.fitness_level] || profile.fitness_level}`,\n      `🍽️ *Comidas/día:* ${profile.meal_count} | *Días entreno/sem:* ${profile.training_days_per_week}`,\n      `🚫 *Restricciones:* ${restrictStr}`,\n    ].join('\\n');\n\n    cleanText = (cleanText || '¡Perfil completado! Aquí tienes tu resumen:') + profileSummary;\n\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set User Context').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
-      },
-      "id": "profile-parse-001",
-      "name": "Parse Profile",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        3952,
-        896
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
-          "combinator": "and",
-          "conditions": [
-            {
-              "id": "pc1",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              },
-              "leftValue": "={{ $json.hasProfile }}",
-              "rightValue": ""
-            }
-          ]
-        },
-        "options": {
-          "looseTypeValidation": true
-        }
-      },
-      "id": "profile-if-001",
-      "name": "Has PERFIL_COMPLETO?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        4160,
-        896
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO user_profiles (user_id, gender, age, height_cm, weight_kg, activity_level, fitness_level, goal, dietary_restrictions, food_allergies, disliked_foods, injuries, available_equipment, training_days_per_week, meal_count, local_culture, budget_level, onboarding_completed) VALUES ($1, $2::gender_type, $3, $4, $5, $6::activity_level, $7::fitness_level, $8::goal_type, ARRAY(SELECT jsonb_array_elements_text($9::jsonb)), ARRAY(SELECT jsonb_array_elements_text($10::jsonb)), ARRAY(SELECT jsonb_array_elements_text($11::jsonb)), ARRAY(SELECT jsonb_array_elements_text($12::jsonb)), ARRAY(SELECT jsonb_array_elements_text($13::jsonb)), $14, $15, $16, $17::budget_level, false) ON CONFLICT (user_id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg, activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level, goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions, food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods, injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment, training_days_per_week = EXCLUDED.training_days_per_week, meal_count = EXCLUDED.meal_count, local_culture = EXCLUDED.local_culture, budget_level = EXCLUDED.budget_level, updated_at = NOW()",
-        "options": {
-          "queryReplacement": "={{ [$('Parse Profile').item.json.userId, $('Parse Profile').item.json.profile.gender, $('Parse Profile').item.json.profile.age, $('Parse Profile').item.json.profile.height_cm, $('Parse Profile').item.json.profile.weight_kg, $('Parse Profile').item.json.profile.activity_level, $('Parse Profile').item.json.profile.fitness_level, $('Parse Profile').item.json.profile.goal, $('Parse Profile').item.json.profile.dietary_restrictions, $('Parse Profile').item.json.profile.food_allergies, $('Parse Profile').item.json.profile.disliked_foods, $('Parse Profile').item.json.profile.injuries, $('Parse Profile').item.json.profile.available_equipment, $('Parse Profile').item.json.profile.training_days_per_week, $('Parse Profile').item.json.profile.meal_count, $('Parse Profile').item.json.profile.local_culture, $('Parse Profile').item.json.profile.budget_level] }}"
-        }
-      },
-      "id": "profile-save-001",
-      "name": "Save User Profile",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        4768,
-        880
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE users SET country = $1, city = $2, document_number = $3, updated_at = NOW() WHERE id = $4",
-        "options": {
-          "queryReplacement": "={{ [$('Parse Profile').item.json.profile.country, $('Parse Profile').item.json.profile.city, $('Parse Profile').item.json.profile.document_number, $('Parse Profile').item.json.userId] }}"
-        }
-      },
-      "id": "profile-user-001",
-      "name": "Update User Contact Data",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        4992,
-        880
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Parse Profile').item.json.chatId }}",
-        "text": "={{ $('Parse Profile').item.json.cleanText }}",
-        "additionalFields": {
-          "appendAttribution": false,
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "profile-msg-001",
-      "name": "Send Profile Done",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        5424,
-        880
-      ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "webhookId": "474cd4c6-78e0-4c8f-9cf8-4b08b99ea277",
-      "credentials": {
-        "telegramApi": {
-          "id": "1duS64x2hsrz3moJ",
-          "name": "Telegram account fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "chat_id",
-              "value": "={{ $('Parse Profile').item.json.chatId }}"
-            },
-            {
-              "name": "text",
-              "value": "📱 Para finalizar tu registro, necesito tu número de teléfono.\n\nPresiona el botón para compartirlo de forma segura."
-            },
-            {
-              "name": "reply_markup",
-              "value": "={{ JSON.stringify({ keyboard: [[{ text: '📱 Compartir mi número', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }) }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "phone-req-001",
-      "name": "Request Phone Number",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        5648,
-        880
-      ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000
-    },
-    {
-      "parameters": {
         "operation": "executeQuery",
         "query": "SELECT id, first_name, true::boolean AS migration_match\nFROM users\nWHERE migration_token = UPPER(TRIM($1))\n  AND migration_token_expires_at > NOW()\nUNION ALL\nSELECT NULL::integer, NULL::text, false::boolean\nLIMIT 1",
         "options": {
@@ -1084,126 +833,6 @@
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT answers, last_step FROM onboarding_progress WHERE user_id = $1\nUNION ALL\nSELECT '{}'::jsonb, 0\nLIMIT 1",
-        "options": {
-          "queryReplacement": "={{ $('Check User & Membership').item.json.user_id }}"
-        }
-      },
-      "id": "11111111-0030-4000-8000-000000000030",
-      "name": "Load Onboarding Progress",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        3344,
-        896
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO onboarding_progress (user_id, answers, last_step, updated_at)\nVALUES ($1, $2::jsonb, $3, NOW())\nON CONFLICT (user_id) DO UPDATE SET\n  answers    = EXCLUDED.answers,\n  last_step  = EXCLUDED.last_step,\n  updated_at = NOW()",
-        "options": {
-          "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id, JSON.stringify($('Parse Profile').item.json.profile || {}), $('Parse Profile').item.json.hasProfile ? 20 : 10] }}"
-        }
-      },
-      "id": "11111111-0031-4000-8000-000000000031",
-      "name": "Save Onboarding Progress",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        4512,
-        1152
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "DELETE FROM onboarding_progress WHERE user_id = $1",
-        "options": {
-          "queryReplacement": "={{ $('Check User & Membership').item.json.user_id }}"
-        }
-      },
-      "id": "11111111-0032-4000-8000-000000000032",
-      "name": "Clear Onboarding Progress",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        4512,
-        880
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Set User Context').item.json.chatId }}",
-        "text": "={{ $('Parse Profile').item.json.cleanText }}",
-        "additionalFields": {
-          "appendAttribution": false,
-          "parse_mode": "Markdown"
-        }
-      },
-      "id": "11111111-0050-4000-8000-000000000050",
-      "name": "Send Onboarding Response",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        4768,
-        1152
-      ],
-      "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
-      "webhookId": "019329a3-2079-4fe5-a9cc-06ae057a7f48",
-      "credentials": {
-        "telegramApi": {
-          "id": "1duS64x2hsrz3moJ",
-          "name": "Telegram account fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE user_profiles SET updated_at = NOW() WHERE user_id = $1",
-        "options": {
-          "queryReplacement": "={{ [$('Parse Profile').item.json.userId] }}"
-        }
-      },
-      "id": "11111111-0060-4000-8000-000000000060",
-      "name": "Mark Onboarding Complete",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        5456,
-        1008
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
         "workflowId": {
           "__rl": true,
           "value": "CCkMv75zwDDoj513",
@@ -1305,158 +934,6 @@
       "position": [
         416,
         112
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose"
-          },
-          "conditions": [
-            {
-              "id": "cond-profile-saved",
-              "leftValue": "={{ $('Check User & Membership').item.json.profile_saved }}",
-              "rightValue": "true",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "phone-pending-if-001",
-      "name": "Profile Saved?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2544,
-        304
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "chat_id",
-              "value": "={{ $('Set User Context').item.json.chatId }}"
-            },
-            {
-              "name": "text",
-              "value": "📱 Aún necesito tu número de teléfono para completar tu registro.\n\nPresiona el botón de abajo para compartirlo."
-            },
-            {
-              "name": "reply_markup",
-              "value": "={{ JSON.stringify({ keyboard: [[{ text: '📱 Compartir mi número', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }) }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "phone-reminder-001",
-      "name": "Send Phone Reminder",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        3184,
-        224
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
-        "options": {
-          "queryReplacement": "={{ [String($('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id)] }}"
-        }
-      },
-      "id": "complete-onboarding-001",
-      "name": "Complete Onboarding",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        784,
-        864
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose"
-          },
-          "conditions": [
-            {
-              "id": "cond-phone-provided",
-              "leftValue": "={{ $('Check User & Membership').item.json.phone_provided }}",
-              "rightValue": "true",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "phone-provided-if-001",
-      "name": "Phone Provided?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        2800,
-        304
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 1
-          },
-          "conditions": [
-            {
-              "id": "cond-has-phone",
-              "leftValue": "={{ $('Check User & Membership').item.json.phone_provided }}",
-              "rightValue": "true",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "has-phone-already-001",
-      "name": "Has Phone Already?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        5216,
-        880
       ]
     },
     {
@@ -1852,77 +1329,6 @@
       ]
     },
     {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "obi-1",
-              "name": "user_id",
-              "type": "number",
-              "value": "={{ $('Check User & Membership').item.json.user_id }}"
-            },
-            {
-              "id": "obi-2",
-              "name": "first_name",
-              "type": "string",
-              "value": "={{ $('Check User & Membership').item.json.first_name }}"
-            },
-            {
-              "id": "obi-3",
-              "name": "membership_status",
-              "type": "string",
-              "value": "={{ $('Check User & Membership').item.json.membership_status }}"
-            },
-            {
-              "id": "obi-4",
-              "name": "onboarding_completed",
-              "type": "string",
-              "value": "={{ $('Check User & Membership').item.json.onboarding_completed }}"
-            },
-            {
-              "id": "obi-5",
-              "name": "profile_saved",
-              "type": "string",
-              "value": "={{ $('Check User & Membership').item.json.profile_saved }}"
-            },
-            {
-              "id": "obi-6",
-              "name": "phone_provided",
-              "type": "string",
-              "value": "={{ $('Check User & Membership').item.json.phone_provided }}"
-            },
-            {
-              "id": "obi-7",
-              "name": "telegramId",
-              "type": "number",
-              "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
-            },
-            {
-              "id": "obi-8",
-              "name": "chatId",
-              "type": "number",
-              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
-            },
-            {
-              "id": "obi-9",
-              "name": "text",
-              "type": "string",
-              "value": "={{ ($('Set User Context').item.json.message || {}).text || '' }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "ob-input-builder",
-      "name": "Build Onboarding Input",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        2800,
-        560
-      ]
-    },
-    {
       "id": "build-ob-input-001",
       "name": "Build Onboarding Input",
       "type": "n8n-nodes-base.code",
@@ -2143,17 +1549,6 @@
         ]
       ]
     },
-    "Onboarding Agent": {
-      "main": [
-        [
-          {
-            "node": "Parse Profile",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "OpenAI Chat Model": {
       "ai_languageModel": [
         [
@@ -2170,28 +1565,6 @@
         [
           {
             "node": "FitAI Main AI Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "OpenAI Chat Model Onboarding": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Onboarding Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Onboarding Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "Onboarding Agent",
             "type": "ai_memory",
             "index": 0
           }
@@ -2286,78 +1659,6 @@
         ]
       ]
     },
-    "Phone ACK": {
-      "main": [
-        []
-      ]
-    },
-    "Parse Profile": {
-      "main": [
-        [
-          {
-            "node": "Has PERFIL_COMPLETO?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has PERFIL_COMPLETO?": {
-      "main": [
-        [
-          {
-            "node": "Clear Onboarding Progress",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Save Onboarding Progress",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Save User Profile": {
-      "main": [
-        [
-          {
-            "node": "Update User Contact Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Update User Contact Data": {
-      "main": [
-        [
-          {
-            "node": "Has Phone Already?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Send Profile Done": {
-      "main": [
-        [
-          {
-            "node": "Request Phone Number",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Request Phone Number": {
-      "main": [
-        []
-      ]
-    },
     "Check Migration Token": {
       "main": [
         [
@@ -2414,50 +1715,6 @@
         ]
       ]
     },
-    "Clear Onboarding Progress": {
-      "main": [
-        [
-          {
-            "node": "Save User Profile",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Save Onboarding Progress": {
-      "main": [
-        [
-          {
-            "node": "Send Onboarding Response",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Load Onboarding Progress": {
-      "main": [
-        [
-          {
-            "node": "Onboarding Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mark Onboarding Complete": {
-      "main": [
-        [
-          {
-            "node": "Send Profile Done",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Call process text message": {
       "main": [
         [
@@ -2474,71 +1731,6 @@
         [
           {
             "node": "Check Migration Token",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Complete Onboarding": {
-      "main": [
-        [
-          {
-            "node": "Phone ACK",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Profile Saved?": {
-      "main": [
-        [
-          {
-            "node": "Phone Provided?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Build Onboarding Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Phone Provided?": {
-      "main": [
-        [
-          {
-            "node": "Complete Onboarding",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Send Phone Reminder",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Phone Already?": {
-      "main": [
-        [
-          {
-            "node": "Complete Onboarding",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Mark Onboarding Complete",
             "type": "main",
             "index": 0
           }
@@ -2710,17 +1902,6 @@
         ]
       ]
     },
-    "Build Onboarding Input": {
-      "main": [
-        [
-          {
-            "node": "Call Onboarding Flow v2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Get User for Phone": {
       "main": [
         [
@@ -2754,9 +1935,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "ca7af075-efde-40fa-ac65-5c81f74d85b5",
-  "activeVersionId": "ca7af075-efde-40fa-ac65-5c81f74d85b5",
-  "versionCounter": 615,
+  "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
+  "activeVersionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
+  "versionCounter": 625,
   "triggerCount": 1,
   "shared": [
     {
@@ -2779,9 +1960,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T17:52:08.217Z",
-    "createdAt": "2026-04-03T17:52:08.217Z",
-    "versionId": "ca7af075-efde-40fa-ac65-5c81f74d85b5",
+    "updatedAt": "2026-04-03T19:12:22.852Z",
+    "createdAt": "2026-04-03T19:12:22.852Z",
+    "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -3215,72 +2396,6 @@
       },
       {
         "parameters": {
-          "promptType": "define",
-          "text": "={{ $('Set User Context').item.json.message.text }}",
-          "options": {
-            "systemMessage": "=Eres FitAI y estas completando el perfil de salud de {{ $('Check User & Membership').item.json.first_name }}.\n\nCONTEXTO: El usuario necesita completar su perfil antes de acceder al asistente completo. Recopila la informacion de forma conversacional, un dato a la vez.\n\n{{ $('Load Onboarding Progress').item.json.last_step > 0 ? '⚠️ RETOMANDO SESION PREVIA: El usuario ya respondio ' + $('Load Onboarding Progress').item.json.last_step + ' de 20 preguntas. Revisa el historial de esta conversacion y continua desde la siguiente pregunta pendiente. NO repitas preguntas ya respondidas.' : 'Empieza desde la pregunta 1.' }}\n\nINFORMACION A RECOPILAR (en este orden):\n1. Objetivo principal: bajar de peso / ganar musculo / mantener / recomposicion\n2. Genero (para calculos metabolicos): masculino / femenino\n3. Edad (anos)\n4. Altura (cm)\n5. Peso actual (kg)\n6. Nivel de actividad: sedentario / poco activo / moderadamente activo / muy activo / extremadamente activo\n7. Nivel de fitness: principiante / intermedio / avanzado\n8. Restricciones dieteticas (vegetariano, vegano, sin gluten, etc.) o 'ninguna'\n9. Alergias alimentarias o 'ninguna'\n10. Alimentos que no le gustan o 'ninguno'\n11. Lesiones o condiciones fisicas a considerar o 'ninguna'\n12. Equipamiento disponible para ejercicio o 'ninguno / solo casa'\n13. Dias de entrenamiento por semana (1-7)\n14. Numero de comidas al dia preferidas (2-6)\n15. Horario de comidas (desayuno/comida/cena aproximados)\n16. Cultura gastronomica (mexicana, colombiana, espanola, etc.)\n17. Presupuesto para ingredientes: economico / moderado / sin restriccion\n18. Pais de residencia (ej: Colombia, Mexico, Espana)\n19. Ciudad de residencia\n20. Numero de documento de identidad (cedula, DNI, pasaporte) — opcional, puedes indicar 'prefiero no dar'\n\nFLUJO DE CIERRE (MUY IMPORTANTE — sigue este orden exacto):\nPASO 1: Cuando tengas los 20 datos, presenta un resumen y pregunta \"¿Todo correcto o deseas cambiar algo?\"\nPASO 2: Si el usuario confirma que esta correcto (dice si, correcto, listo, ok, etc.):\n  - Escribe tu mensaje de bienvenida al asistente\n  - INMEDIATAMENTE despues, en el MISMO mensaje, agrega el bloque [PERFIL_COMPLETO] con todos los datos\n  - Este es el unico momento en que debes incluir el bloque\n\nEl bloque debe tener este formato exacto:\n[PERFIL_COMPLETO]\n{\"objetivo\": \"...\", \"genero\": \"male|female\", \"edad\": 0, \"altura_cm\": 0, \"peso_kg\": 0, \"actividad\": \"sedentary|lightly_active|moderately_active|very_active|extra_active\", \"fitness\": \"beginner|intermediate|advanced\", \"restricciones\": [], \"alergias\": [], \"disgustos\": [], \"lesiones\": [], \"equipamiento\": [], \"dias_entrenamiento\": 0, \"comidas_dia\": 0, \"cultura\": \"...\", \"presupuesto\": \"low|medium|high\", \"pais\": \"...\", \"ciudad\": \"...\", \"documento\": \"...\"}\n[/PERFIL_COMPLETO]\n\nREGLAS:\n- Responde en espanol\n- Se amigable y motivador\n- Si el usuario responde algo ambiguo, pide clarificacion\n- NO incluyas el bloque [PERFIL_COMPLETO] en el resumen ni en ningun mensaje previo a la confirmacion\n- El bloque [PERFIL_COMPLETO] nunca es visible para el usuario — es una senal interna del sistema"
-          }
-        },
-        "id": "11111111-0015-4000-8000-000000000015",
-        "type": "@n8n/n8n-nodes-langchain.agent",
-        "typeVersion": 2,
-        "name": "Onboarding Agent",
-        "position": [
-          3632,
-          896
-        ]
-      },
-      {
-        "parameters": {
-          "model": {
-            "__rl": true,
-            "mode": "list",
-            "value": "gpt-4o-mini",
-            "cachedResultName": "gpt-4o-mini"
-          },
-          "options": {
-            "temperature": 0.5
-          }
-        },
-        "id": "11111111-0016-4000-8000-000000000016",
-        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-        "typeVersion": 1.2,
-        "name": "OpenAI Chat Model Onboarding",
-        "position": [
-          3488,
-          1104
-        ],
-        "credentials": {
-          "openAiApi": {
-            "id": "NOJoPVNWDXiywRgw",
-            "name": "OpenAi account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "sessionIdType": "customKey",
-          "sessionKey": "=onboarding_{{ $('Telegram Trigger').item.json.message.chat.id }}",
-          "tableName": "n8n_onboarding_memory",
-          "contextWindowLength": 30
-        },
-        "id": "11111111-0017-4000-8000-000000000017",
-        "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
-        "typeVersion": 1.1,
-        "name": "Onboarding Memory",
-        "position": [
-          3728,
-          1104
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
           "chatId": "={{ $('Set User Context').item.json.chatId }}",
           "text": "={{ $json.output }}",
           "additionalFields": {
@@ -3553,191 +2668,6 @@
       },
       {
         "parameters": {
-          "chatId": "={{ $('Telegram Trigger').item.json.message?.chat?.id || $('Telegram Trigger').item.json.callback_query?.message?.chat?.id }}",
-          "text": "✅ ¡Perfecto! Ya tienes todo configurado. Puedes escribirme cuando quieras.",
-          "additionalFields": {
-            "appendAttribution": false
-          }
-        },
-        "id": "contact-ack-001",
-        "name": "Phone ACK",
-        "type": "n8n-nodes-base.telegram",
-        "typeVersion": 1.2,
-        "position": [
-          1104,
-          864
-        ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 2000,
-        "webhookId": "7cdd84ef-4e51-42fe-94f1-9681163a8a62",
-        "credentials": {
-          "telegramApi": {
-            "id": "1duS64x2hsrz3moJ",
-            "name": "Telegram account fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "jsCode": "\nconst output = $input.first().json.output || '';\n\nconst START = '[PERFIL_COMPLETO]';\nconst END   = '[/PERFIL_COMPLETO]';\nconst s = output.indexOf(START);\nconst e = output.indexOf(END);\n\nlet cleanText = output.trim();\nlet hasProfile = false;\nlet profile = null;\n\nif (s !== -1 && e !== -1) {\n  cleanText = output.substring(0, s).trim();\n  const jsonStr = output.substring(s + START.length, e).trim();\n  try {\n    const raw = JSON.parse(jsonStr);\n    hasProfile = true;\n\n    const actMap = {\n      'sedentario':'sedentary','sedentary':'sedentary',\n      'poco activo':'lightly_active','lightly_active':'lightly_active',\n      'moderadamente activo':'moderately_active','moderately_active':'moderately_active',\n      'muy activo':'very_active','very_active':'very_active',\n      'extremadamente activo':'extra_active','extra_active':'extra_active'\n    };\n    const goalMap = {\n      'bajar de peso':'lose_weight','perder peso':'lose_weight','lose_weight':'lose_weight',\n      'ganar musculo':'gain_muscle','gain_muscle':'gain_muscle',\n      'mantener':'maintain','maintain':'maintain',\n      'recomposicion':'recomposition','recomposition':'recomposition'\n    };\n    const genderMap = {'masculino':'male','male':'male','femenino':'female','female':'female'};\n    const budgetMap = {\n      'economico':'low','low':'low',\n      'moderado':'medium','medium':'medium',\n      'sin restriccion':'high','alto':'high','high':'high'\n    };\n    const fitnessMap = {\n      'principiante':'beginner','beginner':'beginner',\n      'intermedio':'intermediate','intermediate':'intermediate',\n      'avanzado':'advanced','advanced':'advanced'\n    };\n\n    const toArr = (v) => {\n      if (!v || v === 'ninguna' || v === 'ninguno') return '[]';\n      if (Array.isArray(v)) {\n        const filtered = v.filter(x => x && x !== 'ninguna' && x !== 'ninguno');\n        return JSON.stringify(filtered);\n      }\n      return JSON.stringify([v]);\n    };\n\n    profile = {\n      gender:   genderMap[(raw.genero||'').toLowerCase()] || 'male',\n      age:      parseInt(raw.edad) || 25,\n      height_cm: parseFloat(raw.altura_cm) || 170,\n      weight_kg: parseFloat(raw.peso_kg) || 70,\n      activity_level: actMap[(raw.actividad||'').toLowerCase()] || 'moderately_active',\n      fitness_level:  fitnessMap[(raw.fitness||'').toLowerCase()] || 'beginner',\n      goal: goalMap[(raw.objetivo||'').toLowerCase()] || 'lose_weight',\n      dietary_restrictions: toArr(raw.restricciones),\n      food_allergies:  toArr(raw.alergias),\n      disliked_foods:  toArr(raw.disgustos),\n      injuries:        toArr(raw.lesiones),\n      available_equipment: toArr(raw.equipamiento),\n      training_days_per_week: parseInt(raw.dias_entrenamiento) || 3,\n      meal_count: parseInt(raw.comidas_dia) || 3,\n      local_culture: raw.cultura || 'colombiana',\n      budget_level: budgetMap[(raw.presupuesto||'').toLowerCase()] || 'medium',\n      country:  raw.pais  || null,\n      city:     raw.ciudad || null,\n      document_number: (raw.documento && raw.documento !== 'prefiero no dar') ? raw.documento : null\n    };\n\n    // Construir resumen legible del perfil para mostrar al usuario\n    const goalLabels = { lose_weight:'Bajar de peso', gain_muscle:'Ganar músculo', maintain:'Mantener peso', recomposition:'Recomposición' };\n    const actLabels  = { sedentary:'Sedentario', lightly_active:'Poco activo', moderately_active:'Moderadamente activo', very_active:'Muy activo', extra_active:'Extremadamente activo' };\n    const fitLabels  = { beginner:'Principiante', intermediate:'Intermedio', advanced:'Avanzado' };\n\n    const restrictions = JSON.parse(profile.dietary_restrictions);\n    const restrictStr  = restrictions.length > 0 ? restrictions.join(', ') : 'Ninguna';\n\n    const profileSummary = [\n      '',\n      `🎯 *Objetivo:* ${goalLabels[profile.goal] || profile.goal}`,\n      `⚖️ *Peso:* ${profile.weight_kg} kg | *Altura:* ${profile.height_cm} cm`,\n      `🏃 *Actividad:* ${actLabels[profile.activity_level] || profile.activity_level}`,\n      `💪 *Nivel fitness:* ${fitLabels[profile.fitness_level] || profile.fitness_level}`,\n      `🍽️ *Comidas/día:* ${profile.meal_count} | *Días entreno/sem:* ${profile.training_days_per_week}`,\n      `🚫 *Restricciones:* ${restrictStr}`,\n    ].join('\\n');\n\n    cleanText = (cleanText || '¡Perfil completado! Aquí tienes tu resumen:') + profileSummary;\n\n  } catch(e) {\n    hasProfile = false;\n  }\n}\n\nconst userId = $('Check User & Membership').item.json.user_id;\nconst chatId = $('Set User Context').item.json.chatId;\n\nreturn [{ json: { cleanText, hasProfile, profile, userId, chatId } }];\n"
-        },
-        "id": "profile-parse-001",
-        "name": "Parse Profile",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          3952,
-          896
-        ]
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "options": {
-              "caseSensitive": true,
-              "leftValue": "",
-              "typeValidation": "loose",
-              "version": 2
-            },
-            "combinator": "and",
-            "conditions": [
-              {
-                "id": "pc1",
-                "operator": {
-                  "type": "boolean",
-                  "operation": "true",
-                  "singleValue": true
-                },
-                "leftValue": "={{ $json.hasProfile }}",
-                "rightValue": ""
-              }
-            ]
-          },
-          "options": {
-            "looseTypeValidation": true
-          }
-        },
-        "id": "profile-if-001",
-        "name": "Has PERFIL_COMPLETO?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          4160,
-          896
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "INSERT INTO user_profiles (user_id, gender, age, height_cm, weight_kg, activity_level, fitness_level, goal, dietary_restrictions, food_allergies, disliked_foods, injuries, available_equipment, training_days_per_week, meal_count, local_culture, budget_level, onboarding_completed) VALUES ($1, $2::gender_type, $3, $4, $5, $6::activity_level, $7::fitness_level, $8::goal_type, ARRAY(SELECT jsonb_array_elements_text($9::jsonb)), ARRAY(SELECT jsonb_array_elements_text($10::jsonb)), ARRAY(SELECT jsonb_array_elements_text($11::jsonb)), ARRAY(SELECT jsonb_array_elements_text($12::jsonb)), ARRAY(SELECT jsonb_array_elements_text($13::jsonb)), $14, $15, $16, $17::budget_level, false) ON CONFLICT (user_id) DO UPDATE SET gender = EXCLUDED.gender, age = EXCLUDED.age, height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg, activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level, goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions, food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods, injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment, training_days_per_week = EXCLUDED.training_days_per_week, meal_count = EXCLUDED.meal_count, local_culture = EXCLUDED.local_culture, budget_level = EXCLUDED.budget_level, updated_at = NOW()",
-          "options": {
-            "queryReplacement": "={{ [$('Parse Profile').item.json.userId, $('Parse Profile').item.json.profile.gender, $('Parse Profile').item.json.profile.age, $('Parse Profile').item.json.profile.height_cm, $('Parse Profile').item.json.profile.weight_kg, $('Parse Profile').item.json.profile.activity_level, $('Parse Profile').item.json.profile.fitness_level, $('Parse Profile').item.json.profile.goal, $('Parse Profile').item.json.profile.dietary_restrictions, $('Parse Profile').item.json.profile.food_allergies, $('Parse Profile').item.json.profile.disliked_foods, $('Parse Profile').item.json.profile.injuries, $('Parse Profile').item.json.profile.available_equipment, $('Parse Profile').item.json.profile.training_days_per_week, $('Parse Profile').item.json.profile.meal_count, $('Parse Profile').item.json.profile.local_culture, $('Parse Profile').item.json.profile.budget_level] }}"
-          }
-        },
-        "id": "profile-save-001",
-        "name": "Save User Profile",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          4768,
-          880
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "UPDATE users SET country = $1, city = $2, document_number = $3, updated_at = NOW() WHERE id = $4",
-          "options": {
-            "queryReplacement": "={{ [$('Parse Profile').item.json.profile.country, $('Parse Profile').item.json.profile.city, $('Parse Profile').item.json.profile.document_number, $('Parse Profile').item.json.userId] }}"
-          }
-        },
-        "id": "profile-user-001",
-        "name": "Update User Contact Data",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          4992,
-          880
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "chatId": "={{ $('Parse Profile').item.json.chatId }}",
-          "text": "={{ $('Parse Profile').item.json.cleanText }}",
-          "additionalFields": {
-            "appendAttribution": false,
-            "parse_mode": "Markdown"
-          }
-        },
-        "id": "profile-msg-001",
-        "name": "Send Profile Done",
-        "type": "n8n-nodes-base.telegram",
-        "typeVersion": 1.2,
-        "position": [
-          5424,
-          880
-        ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 2000,
-        "webhookId": "474cd4c6-78e0-4c8f-9cf8-4b08b99ea277",
-        "credentials": {
-          "telegramApi": {
-            "id": "1duS64x2hsrz3moJ",
-            "name": "Telegram account fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {
-                "name": "chat_id",
-                "value": "={{ $('Parse Profile').item.json.chatId }}"
-              },
-              {
-                "name": "text",
-                "value": "📱 Para finalizar tu registro, necesito tu número de teléfono.\n\nPresiona el botón para compartirlo de forma segura."
-              },
-              {
-                "name": "reply_markup",
-                "value": "={{ JSON.stringify({ keyboard: [[{ text: '📱 Compartir mi número', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }) }}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "phone-req-001",
-        "name": "Request Phone Number",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          5648,
-          880
-        ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 2000
-      },
-      {
-        "parameters": {
           "operation": "executeQuery",
           "query": "SELECT id, first_name, true::boolean AS migration_match\nFROM users\nWHERE migration_token = UPPER(TRIM($1))\n  AND migration_token_expires_at > NOW()\nUNION ALL\nSELECT NULL::integer, NULL::text, false::boolean\nLIMIT 1",
           "options": {
@@ -3861,126 +2791,6 @@
       },
       {
         "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT answers, last_step FROM onboarding_progress WHERE user_id = $1\nUNION ALL\nSELECT '{}'::jsonb, 0\nLIMIT 1",
-          "options": {
-            "queryReplacement": "={{ $('Check User & Membership').item.json.user_id }}"
-          }
-        },
-        "id": "11111111-0030-4000-8000-000000000030",
-        "name": "Load Onboarding Progress",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          3344,
-          896
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "INSERT INTO onboarding_progress (user_id, answers, last_step, updated_at)\nVALUES ($1, $2::jsonb, $3, NOW())\nON CONFLICT (user_id) DO UPDATE SET\n  answers    = EXCLUDED.answers,\n  last_step  = EXCLUDED.last_step,\n  updated_at = NOW()",
-          "options": {
-            "queryReplacement": "={{ [$('Check User & Membership').item.json.user_id, JSON.stringify($('Parse Profile').item.json.profile || {}), $('Parse Profile').item.json.hasProfile ? 20 : 10] }}"
-          }
-        },
-        "id": "11111111-0031-4000-8000-000000000031",
-        "name": "Save Onboarding Progress",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          4512,
-          1152
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "DELETE FROM onboarding_progress WHERE user_id = $1",
-          "options": {
-            "queryReplacement": "={{ $('Check User & Membership').item.json.user_id }}"
-          }
-        },
-        "id": "11111111-0032-4000-8000-000000000032",
-        "name": "Clear Onboarding Progress",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          4512,
-          880
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "chatId": "={{ $('Set User Context').item.json.chatId }}",
-          "text": "={{ $('Parse Profile').item.json.cleanText }}",
-          "additionalFields": {
-            "appendAttribution": false,
-            "parse_mode": "Markdown"
-          }
-        },
-        "id": "11111111-0050-4000-8000-000000000050",
-        "name": "Send Onboarding Response",
-        "type": "n8n-nodes-base.telegram",
-        "typeVersion": 1.2,
-        "position": [
-          4768,
-          1152
-        ],
-        "retryOnFail": true,
-        "maxTries": 3,
-        "waitBetweenTries": 2000,
-        "webhookId": "019329a3-2079-4fe5-a9cc-06ae057a7f48",
-        "credentials": {
-          "telegramApi": {
-            "id": "1duS64x2hsrz3moJ",
-            "name": "Telegram account fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "UPDATE user_profiles SET updated_at = NOW() WHERE user_id = $1",
-          "options": {
-            "queryReplacement": "={{ [$('Parse Profile').item.json.userId] }}"
-          }
-        },
-        "id": "11111111-0060-4000-8000-000000000060",
-        "name": "Mark Onboarding Complete",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          5456,
-          1008
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
           "workflowId": {
             "__rl": true,
             "value": "CCkMv75zwDDoj513",
@@ -4082,158 +2892,6 @@
         "position": [
           416,
           112
-        ]
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "options": {
-              "caseSensitive": true,
-              "leftValue": "",
-              "typeValidation": "loose"
-            },
-            "conditions": [
-              {
-                "id": "cond-profile-saved",
-                "leftValue": "={{ $('Check User & Membership').item.json.profile_saved }}",
-                "rightValue": "true",
-                "operator": {
-                  "type": "string",
-                  "operation": "equals"
-                }
-              }
-            ],
-            "combinator": "and"
-          },
-          "options": {}
-        },
-        "id": "phone-pending-if-001",
-        "name": "Profile Saved?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          2544,
-          304
-        ]
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://api.telegram.org/bot8614996928:AAFNVI6I_2bbRjdoRuAGhL0zQiiEHVWZA9c/sendMessage",
-          "sendBody": true,
-          "bodyParameters": {
-            "parameters": [
-              {
-                "name": "chat_id",
-                "value": "={{ $('Set User Context').item.json.chatId }}"
-              },
-              {
-                "name": "text",
-                "value": "📱 Aún necesito tu número de teléfono para completar tu registro.\n\nPresiona el botón de abajo para compartirlo."
-              },
-              {
-                "name": "reply_markup",
-                "value": "={{ JSON.stringify({ keyboard: [[{ text: '📱 Compartir mi número', request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }) }}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "phone-reminder-001",
-        "name": "Send Phone Reminder",
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.2,
-        "position": [
-          3184,
-          224
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "UPDATE user_profiles SET onboarding_completed = true, onboarding_completed_at = NOW(), updated_at = NOW() WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1)",
-          "options": {
-            "queryReplacement": "={{ [String($('Telegram Trigger').item.json.message?.from?.id || $('Telegram Trigger').item.json.callback_query?.from?.id)] }}"
-          }
-        },
-        "id": "complete-onboarding-001",
-        "name": "Complete Onboarding",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          784,
-          864
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "options": {
-              "caseSensitive": true,
-              "leftValue": "",
-              "typeValidation": "loose"
-            },
-            "conditions": [
-              {
-                "id": "cond-phone-provided",
-                "leftValue": "={{ $('Check User & Membership').item.json.phone_provided }}",
-                "rightValue": "true",
-                "operator": {
-                  "type": "string",
-                  "operation": "equals"
-                }
-              }
-            ],
-            "combinator": "and"
-          },
-          "options": {}
-        },
-        "id": "phone-provided-if-001",
-        "name": "Phone Provided?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          2800,
-          304
-        ]
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "options": {
-              "caseSensitive": true,
-              "leftValue": "",
-              "typeValidation": "strict",
-              "version": 1
-            },
-            "conditions": [
-              {
-                "id": "cond-has-phone",
-                "leftValue": "={{ $('Check User & Membership').item.json.phone_provided }}",
-                "rightValue": "true",
-                "operator": {
-                  "type": "string",
-                  "operation": "equals"
-                }
-              }
-            ],
-            "combinator": "and"
-          },
-          "options": {}
-        },
-        "id": "has-phone-already-001",
-        "name": "Has Phone Already?",
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2,
-        "position": [
-          5216,
-          880
         ]
       },
       {
@@ -4629,77 +3287,6 @@
         ]
       },
       {
-        "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "id": "obi-1",
-                "name": "user_id",
-                "type": "number",
-                "value": "={{ $('Check User & Membership').item.json.user_id }}"
-              },
-              {
-                "id": "obi-2",
-                "name": "first_name",
-                "type": "string",
-                "value": "={{ $('Check User & Membership').item.json.first_name }}"
-              },
-              {
-                "id": "obi-3",
-                "name": "membership_status",
-                "type": "string",
-                "value": "={{ $('Check User & Membership').item.json.membership_status }}"
-              },
-              {
-                "id": "obi-4",
-                "name": "onboarding_completed",
-                "type": "string",
-                "value": "={{ $('Check User & Membership').item.json.onboarding_completed }}"
-              },
-              {
-                "id": "obi-5",
-                "name": "profile_saved",
-                "type": "string",
-                "value": "={{ $('Check User & Membership').item.json.profile_saved }}"
-              },
-              {
-                "id": "obi-6",
-                "name": "phone_provided",
-                "type": "string",
-                "value": "={{ $('Check User & Membership').item.json.phone_provided }}"
-              },
-              {
-                "id": "obi-7",
-                "name": "telegramId",
-                "type": "number",
-                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
-              },
-              {
-                "id": "obi-8",
-                "name": "chatId",
-                "type": "number",
-                "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
-              },
-              {
-                "id": "obi-9",
-                "name": "text",
-                "type": "string",
-                "value": "={{ ($('Set User Context').item.json.message || {}).text || '' }}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "ob-input-builder",
-        "name": "Build Onboarding Input",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-          2800,
-          560
-        ]
-      },
-      {
         "id": "build-ob-input-001",
         "name": "Build Onboarding Input",
         "type": "n8n-nodes-base.code",
@@ -4920,17 +3507,6 @@
           ]
         ]
       },
-      "Onboarding Agent": {
-        "main": [
-          [
-            {
-              "node": "Parse Profile",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "OpenAI Chat Model": {
         "ai_languageModel": [
           [
@@ -4947,28 +3523,6 @@
           [
             {
               "node": "FitAI Main AI Agent",
-              "type": "ai_memory",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "OpenAI Chat Model Onboarding": {
-        "ai_languageModel": [
-          [
-            {
-              "node": "Onboarding Agent",
-              "type": "ai_languageModel",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Onboarding Memory": {
-        "ai_memory": [
-          [
-            {
-              "node": "Onboarding Agent",
               "type": "ai_memory",
               "index": 0
             }
@@ -5063,78 +3617,6 @@
           ]
         ]
       },
-      "Phone ACK": {
-        "main": [
-          []
-        ]
-      },
-      "Parse Profile": {
-        "main": [
-          [
-            {
-              "node": "Has PERFIL_COMPLETO?",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Has PERFIL_COMPLETO?": {
-        "main": [
-          [
-            {
-              "node": "Clear Onboarding Progress",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Save Onboarding Progress",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Save User Profile": {
-        "main": [
-          [
-            {
-              "node": "Update User Contact Data",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Update User Contact Data": {
-        "main": [
-          [
-            {
-              "node": "Has Phone Already?",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Send Profile Done": {
-        "main": [
-          [
-            {
-              "node": "Request Phone Number",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Request Phone Number": {
-        "main": [
-          []
-        ]
-      },
       "Check Migration Token": {
         "main": [
           [
@@ -5191,50 +3673,6 @@
           ]
         ]
       },
-      "Clear Onboarding Progress": {
-        "main": [
-          [
-            {
-              "node": "Save User Profile",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Save Onboarding Progress": {
-        "main": [
-          [
-            {
-              "node": "Send Onboarding Response",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Load Onboarding Progress": {
-        "main": [
-          [
-            {
-              "node": "Onboarding Agent",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Mark Onboarding Complete": {
-        "main": [
-          [
-            {
-              "node": "Send Profile Done",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Call process text message": {
         "main": [
           [
@@ -5251,71 +3689,6 @@
           [
             {
               "node": "Check Migration Token",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Complete Onboarding": {
-        "main": [
-          [
-            {
-              "node": "Phone ACK",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Profile Saved?": {
-        "main": [
-          [
-            {
-              "node": "Phone Provided?",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Build Onboarding Input",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Phone Provided?": {
-        "main": [
-          [
-            {
-              "node": "Complete Onboarding",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Send Phone Reminder",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Has Phone Already?": {
-        "main": [
-          [
-            {
-              "node": "Complete Onboarding",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Mark Onboarding Complete",
               "type": "main",
               "index": 0
             }
@@ -5487,17 +3860,6 @@
           ]
         ]
       },
-      "Build Onboarding Input": {
-        "main": [
-          [
-            {
-              "node": "Call Onboarding Flow v2",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Get User for Phone": {
         "main": [
           [
@@ -5527,11 +3889,27 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T17:52:10.599Z",
-        "id": 427,
+        "createdAt": "2026-04-03T19:12:25.142Z",
+        "id": 435,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "ca7af075-efde-40fa-ac65-5c81f74d85b5",
+        "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
         "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      },
+      {
+        "createdAt": "2026-04-03T19:12:35.995Z",
+        "id": 437,
+        "workflowId": "fI5u4rs3iXPfeXFl",
+        "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
+        "event": "activated",
+        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
+      },
+      {
+        "createdAt": "2026-04-03T19:12:34.791Z",
+        "id": 436,
+        "workflowId": "fI5u4rs3iXPfeXFl",
+        "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
+        "event": "deactivated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
     ]
