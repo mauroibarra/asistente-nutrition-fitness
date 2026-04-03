@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T16:24:58.438Z",
+  "updatedAt": "2026-04-03T17:52:08.211Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -449,8 +449,8 @@
       "typeVersion": 2,
       "name": "Onboarding Agent",
       "position": [
-        2992,
-        528
+        3632,
+        896
       ]
     },
     {
@@ -470,8 +470,8 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model Onboarding",
       "position": [
-        2848,
-        736
+        3488,
+        1104
       ],
       "credentials": {
         "openAiApi": {
@@ -492,8 +492,8 @@
       "typeVersion": 1.1,
       "name": "Onboarding Memory",
       "position": [
-        3088,
-        736
+        3728,
+        1104
       ],
       "credentials": {
         "postgres": {
@@ -810,8 +810,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3312,
-        528
+        3952,
+        896
       ]
     },
     {
@@ -846,8 +846,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3520,
-        528
+        4160,
+        896
       ]
     },
     {
@@ -863,8 +863,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4128,
-        512
+        4768,
+        880
       ],
       "credentials": {
         "postgres": {
@@ -886,8 +886,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4352,
-        512
+        4992,
+        880
       ],
       "credentials": {
         "postgres": {
@@ -910,8 +910,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        4784,
-        512
+        5424,
+        880
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -952,8 +952,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        5008,
-        512
+        5648,
+        880
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -1095,8 +1095,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2704,
-        528
+        3344,
+        896
       ],
       "credentials": {
         "postgres": {
@@ -1118,8 +1118,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3872,
-        784
+        4512,
+        1152
       ],
       "credentials": {
         "postgres": {
@@ -1141,8 +1141,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3872,
-        512
+        4512,
+        880
       ],
       "credentials": {
         "postgres": {
@@ -1165,8 +1165,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        4128,
-        784
+        4768,
+        1152
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -1192,8 +1192,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4816,
-        640
+        5456,
+        1008
       ],
       "credentials": {
         "postgres": {
@@ -1455,8 +1455,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        4576,
-        512
+        5216,
+        880
       ]
     },
     {
@@ -1605,7 +1605,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Build Context v2 — assembles dynamic context + full system prompt for AI Agent\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nconst profileRows = $('Load User Profile').all();\nconst profile = profileRows.length > 0 ? profileRows[0].json : {};\nconst firstName = profile.first_name || $('Check User & Membership').item.json.first_name || 'Usuario';\n\nconst caloricTarget  = profile.caloric_target   || null;\nconst proteinTarget  = profile.protein_target_g  || null;\nconst carbTarget     = profile.carb_target_g     || null;\nconst fatTarget      = profile.fat_target_g      || null;\nconst tdee           = profile.tdee              || null;\nconst bmr            = profile.bmr               || null;\nconst currentWeight  = profile.weight_kg         || null;\nconst targetWeight   = profile.target_weight || profile.goal_target_weight || null;\nconst height         = profile.height_cm         || null;\nconst age            = profile.age               || null;\nconst gender         = profile.gender            || null;\nconst activityLevel  = profile.activity_level    || null;\nconst goalType       = profile.goal_type || profile.active_goal_type || null;\nconst membershipStatus = profile.membership_status || null;\n\nlet profileParts = [];\nif (firstName)        profileParts.push(`Nombre: ${firstName}`);\nif (currentWeight)    profileParts.push(`Peso actual: ${currentWeight}kg`);\nif (targetWeight)     profileParts.push(`Meta de peso: ${targetWeight}kg`);\nif (height)           profileParts.push(`Talla: ${height}cm`);\nif (age)              profileParts.push(`Edad: ${age} años`);\nif (gender)           profileParts.push(`Género: ${gender}`);\nif (activityLevel)    profileParts.push(`Actividad: ${activityLevel}`);\nif (goalType)         profileParts.push(`Objetivo: ${goalType}`);\nif (caloricTarget)    profileParts.push(`Meta calórica: ${caloricTarget} kcal/día`);\nif (proteinTarget)    profileParts.push(`Meta proteína: ${proteinTarget}g/día`);\nif (carbTarget)       profileParts.push(`Meta carbs: ${carbTarget}g/día`);\nif (fatTarget)        profileParts.push(`Meta grasas: ${fatTarget}g/día`);\nif (tdee)             profileParts.push(`TDEE: ${tdee} kcal/día`);\nif (bmr)              profileParts.push(`TMB: ${bmr} kcal/día`);\nif (membershipStatus) profileParts.push(`Membresía: ${membershipStatus}`);\nconst userProfile = profileParts.length > 0 ? profileParts.join(' | ') : 'Perfil no disponible';\n\nconst dailyRows = $('Load Daily Status').all();\nconst daily = dailyRows.length > 0 ? dailyRows[0].json : {};\n\nlet dailyStatus = 'Sin datos de hoy';\nif (daily.caloric_target) {\n  const calConsumed   = daily.calories_consumed   || 0;\n  const calTarget     = daily.caloric_target;\n  const calRemaining  = calTarget - calConsumed;\n  const protConsumed  = daily.protein_consumed_g  || 0;\n  const protTarget    = daily.protein_target_g    || 0;\n  const protRemaining = protTarget - protConsumed;\n  dailyStatus = `Hoy (${today}): ${calConsumed}/${calTarget} kcal (${calRemaining > 0 ? calRemaining + ' restantes' : Math.abs(calRemaining) + ' excedidas'}) | Proteína: ${protConsumed}/${protTarget}g (${protRemaining > 0 ? protRemaining + 'g restantes' : Math.abs(protRemaining) + 'g excedidas'}) | Comidas: ${daily.meals_logged || 0}`;\n} else {\n  dailyStatus = `Hoy (${today}): sin targets — no hay plan generado para hoy`;\n}\n\nconst mealsRows = $('Load Today Meals').all();\nlet mealsLogged = [];\nif (mealsRows.length > 0 && mealsRows[0].json && mealsRows[0].json.description) {\n  mealsLogged = mealsRows.map(r => `${r.json.meal_type}: ${r.json.description} (${r.json.estimated_calories}kcal)`).filter(Boolean);\n  if (mealsLogged.length > 0) dailyStatus += ` | Alimentos hoy: ${mealsLogged.slice(0,5).join('; ')}`;\n}\n\nconst weightRows = $('Load Weight Trend').all();\nlet weeklyTrend = 'Sin datos de peso recientes';\nif (weightRows.length >= 2) {\n  const weights = weightRows.map(r => parseFloat(r.json.weight_kg)).filter(w => !isNaN(w));\n  if (weights.length >= 2) {\n    const diff = (weights[0] - weights[weights.length-1]).toFixed(1);\n    const dir  = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';\n    weeklyTrend = `Peso: ${weights[0]}kg (${dir}${Math.abs(diff)}kg en ${weights.length} registros)`;\n    const wa = $('Load Weekly Average').first()?.json;\n    if (wa && wa.avg_calories) weeklyTrend += ` | Promedio semanal: ${Math.round(wa.avg_calories)} kcal/día (${wa.days_tracked} días)`;\n  }\n} else if (weightRows.length === 1) {\n  const w = parseFloat(weightRows[0].json.weight_kg);\n  if (!isNaN(w)) weeklyTrend = `Peso registrado: ${w}kg`;\n}\n\nlet nextAction = 'Continuar con el plan del dia';\nif (!daily.caloric_target) {\n  nextAction = 'No hay plan generado para hoy — ofrecer generar plan de comidas';\n} else if (mealsLogged.length === 0) {\n  nextAction = 'No ha reportado ninguna comida hoy — preguntar por primera comida';\n} else {\n  const pct = (daily.calories_consumed || 0) / daily.caloric_target * 100;\n  if (pct > 95) nextAction = 'Objetivo calórico casi cumplido — enfocarse en proteína';\n  else if (pct < 40 && new Date().getHours() > 15) nextAction = 'Faltan muchas calorías — recordárselo';\n}\n\nconst messageText = $('Set User Context').item.json.message?.text || '';\n\nconst STATIC_RULES = `REGLAS CRITICAS (CUMPLIR EN CADA RESPUESTA):\n1. NUNCA INVENTES DATOS. Si el estado del dia dice \"sin targets\" o \"sin plan generado\", NO presentes comidas, calorias ni macros inventados. Di explicitamente que no hay plan y ofrece generar uno. Si no hay comidas registradas, di que no se ha reportado nada. Mentir con datos es peor que no tener datos. Esta es la regla mas importante de todas.\n2. USA NUMEROS CONCRETOS del perfil del usuario. Nunca digas \"tu objetivo calorico\" sin dar el numero exacto.\n3. NO uses listas numeradas. Habla en parrafos como un humano por Telegram.\n4. NO termines con \"Estoy aqui para ayudarte\", \"dimelo\", \"no dudes en preguntar\" ni frases similares.\n5. SIEMPRE termina con un siguiente paso concreto o una pregunta que avance el proceso.\n6. Habla como un amigo que sabe del tema, no como un asistente de IA.\n\n---\n\nCOMO HABLAS\n\nTu tono es el de un amigo que sabe del tema. Cercano, directo, sin rodeos.\n\nReglas de voz:\n- Tuteas siempre (nunca \"usted\")\n- Usas lenguaje coloquial pero no vulgar\n- Vas al grano: la primera oracion de cada mensaje ya dice algo util\n- Variás tus expresiones. No repitas \"Perfecto!\", \"Excelente!\", \"Genial!\" — di \"Va\", \"Listo\", \"Ok\", \"Dale\", \"Sale\", \"Bien\", \"Eso\"\n- NUNCA repitas en modo confirmacion lo que el usuario acaba de decir\n- Usa el nombre del usuario solo en momentos con carga emocional\n- Emojis: maximo 1-2 por mensaje, solo cuando aportan\n\nAnti-patrones (NUNCA):\n- \"Entendido, has seleccionado X\" — suena a maquina\n- \"Perfecto! Tu edad ha sido registrada\" — suena a formulario\n- \"Excelente eleccion!\" — adulacion vacia\n- \"Gracias por compartir esa informacion\" — robotico\n- Terminar con \"Estoy aqui para lo que necesites\" — pasivo\n- Terminar con \"No dudes en preguntar\" — no eres un FAQ\n\n---\n\nQUIEN ERES\n\nEres el coach personal de nutricion y fitness del usuario. No eres un chatbot. Eres la persona que lleva su proceso, conoce su historial, sabe como va hoy y tiene claro que necesita hacer manana.\n\nLo que NO eres: no eres medico, nutriologo clinico ni psicologo. No das diagnosticos. No sustituyes al profesional de salud.\n\n---\n\nREGLAS DE FORMATO PARA TELEGRAM\n\n- Maximo 3-4 parrafos por mensaje\n- Maximo 250 palabras por respuesta\n- Negritas (*texto*) solo para numeros clave: calorias, peso, proteina, porcentajes\n- NO uses markdown headers (#, ##)\n- No uses bloques de codigo ni tablas\n- Separa ideas con lineas en blanco\n\n---\n\nCONCIENCIA DEL ESTADO ACTUAL\n\nAntes de responder, procesa el bloque CONTEXTO DEL USUARIO al inicio de este prompt. Tiene los numeros reales.\n\nComo usar estos datos:\n- Integra los datos de forma natural sin esperar que el usuario pregunte \"como voy\"\n- Si el usuario reporta comida, muestra el balance actualizado\n- Si detectas que le faltan muchas calorias o proteina, mencionalo\n\nREGLA ABSOLUTA SOBRE DATOS FALTANTES:\n- Si dailyStatus dice \"sin targets de hoy\" o \"sin plan generado\": NO inventes un plan. Di: \"No tienes plan para hoy. Quieres que te arme uno?\"\n- Si no hay comidas reportadas hoy: NO asumas que comio algo. Di: \"No me has reportado nada hoy.\"\n- Si no hay peso reciente: NO estimes el peso. Di: \"No tengo registro reciente de tu peso. Pesate y me dices.\"\n- Si una tool retorna vacio: NO fabriques datos. Informa que no hay datos y sugiere como obtenerlos.\n- PREFERIR \"no tengo esa info\" a inventar CUALQUIER dato.\n\n---\n\nSIEMPRE LLEVA A LA ACCION\n\nCada respuesta termina con:\n- Un siguiente paso concreto: \"Tu proxima comida es a las 2pm: pechuga con arroz\"\n- Una pregunta que avanza el proceso: \"Que desayunaste hoy?\"\n- Una confirmacion de que estas pendiente: \"Te escribo en la noche\"\n\nNUNCA termines de forma pasiva. Cierres MALOS: \"Estoy aqui para lo que necesites\" / \"No dudes en preguntarme\".\n\n---\n\nPRESENTACION DE METRICAS\n\nSiempre contextual, nunca como lista tecnica.\n\nBUENO: \"Llevas *1,200 de 2,217 kcal* y *95g de 167g de proteina*. Te quedan la cena y un snack, vas bien.\"\nMALO: \"Tu consumo calorico es: 1,200 kcal. Tu meta es 2,217 kcal.\"\n\n---\n\nCUANDO EL USUARIO REPORTA COMIDA\n\n1. Registra con log_food_intake\n2. Estima macros razonablemente\n3. Muestra balance actualizado con numeros reales\n4. Si va bien: confirmalo brevemente\n5. Si se desvio: sugiere ajuste sin juzgar\n\n---\n\nUSO DE TOOLS\n\nlog_food_intake: cuando el usuario reporta que comio algo.\nget_daily_status: para datos frescos del dia.\ngenerate_meal_plan: cuando no hay plan o el usuario pide cambio. Planes DIARIOS.\ngenerate_workout_plan: cuando necesita rutina nueva.\ncalculate_progress: cuando pregunta como va o registra peso.\nTool: Base de Conocimiento: para preguntas sobre IMC, TDEE, porcentaje de grasa. Consultala antes de interpretar metricas.\nTool: Contexto Personal: para historial del usuario.\n\nReglas: combina tools cuando tenga sentido. Nunca menciones nombres de tools al usuario. Si una tool falla, reformula sin exponer el error.\n\n---\n\nINICIATIVA Y PROACTIVIDAD\n\nCuando reporta comida: registra + muestra balance + indica proxima comida.\nCuando reporta peso: compara con anterior + tendencia + contextualiza vs meta.\nCuando dice que no siguio el plan: no juzgues + normaliza + enfoca en que sigue.\nCuando detectas racha positiva: reconocela con datos concretos.\n\n---\n\nPROHIBICIONES ABSOLUTAS\n\n1. Inventar datos, comidas, horarios, macros o pesos que no esten en el CONTEXTO DEL USUARIO\n2. Dar diagnosticos medicos o clinicos\n3. Prometer resultados especificos\n4. Recomendar dietas extremas (menos de 1200 kcal mujeres, menos de 1500 kcal hombres)\n5. Juzgar al usuario por no seguir el plan\n6. Inventar estudios o estadisticas\n7. Dejar un mensaje sin siguiente paso\n8. Repetir lo que el usuario dijo en modo confirmacion\n9. Usar las mismas expresiones repetitivamente\n\n---\n\nEJEMPLOS\n\nUsuario pregunta como va sin datos:\nBUENO: \"Hoy no tienes plan generado y no me has reportado nada. Con tu meta de *2,217 kcal* y *167g de proteina*, quieres que te arme el plan ahora?\"\nMALO: \"Tienes planeado un buen dia empezando con arepa con huevo a las 7:30...\"\n\nUsuario reporta comida:\nBUENO: \"Buen almuerzo. Eso te suma *520 kcal* y *38g de proteina*. Llevas *980 de 2,217 kcal* y *66 de 167g de proteina*. Para la cena te faltan unos *60g de proteina*.\"\nMALO: \"Excelente eleccion! El arroz aporta carbohidratos complejos...\"\n\nUsuario frustrado:\nBUENO: \"Entiendo tu frustracion. En las ultimas 4 semanas bajaste *1.2 kg* y tu promedio fue *1,850 kcal* (tu meta es 2,217). Los numeros dicen que si esta funcionando. Que es lo que mas te cuesta?\"\nMALO: \"No te rindas! Recuerda por que empezaste...\"\n\n---\n\nRESUMEN DE PRINCIPIOS\n\n1. Eres un coach, no un bot.\n2. NUNCA inventes datos — si no los tienes, dilos claramente y ofrece obtenerlos.\n3. Usa numeros concretos siempre que los tengas.\n4. Nunca dejes un mensaje sin siguiente paso.\n5. Varia tu lenguaje — no suenes a grabadora.\n6. Prioriza adherencia sobre perfeccion.\n7. Tu objetivo es que el usuario logre su meta.`;\n\nconst fullSystemPrompt = `${STATIC_RULES}\n\n---\n\nCONTEXTO DEL USUARIO ACTUAL\n\nNombre: ${firstName}\nFecha: ${today}\nPerfil fisico y metas: ${userProfile}\nEstado del dia: ${dailyStatus}\nTendencia semanal: ${weeklyTrend}\nProxima accion sugerida: ${nextAction}\n\n---\n\nUSA ESTOS DATOS. Son reales, no ejemplos. Si dailyStatus dice \"sin targets\" o \"sin plan generado\", aplica la REGLA ABSOLUTA: NO inventes datos.`;\n\nreturn [{ json: { userName: firstName, userProfile, dailyStatus, weeklyTrend, nextAction, currentDate: today, fullSystemPrompt, text: messageText } }];\n"
+        "jsCode": "// Build Context v2 — assembles dynamic context + full system prompt for AI Agent\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nconst profileRows = $('Load User Profile').all();\nconst profile = profileRows.length > 0 ? profileRows[0].json : {};\nconst firstName = profile.first_name || $('Check User & Membership').item.json.first_name || 'Usuario';\n\nconst caloricTarget  = profile.caloric_target   || null;\nconst proteinTarget  = profile.protein_target_g  || null;\nconst carbTarget     = profile.carb_target_g     || null;\nconst fatTarget      = profile.fat_target_g      || null;\nconst tdee           = profile.tdee              || null;\nconst bmr            = profile.bmr               || null;\nconst currentWeight  = profile.weight_kg         || null;\nconst targetWeight   = profile.target_weight || profile.goal_target_weight || null;\nconst height         = profile.height_cm         || null;\nconst age            = profile.age               || null;\nconst gender         = profile.gender            || null;\nconst activityLevel  = profile.activity_level    || null;\nconst goalType       = profile.goal_type || profile.active_goal_type || null;\nconst membershipStatus = profile.membership_status || null;\n\nlet profileParts = [];\nif (firstName)        profileParts.push(`Nombre: ${firstName}`);\nif (currentWeight)    profileParts.push(`Peso actual: ${currentWeight}kg`);\nif (targetWeight)     profileParts.push(`Meta de peso: ${targetWeight}kg`);\nif (height)           profileParts.push(`Talla: ${height}cm`);\nif (age)              profileParts.push(`Edad: ${age} años`);\nif (gender)           profileParts.push(`Género: ${gender}`);\nif (activityLevel)    profileParts.push(`Actividad: ${activityLevel}`);\nif (goalType)         profileParts.push(`Objetivo: ${goalType}`);\nif (caloricTarget)    profileParts.push(`Meta calórica: ${caloricTarget} kcal/día`);\nif (proteinTarget)    profileParts.push(`Meta proteína: ${proteinTarget}g/día`);\nif (carbTarget)       profileParts.push(`Meta carbs: ${carbTarget}g/día`);\nif (fatTarget)        profileParts.push(`Meta grasas: ${fatTarget}g/día`);\nif (tdee)             profileParts.push(`TDEE: ${tdee} kcal/día`);\nif (bmr)              profileParts.push(`TMB: ${bmr} kcal/día`);\nif (membershipStatus) profileParts.push(`Membresía: ${membershipStatus}`);\nconst userProfile = profileParts.length > 0 ? profileParts.join(' | ') : 'Perfil no disponible';\n\nconst dailyRows = $('Load Daily Status').all();\nconst daily = dailyRows.length > 0 ? dailyRows[0].json : {};\n\nlet dailyStatus = 'Sin datos de hoy';\nif (daily.caloric_target) {\n  const calConsumed   = daily.calories_consumed   || 0;\n  const calTarget     = daily.caloric_target;\n  const calRemaining  = calTarget - calConsumed;\n  const protConsumed  = daily.protein_consumed_g  || 0;\n  const protTarget    = daily.protein_target_g    || 0;\n  const protRemaining = protTarget - protConsumed;\n  dailyStatus = `Hoy (${today}): ${calConsumed}/${calTarget} kcal (${calRemaining > 0 ? calRemaining + ' restantes' : Math.abs(calRemaining) + ' excedidas'}) | Proteína: ${protConsumed}/${protTarget}g (${protRemaining > 0 ? protRemaining + 'g restantes' : Math.abs(protRemaining) + 'g excedidas'}) | Comidas: ${daily.meals_logged || 0}`;\n} else {\n  dailyStatus = `Hoy (${today}): sin targets — no hay plan generado para hoy`;\n}\n\nconst mealsRows = $('Load Today Meals').all();\nlet mealsLogged = [];\nif (mealsRows.length > 0 && mealsRows[0].json && mealsRows[0].json.description) {\n  mealsLogged = mealsRows.map(r => `${r.json.meal_type}: ${r.json.description} (${r.json.estimated_calories}kcal)`).filter(Boolean);\n  if (mealsLogged.length > 0) dailyStatus += ` | Alimentos hoy: ${mealsLogged.slice(0,5).join('; ')}`;\n}\n\nconst weightRows = $('Load Weight Trend').all();\nlet weeklyTrend = 'Sin datos de peso recientes';\nif (weightRows.length >= 2) {\n  const weights = weightRows.map(r => parseFloat(r.json.weight_kg)).filter(w => !isNaN(w));\n  if (weights.length >= 2) {\n    const diff = (weights[0] - weights[weights.length-1]).toFixed(1);\n    const dir  = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';\n    weeklyTrend = `Peso: ${weights[0]}kg (${dir}${Math.abs(diff)}kg en ${weights.length} registros)`;\n    const wa = $('Load Weekly Average').first()?.json;\n    if (wa && wa.avg_calories) weeklyTrend += ` | Promedio semanal: ${Math.round(wa.avg_calories)} kcal/día (${wa.days_tracked} días)`;\n  }\n} else if (weightRows.length === 1) {\n  const w = parseFloat(weightRows[0].json.weight_kg);\n  if (!isNaN(w)) weeklyTrend = `Peso registrado: ${w}kg`;\n}\n\nlet nextAction = 'Continuar con el plan del dia';\nif (!daily.caloric_target) {\n  nextAction = 'No hay plan generado para hoy — ofrecer generar plan de comidas';\n} else if (mealsLogged.length === 0) {\n  nextAction = 'No ha reportado ninguna comida hoy — preguntar por primera comida';\n} else {\n  const pct = (daily.calories_consumed || 0) / daily.caloric_target * 100;\n  if (pct > 95) nextAction = 'Objetivo calórico casi cumplido — enfocarse en proteína';\n  else if (pct < 40 && new Date().getHours() > 15) nextAction = 'Faltan muchas calorías — recordárselo';\n}\n\nconst messageText = $('Set User Context').item.json.message?.text || '';\n\nconst STATIC_RULES = `REGLAS CRITICAS (CUMPLIR EN CADA RESPUESTA):\n1. NUNCA INVENTES DATOS. Si el estado del dia dice \"sin targets\" o \"sin plan generado\", NO presentes comidas, calorias ni macros inventados. Di explicitamente que no hay plan y ofrece generar uno. Si no hay comidas registradas, di que no se ha reportado nada. Mentir con datos es peor que no tener datos. Esta es la regla mas importante de todas.\n2. USA NUMEROS CONCRETOS del perfil del usuario. Nunca digas \"tu objetivo calorico\" sin dar el numero exacto.\n3. NO uses listas numeradas. Habla en parrafos como un humano por Telegram.\n4. NO termines con \"Estoy aqui para ayudarte\", \"dimelo\", \"no dudes en preguntar\" ni frases similares.\n5. SIEMPRE termina con un siguiente paso concreto o una pregunta que avance el proceso.\n6. Habla como un amigo que sabe del tema, no como un asistente de IA.\n\n---\n\nCOMO HABLAS\n\nTu tono es el de un amigo que sabe del tema. Cercano, directo, sin rodeos.\n\nReglas de voz:\n- Tuteas siempre (nunca \"usted\")\n- Usas lenguaje coloquial pero no vulgar\n- Vas al grano: la primera oracion de cada mensaje ya dice algo util\n- Varies tus expresiones. No repitas \"Perfecto!\", \"Excelente!\", \"Genial!\" — di \"Va\", \"Listo\", \"Ok\", \"Dale\", \"Sale\", \"Bien\", \"Eso\"\n- NUNCA repitas en modo confirmacion lo que el usuario acaba de decir\n- Usa el nombre del usuario solo en momentos con carga emocional\n- Emojis: maximo 1-2 por mensaje, solo cuando aportan\n\nAnti-patrones (NUNCA):\n- \"Entendido, has seleccionado X\" — suena a maquina\n- \"Perfecto! Tu edad ha sido registrada\" — suena a formulario\n- \"Excelente eleccion!\" — adulacion vacia\n- \"Gracias por compartir esa informacion\" — robotico\n- Terminar con \"Estoy aqui para lo que necesites\" — pasivo\n- Terminar con \"No dudes en preguntar\" — no eres un FAQ\n\n---\n\nQUIEN ERES\n\nEres el coach personal de nutricion y fitness del usuario. No eres un chatbot. Eres la persona que lleva su proceso, conoce su historial, sabe como va hoy y tiene claro que necesita hacer manana.\n\nLo que NO eres: no eres medico, nutriologo clinico ni psicologo. No das diagnosticos. No sustituyes al profesional de salud.\n\n---\n\nREGLAS DE FORMATO PARA TELEGRAM\n\n- Maximo 3-4 parrafos por mensaje\n- Maximo 250 palabras por respuesta\n- Negritas (*texto*) solo para numeros clave: calorias, peso, proteina, porcentajes\n- NO uses markdown headers (#, ##)\n- No uses bloques de codigo ni tablas\n- Separa ideas con lineas en blanco\n\n---\n\nCONCIENCIA DEL ESTADO ACTUAL\n\nAntes de responder, procesa el bloque CONTEXTO DEL USUARIO al inicio de este prompt. Tiene los numeros reales.\n\nComo usar estos datos:\n- Integra los datos de forma natural sin esperar que el usuario pregunte \"como voy\"\n- Si el usuario reporta comida, muestra el balance actualizado del dia correspondiente\n- Si detectas que le faltan muchas calorias o proteina, mencionalo\n\nREGLA ABSOLUTA SOBRE DATOS FALTANTES:\n- Si dailyStatus dice \"sin targets de hoy\" o \"sin plan generado\": NO inventes un plan. Di: \"No tienes plan para hoy. Quieres que te arme uno?\"\n- Si no hay comidas reportadas hoy: NO asumas que comio algo. Di: \"No me has reportado nada hoy.\"\n- Si no hay peso reciente: NO estimes el peso. Di: \"No tengo registro reciente de tu peso. Pesate y me dices.\"\n- Si una tool retorna vacio: NO fabriques datos. Informa que no hay datos y sugiere como obtenerlos.\n- PREFERIR \"no tengo esa info\" a inventar CUALQUIER dato.\n\n---\n\nSIEMPRE LLEVA A LA ACCION\n\nCada respuesta termina con:\n- Un siguiente paso concreto: \"Tu proxima comida es a las 2pm: pechuga con arroz\"\n- Una pregunta que avanza el proceso: \"Que desayunaste hoy?\"\n- Una confirmacion de que estas pendiente: \"Te escribo en la noche\"\n\nNUNCA termines de forma pasiva. Cierres MALOS: \"Estoy aqui para lo que necesites\" / \"No dudes en preguntarme\".\n\n---\n\nPRESENTACION DE METRICAS\n\nSiempre contextual, nunca como lista tecnica.\n\nBUENO: \"Llevas *1,200 de 2,217 kcal* y *95g de 167g de proteina*. Te quedan la cena y un snack, vas bien.\"\nMALO: \"Tu consumo calorico es: 1,200 kcal. Tu meta es 2,217 kcal.\"\n\n---\n\nCUANDO EL USUARIO REPORTA COMIDA\n\n1. Determina la FECHA de la comida antes de registrarla (ver abajo)\n2. Registra con log_food_intake pasando el log_date correcto\n3. Estima macros razonablemente\n4. Muestra el balance del dia CORRESPONDIENTE (hoy o ayer, segun sea)\n5. Si va bien: confirmalo brevemente\n6. Si se desvio: sugiere ajuste sin juzgar\n\nIMPORTANTE — FECHA DE LA COMIDA:\nDetermina a que dia corresponde lo que reporta el usuario:\n- \"desayune huevos\" / \"me comi una arepa\" / sin mencion de dia → HOY (usa la fecha del CONTEXTO ACTUAL)\n- \"ayer cene pizza\" / \"anoche comi...\" / \"la cena de ayer\" → AYER (fecha de hoy menos 1 dia)\n- \"el viernes almorce pasta\" → calcular fecha del viernes pasado\n\nPasa siempre la fecha correcta en log_date (formato YYYY-MM-DD).\n\nNUNCA sumes calorias de ayer al balance de hoy. Si la comida es de ayer, el balance que muestras es el de ayer:\n- BIEN (comida de ayer): \"Anotado para ayer. Con eso, ayer cerraste en *1,850 kcal* de tu meta de *2,217 kcal*. Para hoy, que desayunaste?\"\n- MAL: \"Registrado! Llevas *1,850 kcal* hoy\" (confunde al usuario)\n\n---\n\nUSO DE TOOLS\n\nlog_food_intake: cuando el usuario reporta que comio algo. Siempre incluir log_date correcto.\nget_daily_status: para datos frescos del dia.\ngenerate_meal_plan: cuando no hay plan o el usuario pide cambio. Planes DIARIOS.\ngenerate_workout_plan: cuando necesita rutina nueva.\ncalculate_progress: cuando pregunta como va o registra peso.\nTool: Base de Conocimiento: para preguntas sobre IMC, TDEE, porcentaje de grasa.\nTool: Contexto Personal: para historial del usuario.\n\nReglas: combina tools cuando tenga sentido. Nunca menciones nombres de tools al usuario. Si una tool falla, reformula sin exponer el error.\n\n---\n\nINICIATIVA Y PROACTIVIDAD\n\nCuando reporta comida: registra con fecha correcta + muestra balance del dia correspondiente + indica proxima comida.\nCuando reporta peso: compara con anterior + tendencia + contextualiza vs meta.\nCuando dice que no siguio el plan: no juzgues + normaliza + enfoca en que sigue.\nCuando detectas racha positiva: reconocela con datos concretos.\n\n---\n\nPROHIBICIONES ABSOLUTAS\n\n1. Inventar datos, comidas, horarios, macros o pesos que no esten en el CONTEXTO DEL USUARIO\n2. Dar diagnosticos medicos o clinicos\n3. Prometer resultados especificos\n4. Recomendar dietas extremas (menos de 1200 kcal mujeres, menos de 1500 kcal hombres)\n5. Juzgar al usuario por no seguir el plan\n6. Inventar estudios o estadisticas\n7. Dejar un mensaje sin siguiente paso\n8. Repetir lo que el usuario dijo en modo confirmacion\n9. Usar las mismas expresiones repetitivamente\n10. Sumar calorias de ayer al balance de hoy\n\n---\n\nEJEMPLOS\n\nUsuario pregunta como va sin datos:\nBUENO: \"Hoy no tienes plan generado y no me has reportado nada. Con tu meta de *2,217 kcal* y *167g de proteina*, quieres que te arme el plan ahora?\"\nMALO: \"Tienes planeado un buen dia empezando con arepa con huevo a las 7:30...\"\n\nUsuario reporta comida de HOY:\nBUENO: \"Buen almuerzo. Eso te suma *520 kcal* y *38g de proteina*. Llevas *980 de 2,217 kcal* y *66 de 167g de proteina*. Para la cena te faltan unos *60g de proteina*.\"\nMALO: \"Excelente eleccion! El arroz aporta carbohidratos complejos...\"\n\nUsuario reporta comida de AYER:\nBUENO: \"Anotado para ayer. Con eso, ayer cerraste en *1,850 kcal* de tu meta de *2,217 kcal*. Buen cierre. Para hoy, que desayunaste?\"\nMALO: \"Registrado! Llevas *1,850 kcal* hoy.\"\n\nUsuario frustrado:\nBUENO: \"Entiendo tu frustracion. En las ultimas 4 semanas bajaste *1.2 kg* y tu promedio fue *1,850 kcal* (tu meta es 2,217). Los numeros dicen que si esta funcionando. Que es lo que mas te cuesta?\"\nMALO: \"No te rindas! Recuerda por que empezaste...\"\n\n---\n\nRESUMEN DE PRINCIPIOS\n\n1. Eres un coach, no un bot.\n2. NUNCA inventes datos — si no los tienes, dilos claramente y ofrece obtenerlos.\n3. Usa numeros concretos siempre que los tengas.\n4. Nunca dejes un mensaje sin siguiente paso.\n5. Varia tu lenguaje — no suenes a grabadora.\n6. Prioriza adherencia sobre perfeccion.\n7. Tu objetivo es que el usuario logre su meta.\n8. La fecha importa: ayer es ayer, hoy es hoy. Nunca mezcles los balances.`;\n\nconst fullSystemPrompt = `${STATIC_RULES}\n\n---\n\nCONTEXTO DEL USUARIO ACTUAL\n\nNombre: ${firstName}\nFecha: ${today}\nPerfil fisico y metas: ${userProfile}\nEstado del dia: ${dailyStatus}\nTendencia semanal: ${weeklyTrend}\nProxima accion sugerida: ${nextAction}\n\n---\n\nUSA ESTOS DATOS. Son reales, no ejemplos. Si dailyStatus dice \"sin targets\" o \"sin plan generado\", aplica la REGLA ABSOLUTA: NO inventes datos. Si el usuario reporta comida, determina si es de hoy o ayer y pasa log_date correcto.`;\n\nreturn [{ json: { userName: firstName, userProfile, dailyStatus, weeklyTrend, nextAction, currentDate: today, fullSystemPrompt, text: messageText } }];\n"
       },
       "id": "22222222-0007-4000-8000-000000000007",
       "name": "Build Context",
@@ -1619,7 +1619,7 @@
     {
       "parameters": {
         "name": "log_food_intake",
-        "description": "Registra un alimento consumido por el usuario en su log diario. Usa esta tool cuando el usuario mencione que comió, consumió, tomó o ingirió algo. Pasa la información como JSON en el campo 'query' con este formato exacto: {\"food_name\": \"nombre del alimento\", \"meal_type\": \"breakfast|lunch|dinner|snack\", \"calories\": 350, \"protein_g\": 25, \"carbs_g\": 30, \"fat_g\": 8}. Si el usuario no menciona las calorías, estímalas razonablemente. meal_type debe ser: breakfast (desayuno), lunch (almuerzo), dinner (cena), snack (merienda/snack).",
+        "description": "Registra un alimento consumido por el usuario en su log diario. Usa esta tool cuando el usuario mencione que comio, consumio, tomo o ingirió algo. Pasa la informacion como JSON string en el campo 'query' con este formato exacto: {\"food_name\": \"nombre del alimento\", \"meal_type\": \"breakfast|lunch|dinner|snack\", \"calories\": 350, \"protein_g\": 25, \"carbs_g\": 30, \"fat_g\": 8, \"log_date\": \"YYYY-MM-DD\"}. log_date es OBLIGATORIO — determina la fecha segun lo que diga el usuario: si habla de 'hoy' o no especifica → usa la fecha de hoy del CONTEXTO DEL USUARIO; si dice 'ayer' o 'anoche' → usa la fecha de ayer (hoy - 1 dia); si menciona un dia de la semana → calcula la fecha pasada correspondiente. Si el usuario no menciona calorias, estimaras razonablemente. meal_type: breakfast=desayuno, lunch=almuerzo, dinner=cena, snack=merienda.",
         "workflowId": {
           "__rl": true,
           "value": "DQsnzXQWMSqJxigL",
@@ -1691,6 +1691,40 @@
         },
         "options": {
           "waitForSubWorkflow": true
+        },
+        "fields": {
+          "values": [
+            {
+              "name": "telegramId",
+              "type": "stringValue",
+              "stringValue": "={{ $json.telegramId }}"
+            },
+            {
+              "name": "chatId",
+              "type": "stringValue",
+              "stringValue": "={{ $json.chatId }}"
+            },
+            {
+              "name": "userId",
+              "type": "numberValue",
+              "numberValue": "={{ $json.userId }}"
+            },
+            {
+              "name": "text",
+              "type": "stringValue",
+              "stringValue": "={{ $json.text }}"
+            },
+            {
+              "name": "callbackData",
+              "type": "stringValue",
+              "stringValue": "={{ $json.callbackData }}"
+            },
+            {
+              "name": "phone_number",
+              "type": "stringValue",
+              "stringValue": "={{ $json.phone_number }}"
+            }
+          ]
         }
       },
       "id": "ob-call-v2",
@@ -1698,8 +1732,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        2704,
-        608
+        3040,
+        560
       ]
     },
     {
@@ -1716,14 +1750,6 @@
       ]
     },
     {
-      "id": "vs-knowledge-rag-tool",
-      "name": "Tool: Base de Conocimiento",
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
-      "typeVersion": 1.3,
-      "position": [
-        4616,
-        -368
-      ],
       "parameters": {
         "mode": "retrieve-as-tool",
         "toolDescription": "Base de conocimiento experta en nutricion, fitness, entrenamiento, suplementacion, habitos saludables, psicologia del cambio, y estrategias de coaching. Consultar SIEMPRE que el usuario:\n- Pregunte algo tecnico sobre nutricion, ejercicio o suplementos\n- Se sienta estancado, en meseta, o sin progreso (hay protocolos especificos para romper mesetas)\n- Necesite ayuda para crear habitos o mantener consistencia (hay tecnicas como habit stacking)\n- Pregunte sobre ritmos seguros de perdida o ganancia de peso\n- Pregunte sobre tipos de entrenamiento, volumen, frecuencia o deload\n- Exprese frustracion con su proceso (hay estrategias de coaching basadas en evidencia)\n- Pregunte por metricas de salud como IMC, porcentaje de grasa corporal, metabolismo basal o TDEE (hay tablas de rangos, clasificaciones y acciones recomendadas)\n- Necesite interpretar cualquier indicador numerico de su progreso",
@@ -1732,9 +1758,16 @@
           "mode": "id",
           "value": "knowledge_rag"
         },
-        "topK": 4,
         "options": {}
       },
+      "id": "vs-knowledge-rag-tool",
+      "name": "Tool: Base de Conocimiento",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.3,
+      "position": [
+        4624,
+        -368
+      ],
       "credentials": {
         "qdrantApi": {
           "id": "ZgvYkNPmxRynoz3F",
@@ -1743,18 +1776,18 @@
       }
     },
     {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
       "id": "embeddings-knowledge-rag",
       "name": "OpenAI Embeddings (Knowledge RAG)",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1,
       "position": [
-        4616,
+        4624,
         -192
       ],
-      "parameters": {
-        "model": "text-embedding-3-small",
-        "options": {}
-      },
       "credentials": {
         "openAiApi": {
           "id": "NOJoPVNWDXiywRgw",
@@ -1763,12 +1796,19 @@
       }
     },
     {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversation_logs (user_id, message_type, message_text)\nVALUES ($1, 'text', $2)\nRETURNING id",
+        "options": {
+          "queryReplacement": "={{ [$('Check User & Membership').first().json.user_id, ($('Set User Context').first().json.message && $('Set User Context').first().json.message.text) ? $('Set User Context').first().json.message.text : '[no text]'] }}"
+        }
+      },
       "id": "rag-log-conv-001",
       "name": "Log Conversation",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4924,
+        4928,
         -640
       ],
       "credentials": {
@@ -1776,37 +1816,22 @@
           "id": "QLEgAnHDncQkLeNb",
           "name": "Postgres account Fitia"
         }
-      },
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO conversation_logs (user_id, message_type, message_text)\nVALUES ($1, 'text', $2)\nRETURNING id",
-        "options": {
-          "queryReplacement": "={{ [$('Check User & Membership').first().json.user_id, ($('Set User Context').first().json.message && $('Set User Context').first().json.message.text) ? $('Set User Context').first().json.message.text : '[no text]'] }}"
-        }
       }
     },
     {
+      "parameters": {
+        "jsCode": "// Assembles payload for the async RAG indexer\nconst userId = $('Check User & Membership').first().json.user_id;\nconst ctx = $('Set User Context').first().json;\nconst userMessage = (ctx.message && ctx.message.text) ? ctx.message.text : '';\nconst agentResponse = $('FitAI Main AI Agent').first().json.output || '';\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nreturn [{\n  json: {\n    userId,\n    query: JSON.stringify({\n      eventType: 'conversation',\n      userMessage: userMessage.substring(0, 300),\n      agentResponse: agentResponse.substring(0, 500),\n      date: today\n    })\n  }\n}];"
+      },
       "id": "rag-build-payload-001",
       "name": "Build RAG Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5144,
+        5152,
         -640
-      ],
-      "parameters": {
-        "jsCode": "// Assembles payload for the async RAG indexer\nconst userId = $('Check User & Membership').first().json.user_id;\nconst ctx = $('Set User Context').first().json;\nconst userMessage = (ctx.message && ctx.message.text) ? ctx.message.text : '';\nconst agentResponse = $('FitAI Main AI Agent').first().json.output || '';\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nreturn [{\n  json: {\n    userId,\n    query: JSON.stringify({\n      eventType: 'conversation',\n      userMessage: userMessage.substring(0, 300),\n      agentResponse: agentResponse.substring(0, 500),\n      date: today\n    })\n  }\n}];"
-      }
+      ]
     },
     {
-      "id": "rag-trigger-001",
-      "name": "Trigger RAG Indexer",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.1,
-      "position": [
-        5364,
-        -640
-      ],
       "parameters": {
         "workflowId": {
           "__rl": true,
@@ -1816,6 +1841,134 @@
         "options": {
           "waitForSubWorkflow": false
         }
+      },
+      "id": "rag-trigger-001",
+      "name": "Trigger RAG Indexer",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        5376,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "obi-1",
+              "name": "user_id",
+              "type": "number",
+              "value": "={{ $('Check User & Membership').item.json.user_id }}"
+            },
+            {
+              "id": "obi-2",
+              "name": "first_name",
+              "type": "string",
+              "value": "={{ $('Check User & Membership').item.json.first_name }}"
+            },
+            {
+              "id": "obi-3",
+              "name": "membership_status",
+              "type": "string",
+              "value": "={{ $('Check User & Membership').item.json.membership_status }}"
+            },
+            {
+              "id": "obi-4",
+              "name": "onboarding_completed",
+              "type": "string",
+              "value": "={{ $('Check User & Membership').item.json.onboarding_completed }}"
+            },
+            {
+              "id": "obi-5",
+              "name": "profile_saved",
+              "type": "string",
+              "value": "={{ $('Check User & Membership').item.json.profile_saved }}"
+            },
+            {
+              "id": "obi-6",
+              "name": "phone_provided",
+              "type": "string",
+              "value": "={{ $('Check User & Membership').item.json.phone_provided }}"
+            },
+            {
+              "id": "obi-7",
+              "name": "telegramId",
+              "type": "number",
+              "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+            },
+            {
+              "id": "obi-8",
+              "name": "chatId",
+              "type": "number",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+            },
+            {
+              "id": "obi-9",
+              "name": "text",
+              "type": "string",
+              "value": "={{ ($('Set User Context').item.json.message || {}).text || '' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ob-input-builder",
+      "name": "Build Onboarding Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2800,
+        560
+      ]
+    },
+    {
+      "id": "build-ob-input-001",
+      "name": "Build Onboarding Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2544,
+        608
+      ],
+      "parameters": {
+        "jsCode": "// Build the explicit payload for Call Onboarding Flow v2\nconst trig = $('Telegram Trigger').item.json;\nconst telegramId = String(trig.message?.from?.id || trig.callback_query?.from?.id || '');\nconst chatId     = String(trig.message?.chat?.id  || trig.callback_query?.message?.chat?.id || '');\nconst userId     = $('Check User & Membership').item.json.user_id;\nconst userCtx    = $('Set User Context').first().json;\nconst text       = userCtx.message?.text || userCtx['message.text'] || '';\nconst callbackData = trig.callback_query?.data || null;\n\nreturn [{ json: { telegramId, chatId, userId, text, callbackData, phone_number: null } }];"
+      }
+    },
+    {
+      "id": "get-user-phone-001",
+      "name": "Get User for Phone",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        784,
+        864
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "QLEgAnHDncQkLeNb",
+          "name": "Postgres account Fitia"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id as user_id FROM users WHERE telegram_id = $1",
+        "options": {
+          "queryReplacement": "={{ [String($('Set Phone Data').item.json.telegram_id)] }}"
+        }
+      }
+    },
+    {
+      "id": "build-contact-input-001",
+      "name": "Build Contact Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        864
+      ],
+      "parameters": {
+        "jsCode": "const phoneData = $('Set Phone Data').item.json;\nreturn [{ json: {\n  telegramId:   String(phoneData.telegram_id),\n  chatId:       String(phoneData.chatId),\n  userId:       $json.user_id,\n  text:         '',\n  callbackData: null,\n  phone_number: phoneData.phone_number\n} }];"
       }
     }
   ],
@@ -1972,7 +2125,7 @@
         ],
         [
           {
-            "node": "Profile Saved?",
+            "node": "Build Onboarding Input",
             "type": "main",
             "index": 0
           }
@@ -2126,7 +2279,7 @@
       "main": [
         [
           {
-            "node": "Complete Onboarding",
+            "node": "Get User for Phone",
             "type": "main",
             "index": 0
           }
@@ -2349,7 +2502,7 @@
         ],
         [
           {
-            "node": "Call Onboarding Flow v2",
+            "node": "Build Onboarding Input",
             "type": "main",
             "index": 0
           }
@@ -2556,6 +2709,39 @@
           }
         ]
       ]
+    },
+    "Build Onboarding Input": {
+      "main": [
+        [
+          {
+            "node": "Call Onboarding Flow v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get User for Phone": {
+      "main": [
+        [
+          {
+            "node": "Build Contact Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Contact Input": {
+      "main": [
+        [
+          {
+            "node": "Call Onboarding Flow v2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2568,9 +2754,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "18cc5279-1644-41ce-8bb1-6d004169e022",
-  "activeVersionId": "18cc5279-1644-41ce-8bb1-6d004169e022",
-  "versionCounter": 589,
+  "versionId": "ca7af075-efde-40fa-ac65-5c81f74d85b5",
+  "activeVersionId": "ca7af075-efde-40fa-ac65-5c81f74d85b5",
+  "versionCounter": 615,
   "triggerCount": 1,
   "shared": [
     {
@@ -2593,9 +2779,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T16:24:58.441Z",
-    "createdAt": "2026-04-02T16:24:58.441Z",
-    "versionId": "18cc5279-1644-41ce-8bb1-6d004169e022",
+    "updatedAt": "2026-04-03T17:52:08.217Z",
+    "createdAt": "2026-04-03T17:52:08.217Z",
+    "versionId": "ca7af075-efde-40fa-ac65-5c81f74d85b5",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -3040,8 +3226,8 @@
         "typeVersion": 2,
         "name": "Onboarding Agent",
         "position": [
-          2992,
-          528
+          3632,
+          896
         ]
       },
       {
@@ -3061,8 +3247,8 @@
         "typeVersion": 1.2,
         "name": "OpenAI Chat Model Onboarding",
         "position": [
-          2848,
-          736
+          3488,
+          1104
         ],
         "credentials": {
           "openAiApi": {
@@ -3083,8 +3269,8 @@
         "typeVersion": 1.1,
         "name": "Onboarding Memory",
         "position": [
-          3088,
-          736
+          3728,
+          1104
         ],
         "credentials": {
           "postgres": {
@@ -3401,8 +3587,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3312,
-          528
+          3952,
+          896
         ]
       },
       {
@@ -3437,8 +3623,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          3520,
-          528
+          4160,
+          896
         ]
       },
       {
@@ -3454,8 +3640,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          4128,
-          512
+          4768,
+          880
         ],
         "credentials": {
           "postgres": {
@@ -3477,8 +3663,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          4352,
-          512
+          4992,
+          880
         ],
         "credentials": {
           "postgres": {
@@ -3501,8 +3687,8 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          4784,
-          512
+          5424,
+          880
         ],
         "retryOnFail": true,
         "maxTries": 3,
@@ -3543,8 +3729,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          5008,
-          512
+          5648,
+          880
         ],
         "retryOnFail": true,
         "maxTries": 3,
@@ -3686,8 +3872,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2704,
-          528
+          3344,
+          896
         ],
         "credentials": {
           "postgres": {
@@ -3709,8 +3895,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          3872,
-          784
+          4512,
+          1152
         ],
         "credentials": {
           "postgres": {
@@ -3732,8 +3918,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          3872,
-          512
+          4512,
+          880
         ],
         "credentials": {
           "postgres": {
@@ -3756,8 +3942,8 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          4128,
-          784
+          4768,
+          1152
         ],
         "retryOnFail": true,
         "maxTries": 3,
@@ -3783,8 +3969,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          4816,
-          640
+          5456,
+          1008
         ],
         "credentials": {
           "postgres": {
@@ -4046,8 +4232,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          4576,
-          512
+          5216,
+          880
         ]
       },
       {
@@ -4196,7 +4382,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Build Context v2 — assembles dynamic context + full system prompt for AI Agent\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nconst profileRows = $('Load User Profile').all();\nconst profile = profileRows.length > 0 ? profileRows[0].json : {};\nconst firstName = profile.first_name || $('Check User & Membership').item.json.first_name || 'Usuario';\n\nconst caloricTarget  = profile.caloric_target   || null;\nconst proteinTarget  = profile.protein_target_g  || null;\nconst carbTarget     = profile.carb_target_g     || null;\nconst fatTarget      = profile.fat_target_g      || null;\nconst tdee           = profile.tdee              || null;\nconst bmr            = profile.bmr               || null;\nconst currentWeight  = profile.weight_kg         || null;\nconst targetWeight   = profile.target_weight || profile.goal_target_weight || null;\nconst height         = profile.height_cm         || null;\nconst age            = profile.age               || null;\nconst gender         = profile.gender            || null;\nconst activityLevel  = profile.activity_level    || null;\nconst goalType       = profile.goal_type || profile.active_goal_type || null;\nconst membershipStatus = profile.membership_status || null;\n\nlet profileParts = [];\nif (firstName)        profileParts.push(`Nombre: ${firstName}`);\nif (currentWeight)    profileParts.push(`Peso actual: ${currentWeight}kg`);\nif (targetWeight)     profileParts.push(`Meta de peso: ${targetWeight}kg`);\nif (height)           profileParts.push(`Talla: ${height}cm`);\nif (age)              profileParts.push(`Edad: ${age} años`);\nif (gender)           profileParts.push(`Género: ${gender}`);\nif (activityLevel)    profileParts.push(`Actividad: ${activityLevel}`);\nif (goalType)         profileParts.push(`Objetivo: ${goalType}`);\nif (caloricTarget)    profileParts.push(`Meta calórica: ${caloricTarget} kcal/día`);\nif (proteinTarget)    profileParts.push(`Meta proteína: ${proteinTarget}g/día`);\nif (carbTarget)       profileParts.push(`Meta carbs: ${carbTarget}g/día`);\nif (fatTarget)        profileParts.push(`Meta grasas: ${fatTarget}g/día`);\nif (tdee)             profileParts.push(`TDEE: ${tdee} kcal/día`);\nif (bmr)              profileParts.push(`TMB: ${bmr} kcal/día`);\nif (membershipStatus) profileParts.push(`Membresía: ${membershipStatus}`);\nconst userProfile = profileParts.length > 0 ? profileParts.join(' | ') : 'Perfil no disponible';\n\nconst dailyRows = $('Load Daily Status').all();\nconst daily = dailyRows.length > 0 ? dailyRows[0].json : {};\n\nlet dailyStatus = 'Sin datos de hoy';\nif (daily.caloric_target) {\n  const calConsumed   = daily.calories_consumed   || 0;\n  const calTarget     = daily.caloric_target;\n  const calRemaining  = calTarget - calConsumed;\n  const protConsumed  = daily.protein_consumed_g  || 0;\n  const protTarget    = daily.protein_target_g    || 0;\n  const protRemaining = protTarget - protConsumed;\n  dailyStatus = `Hoy (${today}): ${calConsumed}/${calTarget} kcal (${calRemaining > 0 ? calRemaining + ' restantes' : Math.abs(calRemaining) + ' excedidas'}) | Proteína: ${protConsumed}/${protTarget}g (${protRemaining > 0 ? protRemaining + 'g restantes' : Math.abs(protRemaining) + 'g excedidas'}) | Comidas: ${daily.meals_logged || 0}`;\n} else {\n  dailyStatus = `Hoy (${today}): sin targets — no hay plan generado para hoy`;\n}\n\nconst mealsRows = $('Load Today Meals').all();\nlet mealsLogged = [];\nif (mealsRows.length > 0 && mealsRows[0].json && mealsRows[0].json.description) {\n  mealsLogged = mealsRows.map(r => `${r.json.meal_type}: ${r.json.description} (${r.json.estimated_calories}kcal)`).filter(Boolean);\n  if (mealsLogged.length > 0) dailyStatus += ` | Alimentos hoy: ${mealsLogged.slice(0,5).join('; ')}`;\n}\n\nconst weightRows = $('Load Weight Trend').all();\nlet weeklyTrend = 'Sin datos de peso recientes';\nif (weightRows.length >= 2) {\n  const weights = weightRows.map(r => parseFloat(r.json.weight_kg)).filter(w => !isNaN(w));\n  if (weights.length >= 2) {\n    const diff = (weights[0] - weights[weights.length-1]).toFixed(1);\n    const dir  = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';\n    weeklyTrend = `Peso: ${weights[0]}kg (${dir}${Math.abs(diff)}kg en ${weights.length} registros)`;\n    const wa = $('Load Weekly Average').first()?.json;\n    if (wa && wa.avg_calories) weeklyTrend += ` | Promedio semanal: ${Math.round(wa.avg_calories)} kcal/día (${wa.days_tracked} días)`;\n  }\n} else if (weightRows.length === 1) {\n  const w = parseFloat(weightRows[0].json.weight_kg);\n  if (!isNaN(w)) weeklyTrend = `Peso registrado: ${w}kg`;\n}\n\nlet nextAction = 'Continuar con el plan del dia';\nif (!daily.caloric_target) {\n  nextAction = 'No hay plan generado para hoy — ofrecer generar plan de comidas';\n} else if (mealsLogged.length === 0) {\n  nextAction = 'No ha reportado ninguna comida hoy — preguntar por primera comida';\n} else {\n  const pct = (daily.calories_consumed || 0) / daily.caloric_target * 100;\n  if (pct > 95) nextAction = 'Objetivo calórico casi cumplido — enfocarse en proteína';\n  else if (pct < 40 && new Date().getHours() > 15) nextAction = 'Faltan muchas calorías — recordárselo';\n}\n\nconst messageText = $('Set User Context').item.json.message?.text || '';\n\nconst STATIC_RULES = `REGLAS CRITICAS (CUMPLIR EN CADA RESPUESTA):\n1. NUNCA INVENTES DATOS. Si el estado del dia dice \"sin targets\" o \"sin plan generado\", NO presentes comidas, calorias ni macros inventados. Di explicitamente que no hay plan y ofrece generar uno. Si no hay comidas registradas, di que no se ha reportado nada. Mentir con datos es peor que no tener datos. Esta es la regla mas importante de todas.\n2. USA NUMEROS CONCRETOS del perfil del usuario. Nunca digas \"tu objetivo calorico\" sin dar el numero exacto.\n3. NO uses listas numeradas. Habla en parrafos como un humano por Telegram.\n4. NO termines con \"Estoy aqui para ayudarte\", \"dimelo\", \"no dudes en preguntar\" ni frases similares.\n5. SIEMPRE termina con un siguiente paso concreto o una pregunta que avance el proceso.\n6. Habla como un amigo que sabe del tema, no como un asistente de IA.\n\n---\n\nCOMO HABLAS\n\nTu tono es el de un amigo que sabe del tema. Cercano, directo, sin rodeos.\n\nReglas de voz:\n- Tuteas siempre (nunca \"usted\")\n- Usas lenguaje coloquial pero no vulgar\n- Vas al grano: la primera oracion de cada mensaje ya dice algo util\n- Variás tus expresiones. No repitas \"Perfecto!\", \"Excelente!\", \"Genial!\" — di \"Va\", \"Listo\", \"Ok\", \"Dale\", \"Sale\", \"Bien\", \"Eso\"\n- NUNCA repitas en modo confirmacion lo que el usuario acaba de decir\n- Usa el nombre del usuario solo en momentos con carga emocional\n- Emojis: maximo 1-2 por mensaje, solo cuando aportan\n\nAnti-patrones (NUNCA):\n- \"Entendido, has seleccionado X\" — suena a maquina\n- \"Perfecto! Tu edad ha sido registrada\" — suena a formulario\n- \"Excelente eleccion!\" — adulacion vacia\n- \"Gracias por compartir esa informacion\" — robotico\n- Terminar con \"Estoy aqui para lo que necesites\" — pasivo\n- Terminar con \"No dudes en preguntar\" — no eres un FAQ\n\n---\n\nQUIEN ERES\n\nEres el coach personal de nutricion y fitness del usuario. No eres un chatbot. Eres la persona que lleva su proceso, conoce su historial, sabe como va hoy y tiene claro que necesita hacer manana.\n\nLo que NO eres: no eres medico, nutriologo clinico ni psicologo. No das diagnosticos. No sustituyes al profesional de salud.\n\n---\n\nREGLAS DE FORMATO PARA TELEGRAM\n\n- Maximo 3-4 parrafos por mensaje\n- Maximo 250 palabras por respuesta\n- Negritas (*texto*) solo para numeros clave: calorias, peso, proteina, porcentajes\n- NO uses markdown headers (#, ##)\n- No uses bloques de codigo ni tablas\n- Separa ideas con lineas en blanco\n\n---\n\nCONCIENCIA DEL ESTADO ACTUAL\n\nAntes de responder, procesa el bloque CONTEXTO DEL USUARIO al inicio de este prompt. Tiene los numeros reales.\n\nComo usar estos datos:\n- Integra los datos de forma natural sin esperar que el usuario pregunte \"como voy\"\n- Si el usuario reporta comida, muestra el balance actualizado\n- Si detectas que le faltan muchas calorias o proteina, mencionalo\n\nREGLA ABSOLUTA SOBRE DATOS FALTANTES:\n- Si dailyStatus dice \"sin targets de hoy\" o \"sin plan generado\": NO inventes un plan. Di: \"No tienes plan para hoy. Quieres que te arme uno?\"\n- Si no hay comidas reportadas hoy: NO asumas que comio algo. Di: \"No me has reportado nada hoy.\"\n- Si no hay peso reciente: NO estimes el peso. Di: \"No tengo registro reciente de tu peso. Pesate y me dices.\"\n- Si una tool retorna vacio: NO fabriques datos. Informa que no hay datos y sugiere como obtenerlos.\n- PREFERIR \"no tengo esa info\" a inventar CUALQUIER dato.\n\n---\n\nSIEMPRE LLEVA A LA ACCION\n\nCada respuesta termina con:\n- Un siguiente paso concreto: \"Tu proxima comida es a las 2pm: pechuga con arroz\"\n- Una pregunta que avanza el proceso: \"Que desayunaste hoy?\"\n- Una confirmacion de que estas pendiente: \"Te escribo en la noche\"\n\nNUNCA termines de forma pasiva. Cierres MALOS: \"Estoy aqui para lo que necesites\" / \"No dudes en preguntarme\".\n\n---\n\nPRESENTACION DE METRICAS\n\nSiempre contextual, nunca como lista tecnica.\n\nBUENO: \"Llevas *1,200 de 2,217 kcal* y *95g de 167g de proteina*. Te quedan la cena y un snack, vas bien.\"\nMALO: \"Tu consumo calorico es: 1,200 kcal. Tu meta es 2,217 kcal.\"\n\n---\n\nCUANDO EL USUARIO REPORTA COMIDA\n\n1. Registra con log_food_intake\n2. Estima macros razonablemente\n3. Muestra balance actualizado con numeros reales\n4. Si va bien: confirmalo brevemente\n5. Si se desvio: sugiere ajuste sin juzgar\n\n---\n\nUSO DE TOOLS\n\nlog_food_intake: cuando el usuario reporta que comio algo.\nget_daily_status: para datos frescos del dia.\ngenerate_meal_plan: cuando no hay plan o el usuario pide cambio. Planes DIARIOS.\ngenerate_workout_plan: cuando necesita rutina nueva.\ncalculate_progress: cuando pregunta como va o registra peso.\nTool: Base de Conocimiento: para preguntas sobre IMC, TDEE, porcentaje de grasa. Consultala antes de interpretar metricas.\nTool: Contexto Personal: para historial del usuario.\n\nReglas: combina tools cuando tenga sentido. Nunca menciones nombres de tools al usuario. Si una tool falla, reformula sin exponer el error.\n\n---\n\nINICIATIVA Y PROACTIVIDAD\n\nCuando reporta comida: registra + muestra balance + indica proxima comida.\nCuando reporta peso: compara con anterior + tendencia + contextualiza vs meta.\nCuando dice que no siguio el plan: no juzgues + normaliza + enfoca en que sigue.\nCuando detectas racha positiva: reconocela con datos concretos.\n\n---\n\nPROHIBICIONES ABSOLUTAS\n\n1. Inventar datos, comidas, horarios, macros o pesos que no esten en el CONTEXTO DEL USUARIO\n2. Dar diagnosticos medicos o clinicos\n3. Prometer resultados especificos\n4. Recomendar dietas extremas (menos de 1200 kcal mujeres, menos de 1500 kcal hombres)\n5. Juzgar al usuario por no seguir el plan\n6. Inventar estudios o estadisticas\n7. Dejar un mensaje sin siguiente paso\n8. Repetir lo que el usuario dijo en modo confirmacion\n9. Usar las mismas expresiones repetitivamente\n\n---\n\nEJEMPLOS\n\nUsuario pregunta como va sin datos:\nBUENO: \"Hoy no tienes plan generado y no me has reportado nada. Con tu meta de *2,217 kcal* y *167g de proteina*, quieres que te arme el plan ahora?\"\nMALO: \"Tienes planeado un buen dia empezando con arepa con huevo a las 7:30...\"\n\nUsuario reporta comida:\nBUENO: \"Buen almuerzo. Eso te suma *520 kcal* y *38g de proteina*. Llevas *980 de 2,217 kcal* y *66 de 167g de proteina*. Para la cena te faltan unos *60g de proteina*.\"\nMALO: \"Excelente eleccion! El arroz aporta carbohidratos complejos...\"\n\nUsuario frustrado:\nBUENO: \"Entiendo tu frustracion. En las ultimas 4 semanas bajaste *1.2 kg* y tu promedio fue *1,850 kcal* (tu meta es 2,217). Los numeros dicen que si esta funcionando. Que es lo que mas te cuesta?\"\nMALO: \"No te rindas! Recuerda por que empezaste...\"\n\n---\n\nRESUMEN DE PRINCIPIOS\n\n1. Eres un coach, no un bot.\n2. NUNCA inventes datos — si no los tienes, dilos claramente y ofrece obtenerlos.\n3. Usa numeros concretos siempre que los tengas.\n4. Nunca dejes un mensaje sin siguiente paso.\n5. Varia tu lenguaje — no suenes a grabadora.\n6. Prioriza adherencia sobre perfeccion.\n7. Tu objetivo es que el usuario logre su meta.`;\n\nconst fullSystemPrompt = `${STATIC_RULES}\n\n---\n\nCONTEXTO DEL USUARIO ACTUAL\n\nNombre: ${firstName}\nFecha: ${today}\nPerfil fisico y metas: ${userProfile}\nEstado del dia: ${dailyStatus}\nTendencia semanal: ${weeklyTrend}\nProxima accion sugerida: ${nextAction}\n\n---\n\nUSA ESTOS DATOS. Son reales, no ejemplos. Si dailyStatus dice \"sin targets\" o \"sin plan generado\", aplica la REGLA ABSOLUTA: NO inventes datos.`;\n\nreturn [{ json: { userName: firstName, userProfile, dailyStatus, weeklyTrend, nextAction, currentDate: today, fullSystemPrompt, text: messageText } }];\n"
+          "jsCode": "// Build Context v2 — assembles dynamic context + full system prompt for AI Agent\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nconst profileRows = $('Load User Profile').all();\nconst profile = profileRows.length > 0 ? profileRows[0].json : {};\nconst firstName = profile.first_name || $('Check User & Membership').item.json.first_name || 'Usuario';\n\nconst caloricTarget  = profile.caloric_target   || null;\nconst proteinTarget  = profile.protein_target_g  || null;\nconst carbTarget     = profile.carb_target_g     || null;\nconst fatTarget      = profile.fat_target_g      || null;\nconst tdee           = profile.tdee              || null;\nconst bmr            = profile.bmr               || null;\nconst currentWeight  = profile.weight_kg         || null;\nconst targetWeight   = profile.target_weight || profile.goal_target_weight || null;\nconst height         = profile.height_cm         || null;\nconst age            = profile.age               || null;\nconst gender         = profile.gender            || null;\nconst activityLevel  = profile.activity_level    || null;\nconst goalType       = profile.goal_type || profile.active_goal_type || null;\nconst membershipStatus = profile.membership_status || null;\n\nlet profileParts = [];\nif (firstName)        profileParts.push(`Nombre: ${firstName}`);\nif (currentWeight)    profileParts.push(`Peso actual: ${currentWeight}kg`);\nif (targetWeight)     profileParts.push(`Meta de peso: ${targetWeight}kg`);\nif (height)           profileParts.push(`Talla: ${height}cm`);\nif (age)              profileParts.push(`Edad: ${age} años`);\nif (gender)           profileParts.push(`Género: ${gender}`);\nif (activityLevel)    profileParts.push(`Actividad: ${activityLevel}`);\nif (goalType)         profileParts.push(`Objetivo: ${goalType}`);\nif (caloricTarget)    profileParts.push(`Meta calórica: ${caloricTarget} kcal/día`);\nif (proteinTarget)    profileParts.push(`Meta proteína: ${proteinTarget}g/día`);\nif (carbTarget)       profileParts.push(`Meta carbs: ${carbTarget}g/día`);\nif (fatTarget)        profileParts.push(`Meta grasas: ${fatTarget}g/día`);\nif (tdee)             profileParts.push(`TDEE: ${tdee} kcal/día`);\nif (bmr)              profileParts.push(`TMB: ${bmr} kcal/día`);\nif (membershipStatus) profileParts.push(`Membresía: ${membershipStatus}`);\nconst userProfile = profileParts.length > 0 ? profileParts.join(' | ') : 'Perfil no disponible';\n\nconst dailyRows = $('Load Daily Status').all();\nconst daily = dailyRows.length > 0 ? dailyRows[0].json : {};\n\nlet dailyStatus = 'Sin datos de hoy';\nif (daily.caloric_target) {\n  const calConsumed   = daily.calories_consumed   || 0;\n  const calTarget     = daily.caloric_target;\n  const calRemaining  = calTarget - calConsumed;\n  const protConsumed  = daily.protein_consumed_g  || 0;\n  const protTarget    = daily.protein_target_g    || 0;\n  const protRemaining = protTarget - protConsumed;\n  dailyStatus = `Hoy (${today}): ${calConsumed}/${calTarget} kcal (${calRemaining > 0 ? calRemaining + ' restantes' : Math.abs(calRemaining) + ' excedidas'}) | Proteína: ${protConsumed}/${protTarget}g (${protRemaining > 0 ? protRemaining + 'g restantes' : Math.abs(protRemaining) + 'g excedidas'}) | Comidas: ${daily.meals_logged || 0}`;\n} else {\n  dailyStatus = `Hoy (${today}): sin targets — no hay plan generado para hoy`;\n}\n\nconst mealsRows = $('Load Today Meals').all();\nlet mealsLogged = [];\nif (mealsRows.length > 0 && mealsRows[0].json && mealsRows[0].json.description) {\n  mealsLogged = mealsRows.map(r => `${r.json.meal_type}: ${r.json.description} (${r.json.estimated_calories}kcal)`).filter(Boolean);\n  if (mealsLogged.length > 0) dailyStatus += ` | Alimentos hoy: ${mealsLogged.slice(0,5).join('; ')}`;\n}\n\nconst weightRows = $('Load Weight Trend').all();\nlet weeklyTrend = 'Sin datos de peso recientes';\nif (weightRows.length >= 2) {\n  const weights = weightRows.map(r => parseFloat(r.json.weight_kg)).filter(w => !isNaN(w));\n  if (weights.length >= 2) {\n    const diff = (weights[0] - weights[weights.length-1]).toFixed(1);\n    const dir  = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';\n    weeklyTrend = `Peso: ${weights[0]}kg (${dir}${Math.abs(diff)}kg en ${weights.length} registros)`;\n    const wa = $('Load Weekly Average').first()?.json;\n    if (wa && wa.avg_calories) weeklyTrend += ` | Promedio semanal: ${Math.round(wa.avg_calories)} kcal/día (${wa.days_tracked} días)`;\n  }\n} else if (weightRows.length === 1) {\n  const w = parseFloat(weightRows[0].json.weight_kg);\n  if (!isNaN(w)) weeklyTrend = `Peso registrado: ${w}kg`;\n}\n\nlet nextAction = 'Continuar con el plan del dia';\nif (!daily.caloric_target) {\n  nextAction = 'No hay plan generado para hoy — ofrecer generar plan de comidas';\n} else if (mealsLogged.length === 0) {\n  nextAction = 'No ha reportado ninguna comida hoy — preguntar por primera comida';\n} else {\n  const pct = (daily.calories_consumed || 0) / daily.caloric_target * 100;\n  if (pct > 95) nextAction = 'Objetivo calórico casi cumplido — enfocarse en proteína';\n  else if (pct < 40 && new Date().getHours() > 15) nextAction = 'Faltan muchas calorías — recordárselo';\n}\n\nconst messageText = $('Set User Context').item.json.message?.text || '';\n\nconst STATIC_RULES = `REGLAS CRITICAS (CUMPLIR EN CADA RESPUESTA):\n1. NUNCA INVENTES DATOS. Si el estado del dia dice \"sin targets\" o \"sin plan generado\", NO presentes comidas, calorias ni macros inventados. Di explicitamente que no hay plan y ofrece generar uno. Si no hay comidas registradas, di que no se ha reportado nada. Mentir con datos es peor que no tener datos. Esta es la regla mas importante de todas.\n2. USA NUMEROS CONCRETOS del perfil del usuario. Nunca digas \"tu objetivo calorico\" sin dar el numero exacto.\n3. NO uses listas numeradas. Habla en parrafos como un humano por Telegram.\n4. NO termines con \"Estoy aqui para ayudarte\", \"dimelo\", \"no dudes en preguntar\" ni frases similares.\n5. SIEMPRE termina con un siguiente paso concreto o una pregunta que avance el proceso.\n6. Habla como un amigo que sabe del tema, no como un asistente de IA.\n\n---\n\nCOMO HABLAS\n\nTu tono es el de un amigo que sabe del tema. Cercano, directo, sin rodeos.\n\nReglas de voz:\n- Tuteas siempre (nunca \"usted\")\n- Usas lenguaje coloquial pero no vulgar\n- Vas al grano: la primera oracion de cada mensaje ya dice algo util\n- Varies tus expresiones. No repitas \"Perfecto!\", \"Excelente!\", \"Genial!\" — di \"Va\", \"Listo\", \"Ok\", \"Dale\", \"Sale\", \"Bien\", \"Eso\"\n- NUNCA repitas en modo confirmacion lo que el usuario acaba de decir\n- Usa el nombre del usuario solo en momentos con carga emocional\n- Emojis: maximo 1-2 por mensaje, solo cuando aportan\n\nAnti-patrones (NUNCA):\n- \"Entendido, has seleccionado X\" — suena a maquina\n- \"Perfecto! Tu edad ha sido registrada\" — suena a formulario\n- \"Excelente eleccion!\" — adulacion vacia\n- \"Gracias por compartir esa informacion\" — robotico\n- Terminar con \"Estoy aqui para lo que necesites\" — pasivo\n- Terminar con \"No dudes en preguntar\" — no eres un FAQ\n\n---\n\nQUIEN ERES\n\nEres el coach personal de nutricion y fitness del usuario. No eres un chatbot. Eres la persona que lleva su proceso, conoce su historial, sabe como va hoy y tiene claro que necesita hacer manana.\n\nLo que NO eres: no eres medico, nutriologo clinico ni psicologo. No das diagnosticos. No sustituyes al profesional de salud.\n\n---\n\nREGLAS DE FORMATO PARA TELEGRAM\n\n- Maximo 3-4 parrafos por mensaje\n- Maximo 250 palabras por respuesta\n- Negritas (*texto*) solo para numeros clave: calorias, peso, proteina, porcentajes\n- NO uses markdown headers (#, ##)\n- No uses bloques de codigo ni tablas\n- Separa ideas con lineas en blanco\n\n---\n\nCONCIENCIA DEL ESTADO ACTUAL\n\nAntes de responder, procesa el bloque CONTEXTO DEL USUARIO al inicio de este prompt. Tiene los numeros reales.\n\nComo usar estos datos:\n- Integra los datos de forma natural sin esperar que el usuario pregunte \"como voy\"\n- Si el usuario reporta comida, muestra el balance actualizado del dia correspondiente\n- Si detectas que le faltan muchas calorias o proteina, mencionalo\n\nREGLA ABSOLUTA SOBRE DATOS FALTANTES:\n- Si dailyStatus dice \"sin targets de hoy\" o \"sin plan generado\": NO inventes un plan. Di: \"No tienes plan para hoy. Quieres que te arme uno?\"\n- Si no hay comidas reportadas hoy: NO asumas que comio algo. Di: \"No me has reportado nada hoy.\"\n- Si no hay peso reciente: NO estimes el peso. Di: \"No tengo registro reciente de tu peso. Pesate y me dices.\"\n- Si una tool retorna vacio: NO fabriques datos. Informa que no hay datos y sugiere como obtenerlos.\n- PREFERIR \"no tengo esa info\" a inventar CUALQUIER dato.\n\n---\n\nSIEMPRE LLEVA A LA ACCION\n\nCada respuesta termina con:\n- Un siguiente paso concreto: \"Tu proxima comida es a las 2pm: pechuga con arroz\"\n- Una pregunta que avanza el proceso: \"Que desayunaste hoy?\"\n- Una confirmacion de que estas pendiente: \"Te escribo en la noche\"\n\nNUNCA termines de forma pasiva. Cierres MALOS: \"Estoy aqui para lo que necesites\" / \"No dudes en preguntarme\".\n\n---\n\nPRESENTACION DE METRICAS\n\nSiempre contextual, nunca como lista tecnica.\n\nBUENO: \"Llevas *1,200 de 2,217 kcal* y *95g de 167g de proteina*. Te quedan la cena y un snack, vas bien.\"\nMALO: \"Tu consumo calorico es: 1,200 kcal. Tu meta es 2,217 kcal.\"\n\n---\n\nCUANDO EL USUARIO REPORTA COMIDA\n\n1. Determina la FECHA de la comida antes de registrarla (ver abajo)\n2. Registra con log_food_intake pasando el log_date correcto\n3. Estima macros razonablemente\n4. Muestra el balance del dia CORRESPONDIENTE (hoy o ayer, segun sea)\n5. Si va bien: confirmalo brevemente\n6. Si se desvio: sugiere ajuste sin juzgar\n\nIMPORTANTE — FECHA DE LA COMIDA:\nDetermina a que dia corresponde lo que reporta el usuario:\n- \"desayune huevos\" / \"me comi una arepa\" / sin mencion de dia → HOY (usa la fecha del CONTEXTO ACTUAL)\n- \"ayer cene pizza\" / \"anoche comi...\" / \"la cena de ayer\" → AYER (fecha de hoy menos 1 dia)\n- \"el viernes almorce pasta\" → calcular fecha del viernes pasado\n\nPasa siempre la fecha correcta en log_date (formato YYYY-MM-DD).\n\nNUNCA sumes calorias de ayer al balance de hoy. Si la comida es de ayer, el balance que muestras es el de ayer:\n- BIEN (comida de ayer): \"Anotado para ayer. Con eso, ayer cerraste en *1,850 kcal* de tu meta de *2,217 kcal*. Para hoy, que desayunaste?\"\n- MAL: \"Registrado! Llevas *1,850 kcal* hoy\" (confunde al usuario)\n\n---\n\nUSO DE TOOLS\n\nlog_food_intake: cuando el usuario reporta que comio algo. Siempre incluir log_date correcto.\nget_daily_status: para datos frescos del dia.\ngenerate_meal_plan: cuando no hay plan o el usuario pide cambio. Planes DIARIOS.\ngenerate_workout_plan: cuando necesita rutina nueva.\ncalculate_progress: cuando pregunta como va o registra peso.\nTool: Base de Conocimiento: para preguntas sobre IMC, TDEE, porcentaje de grasa.\nTool: Contexto Personal: para historial del usuario.\n\nReglas: combina tools cuando tenga sentido. Nunca menciones nombres de tools al usuario. Si una tool falla, reformula sin exponer el error.\n\n---\n\nINICIATIVA Y PROACTIVIDAD\n\nCuando reporta comida: registra con fecha correcta + muestra balance del dia correspondiente + indica proxima comida.\nCuando reporta peso: compara con anterior + tendencia + contextualiza vs meta.\nCuando dice que no siguio el plan: no juzgues + normaliza + enfoca en que sigue.\nCuando detectas racha positiva: reconocela con datos concretos.\n\n---\n\nPROHIBICIONES ABSOLUTAS\n\n1. Inventar datos, comidas, horarios, macros o pesos que no esten en el CONTEXTO DEL USUARIO\n2. Dar diagnosticos medicos o clinicos\n3. Prometer resultados especificos\n4. Recomendar dietas extremas (menos de 1200 kcal mujeres, menos de 1500 kcal hombres)\n5. Juzgar al usuario por no seguir el plan\n6. Inventar estudios o estadisticas\n7. Dejar un mensaje sin siguiente paso\n8. Repetir lo que el usuario dijo en modo confirmacion\n9. Usar las mismas expresiones repetitivamente\n10. Sumar calorias de ayer al balance de hoy\n\n---\n\nEJEMPLOS\n\nUsuario pregunta como va sin datos:\nBUENO: \"Hoy no tienes plan generado y no me has reportado nada. Con tu meta de *2,217 kcal* y *167g de proteina*, quieres que te arme el plan ahora?\"\nMALO: \"Tienes planeado un buen dia empezando con arepa con huevo a las 7:30...\"\n\nUsuario reporta comida de HOY:\nBUENO: \"Buen almuerzo. Eso te suma *520 kcal* y *38g de proteina*. Llevas *980 de 2,217 kcal* y *66 de 167g de proteina*. Para la cena te faltan unos *60g de proteina*.\"\nMALO: \"Excelente eleccion! El arroz aporta carbohidratos complejos...\"\n\nUsuario reporta comida de AYER:\nBUENO: \"Anotado para ayer. Con eso, ayer cerraste en *1,850 kcal* de tu meta de *2,217 kcal*. Buen cierre. Para hoy, que desayunaste?\"\nMALO: \"Registrado! Llevas *1,850 kcal* hoy.\"\n\nUsuario frustrado:\nBUENO: \"Entiendo tu frustracion. En las ultimas 4 semanas bajaste *1.2 kg* y tu promedio fue *1,850 kcal* (tu meta es 2,217). Los numeros dicen que si esta funcionando. Que es lo que mas te cuesta?\"\nMALO: \"No te rindas! Recuerda por que empezaste...\"\n\n---\n\nRESUMEN DE PRINCIPIOS\n\n1. Eres un coach, no un bot.\n2. NUNCA inventes datos — si no los tienes, dilos claramente y ofrece obtenerlos.\n3. Usa numeros concretos siempre que los tengas.\n4. Nunca dejes un mensaje sin siguiente paso.\n5. Varia tu lenguaje — no suenes a grabadora.\n6. Prioriza adherencia sobre perfeccion.\n7. Tu objetivo es que el usuario logre su meta.\n8. La fecha importa: ayer es ayer, hoy es hoy. Nunca mezcles los balances.`;\n\nconst fullSystemPrompt = `${STATIC_RULES}\n\n---\n\nCONTEXTO DEL USUARIO ACTUAL\n\nNombre: ${firstName}\nFecha: ${today}\nPerfil fisico y metas: ${userProfile}\nEstado del dia: ${dailyStatus}\nTendencia semanal: ${weeklyTrend}\nProxima accion sugerida: ${nextAction}\n\n---\n\nUSA ESTOS DATOS. Son reales, no ejemplos. Si dailyStatus dice \"sin targets\" o \"sin plan generado\", aplica la REGLA ABSOLUTA: NO inventes datos. Si el usuario reporta comida, determina si es de hoy o ayer y pasa log_date correcto.`;\n\nreturn [{ json: { userName: firstName, userProfile, dailyStatus, weeklyTrend, nextAction, currentDate: today, fullSystemPrompt, text: messageText } }];\n"
         },
         "id": "22222222-0007-4000-8000-000000000007",
         "name": "Build Context",
@@ -4210,7 +4396,7 @@
       {
         "parameters": {
           "name": "log_food_intake",
-          "description": "Registra un alimento consumido por el usuario en su log diario. Usa esta tool cuando el usuario mencione que comió, consumió, tomó o ingirió algo. Pasa la información como JSON en el campo 'query' con este formato exacto: {\"food_name\": \"nombre del alimento\", \"meal_type\": \"breakfast|lunch|dinner|snack\", \"calories\": 350, \"protein_g\": 25, \"carbs_g\": 30, \"fat_g\": 8}. Si el usuario no menciona las calorías, estímalas razonablemente. meal_type debe ser: breakfast (desayuno), lunch (almuerzo), dinner (cena), snack (merienda/snack).",
+          "description": "Registra un alimento consumido por el usuario en su log diario. Usa esta tool cuando el usuario mencione que comio, consumio, tomo o ingirió algo. Pasa la informacion como JSON string en el campo 'query' con este formato exacto: {\"food_name\": \"nombre del alimento\", \"meal_type\": \"breakfast|lunch|dinner|snack\", \"calories\": 350, \"protein_g\": 25, \"carbs_g\": 30, \"fat_g\": 8, \"log_date\": \"YYYY-MM-DD\"}. log_date es OBLIGATORIO — determina la fecha segun lo que diga el usuario: si habla de 'hoy' o no especifica → usa la fecha de hoy del CONTEXTO DEL USUARIO; si dice 'ayer' o 'anoche' → usa la fecha de ayer (hoy - 1 dia); si menciona un dia de la semana → calcula la fecha pasada correspondiente. Si el usuario no menciona calorias, estimaras razonablemente. meal_type: breakfast=desayuno, lunch=almuerzo, dinner=cena, snack=merienda.",
           "workflowId": {
             "__rl": true,
             "value": "DQsnzXQWMSqJxigL",
@@ -4282,6 +4468,40 @@
           },
           "options": {
             "waitForSubWorkflow": true
+          },
+          "fields": {
+            "values": [
+              {
+                "name": "telegramId",
+                "type": "stringValue",
+                "stringValue": "={{ $json.telegramId }}"
+              },
+              {
+                "name": "chatId",
+                "type": "stringValue",
+                "stringValue": "={{ $json.chatId }}"
+              },
+              {
+                "name": "userId",
+                "type": "numberValue",
+                "numberValue": "={{ $json.userId }}"
+              },
+              {
+                "name": "text",
+                "type": "stringValue",
+                "stringValue": "={{ $json.text }}"
+              },
+              {
+                "name": "callbackData",
+                "type": "stringValue",
+                "stringValue": "={{ $json.callbackData }}"
+              },
+              {
+                "name": "phone_number",
+                "type": "stringValue",
+                "stringValue": "={{ $json.phone_number }}"
+              }
+            ]
           }
         },
         "id": "ob-call-v2",
@@ -4289,8 +4509,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          2704,
-          608
+          3040,
+          560
         ]
       },
       {
@@ -4307,14 +4527,6 @@
         ]
       },
       {
-        "id": "vs-knowledge-rag-tool",
-        "name": "Tool: Base de Conocimiento",
-        "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
-        "typeVersion": 1.3,
-        "position": [
-          4616,
-          -368
-        ],
         "parameters": {
           "mode": "retrieve-as-tool",
           "toolDescription": "Base de conocimiento experta en nutricion, fitness, entrenamiento, suplementacion, habitos saludables, psicologia del cambio, y estrategias de coaching. Consultar SIEMPRE que el usuario:\n- Pregunte algo tecnico sobre nutricion, ejercicio o suplementos\n- Se sienta estancado, en meseta, o sin progreso (hay protocolos especificos para romper mesetas)\n- Necesite ayuda para crear habitos o mantener consistencia (hay tecnicas como habit stacking)\n- Pregunte sobre ritmos seguros de perdida o ganancia de peso\n- Pregunte sobre tipos de entrenamiento, volumen, frecuencia o deload\n- Exprese frustracion con su proceso (hay estrategias de coaching basadas en evidencia)\n- Pregunte por metricas de salud como IMC, porcentaje de grasa corporal, metabolismo basal o TDEE (hay tablas de rangos, clasificaciones y acciones recomendadas)\n- Necesite interpretar cualquier indicador numerico de su progreso",
@@ -4323,9 +4535,16 @@
             "mode": "id",
             "value": "knowledge_rag"
           },
-          "topK": 4,
           "options": {}
         },
+        "id": "vs-knowledge-rag-tool",
+        "name": "Tool: Base de Conocimiento",
+        "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+        "typeVersion": 1.3,
+        "position": [
+          4624,
+          -368
+        ],
         "credentials": {
           "qdrantApi": {
             "id": "ZgvYkNPmxRynoz3F",
@@ -4334,18 +4553,18 @@
         }
       },
       {
+        "parameters": {
+          "model": "text-embedding-3-small",
+          "options": {}
+        },
         "id": "embeddings-knowledge-rag",
         "name": "OpenAI Embeddings (Knowledge RAG)",
         "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
         "typeVersion": 1,
         "position": [
-          4616,
+          4624,
           -192
         ],
-        "parameters": {
-          "model": "text-embedding-3-small",
-          "options": {}
-        },
         "credentials": {
           "openAiApi": {
             "id": "NOJoPVNWDXiywRgw",
@@ -4354,12 +4573,19 @@
         }
       },
       {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO conversation_logs (user_id, message_type, message_text)\nVALUES ($1, 'text', $2)\nRETURNING id",
+          "options": {
+            "queryReplacement": "={{ [$('Check User & Membership').first().json.user_id, ($('Set User Context').first().json.message && $('Set User Context').first().json.message.text) ? $('Set User Context').first().json.message.text : '[no text]'] }}"
+          }
+        },
         "id": "rag-log-conv-001",
         "name": "Log Conversation",
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          4924,
+          4928,
           -640
         ],
         "credentials": {
@@ -4367,37 +4593,22 @@
             "id": "QLEgAnHDncQkLeNb",
             "name": "Postgres account Fitia"
           }
-        },
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "INSERT INTO conversation_logs (user_id, message_type, message_text)\nVALUES ($1, 'text', $2)\nRETURNING id",
-          "options": {
-            "queryReplacement": "={{ [$('Check User & Membership').first().json.user_id, ($('Set User Context').first().json.message && $('Set User Context').first().json.message.text) ? $('Set User Context').first().json.message.text : '[no text]'] }}"
-          }
         }
       },
       {
+        "parameters": {
+          "jsCode": "// Assembles payload for the async RAG indexer\nconst userId = $('Check User & Membership').first().json.user_id;\nconst ctx = $('Set User Context').first().json;\nconst userMessage = (ctx.message && ctx.message.text) ? ctx.message.text : '';\nconst agentResponse = $('FitAI Main AI Agent').first().json.output || '';\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nreturn [{\n  json: {\n    userId,\n    query: JSON.stringify({\n      eventType: 'conversation',\n      userMessage: userMessage.substring(0, 300),\n      agentResponse: agentResponse.substring(0, 500),\n      date: today\n    })\n  }\n}];"
+        },
         "id": "rag-build-payload-001",
         "name": "Build RAG Payload",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          5144,
+          5152,
           -640
-        ],
-        "parameters": {
-          "jsCode": "// Assembles payload for the async RAG indexer\nconst userId = $('Check User & Membership').first().json.user_id;\nconst ctx = $('Set User Context').first().json;\nconst userMessage = (ctx.message && ctx.message.text) ? ctx.message.text : '';\nconst agentResponse = $('FitAI Main AI Agent').first().json.output || '';\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });\n\nreturn [{\n  json: {\n    userId,\n    query: JSON.stringify({\n      eventType: 'conversation',\n      userMessage: userMessage.substring(0, 300),\n      agentResponse: agentResponse.substring(0, 500),\n      date: today\n    })\n  }\n}];"
-        }
+        ]
       },
       {
-        "id": "rag-trigger-001",
-        "name": "Trigger RAG Indexer",
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.1,
-        "position": [
-          5364,
-          -640
-        ],
         "parameters": {
           "workflowId": {
             "__rl": true,
@@ -4407,6 +4618,134 @@
           "options": {
             "waitForSubWorkflow": false
           }
+        },
+        "id": "rag-trigger-001",
+        "name": "Trigger RAG Indexer",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.1,
+        "position": [
+          5376,
+          -640
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "obi-1",
+                "name": "user_id",
+                "type": "number",
+                "value": "={{ $('Check User & Membership').item.json.user_id }}"
+              },
+              {
+                "id": "obi-2",
+                "name": "first_name",
+                "type": "string",
+                "value": "={{ $('Check User & Membership').item.json.first_name }}"
+              },
+              {
+                "id": "obi-3",
+                "name": "membership_status",
+                "type": "string",
+                "value": "={{ $('Check User & Membership').item.json.membership_status }}"
+              },
+              {
+                "id": "obi-4",
+                "name": "onboarding_completed",
+                "type": "string",
+                "value": "={{ $('Check User & Membership').item.json.onboarding_completed }}"
+              },
+              {
+                "id": "obi-5",
+                "name": "profile_saved",
+                "type": "string",
+                "value": "={{ $('Check User & Membership').item.json.profile_saved }}"
+              },
+              {
+                "id": "obi-6",
+                "name": "phone_provided",
+                "type": "string",
+                "value": "={{ $('Check User & Membership').item.json.phone_provided }}"
+              },
+              {
+                "id": "obi-7",
+                "name": "telegramId",
+                "type": "number",
+                "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+              },
+              {
+                "id": "obi-8",
+                "name": "chatId",
+                "type": "number",
+                "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+              },
+              {
+                "id": "obi-9",
+                "name": "text",
+                "type": "string",
+                "value": "={{ ($('Set User Context').item.json.message || {}).text || '' }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "ob-input-builder",
+        "name": "Build Onboarding Input",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2800,
+          560
+        ]
+      },
+      {
+        "id": "build-ob-input-001",
+        "name": "Build Onboarding Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2544,
+          608
+        ],
+        "parameters": {
+          "jsCode": "// Build the explicit payload for Call Onboarding Flow v2\nconst trig = $('Telegram Trigger').item.json;\nconst telegramId = String(trig.message?.from?.id || trig.callback_query?.from?.id || '');\nconst chatId     = String(trig.message?.chat?.id  || trig.callback_query?.message?.chat?.id || '');\nconst userId     = $('Check User & Membership').item.json.user_id;\nconst userCtx    = $('Set User Context').first().json;\nconst text       = userCtx.message?.text || userCtx['message.text'] || '';\nconst callbackData = trig.callback_query?.data || null;\n\nreturn [{ json: { telegramId, chatId, userId, text, callbackData, phone_number: null } }];"
+        }
+      },
+      {
+        "id": "get-user-phone-001",
+        "name": "Get User for Phone",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          784,
+          864
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "QLEgAnHDncQkLeNb",
+            "name": "Postgres account Fitia"
+          }
+        },
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT id as user_id FROM users WHERE telegram_id = $1",
+          "options": {
+            "queryReplacement": "={{ [String($('Set Phone Data').item.json.telegram_id)] }}"
+          }
+        }
+      },
+      {
+        "id": "build-contact-input-001",
+        "name": "Build Contact Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1104,
+          864
+        ],
+        "parameters": {
+          "jsCode": "const phoneData = $('Set Phone Data').item.json;\nreturn [{ json: {\n  telegramId:   String(phoneData.telegram_id),\n  chatId:       String(phoneData.chatId),\n  userId:       $json.user_id,\n  text:         '',\n  callbackData: null,\n  phone_number: phoneData.phone_number\n} }];"
         }
       }
     ],
@@ -4563,7 +4902,7 @@
           ],
           [
             {
-              "node": "Profile Saved?",
+              "node": "Build Onboarding Input",
               "type": "main",
               "index": 0
             }
@@ -4717,7 +5056,7 @@
         "main": [
           [
             {
-              "node": "Complete Onboarding",
+              "node": "Get User for Phone",
               "type": "main",
               "index": 0
             }
@@ -4940,7 +5279,7 @@
           ],
           [
             {
-              "node": "Call Onboarding Flow v2",
+              "node": "Build Onboarding Input",
               "type": "main",
               "index": 0
             }
@@ -5147,6 +5486,39 @@
             }
           ]
         ]
+      },
+      "Build Onboarding Input": {
+        "main": [
+          [
+            {
+              "node": "Call Onboarding Flow v2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get User for Phone": {
+        "main": [
+          [
+            {
+              "node": "Build Contact Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Contact Input": {
+        "main": [
+          [
+            {
+              "node": "Call Onboarding Flow v2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "Mauro Ibarra ",
@@ -5155,10 +5527,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T16:25:00.627Z",
-        "id": 379,
+        "createdAt": "2026-04-03T17:52:10.599Z",
+        "id": 427,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "18cc5279-1644-41ce-8bb1-6d004169e022",
+        "versionId": "ca7af075-efde-40fa-ac65-5c81f74d85b5",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
