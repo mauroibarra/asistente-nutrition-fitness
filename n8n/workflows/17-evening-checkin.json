@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T14:49:24.748Z",
+  "updatedAt": "2026-04-02T20:33:10.311Z",
   "createdAt": "2026-04-01T20:41:20.487Z",
   "id": "ErIUGcIkS5Rim65L",
   "name": "FitAI - Evening Check-in",
@@ -138,7 +138,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'evening_checkin', '[proactive]', $2, NOW());",
         "options": {
-          "queryReplacement": "={ [$('Build Check-in Message').item.json.userId, $('Build Check-in Message').item.json.message] }"
+          "queryReplacement": "={{ [$('Build Check-in Message').item.json.userId, $('Build Check-in Message').item.json.message] }}"
         }
       }
     }
@@ -214,9 +214,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "44aa66c0-c679-465c-9e54-1bd9e4d67b81",
-  "activeVersionId": "44aa66c0-c679-465c-9e54-1bd9e4d67b81",
-  "versionCounter": 13,
+  "versionId": "5c340f0f-dd46-45db-a079-8d8801036984",
+  "activeVersionId": "5c340f0f-dd46-45db-a079-8d8801036984",
+  "versionCounter": 24,
   "triggerCount": 1,
   "shared": [
     {
@@ -239,9 +239,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T14:49:24.749Z",
-    "createdAt": "2026-04-02T14:49:24.749Z",
-    "versionId": "44aa66c0-c679-465c-9e54-1bd9e4d67b81",
+    "updatedAt": "2026-04-02T20:33:10.312Z",
+    "createdAt": "2026-04-02T20:33:10.312Z",
+    "versionId": "5c340f0f-dd46-45db-a079-8d8801036984",
     "workflowId": "ErIUGcIkS5Rim65L",
     "nodes": [
       {
@@ -375,7 +375,7 @@
           "operation": "executeQuery",
           "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'evening_checkin', '[proactive]', $2, NOW());",
           "options": {
-            "queryReplacement": "={ [$('Build Check-in Message').item.json.userId, $('Build Check-in Message').item.json.message] }"
+            "queryReplacement": "={{ [$('Build Check-in Message').item.json.userId, $('Build Check-in Message').item.json.message] }}"
           }
         }
       }
@@ -444,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T14:49:25.365Z",
-        "id": 359,
+        "createdAt": "2026-04-02T20:33:10.856Z",
+        "id": 405,
         "workflowId": "ErIUGcIkS5Rim65L",
-        "versionId": "44aa66c0-c679-465c-9e54-1bd9e4d67b81",
+        "versionId": "5c340f0f-dd46-45db-a079-8d8801036984",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

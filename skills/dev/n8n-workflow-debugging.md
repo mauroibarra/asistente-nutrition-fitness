@@ -444,6 +444,7 @@ Cuando un workflow no funciona como se espera:
 21. ✅ ¿Nodo downstream lejano usa `.item.json` para referencias upstream? → Cambiar a `.first().json` (ver sección 17)
 22. ✅ ¿Campo de Set node tiene punto en el nombre (ej: `message.text`)? → El output es anidado: `json.message.text`, no `json.text` (ver sección 18)
 23. ✅ ¿`systemMessage` del AI Agent no evalúa expresiones? → El campo necesita prefijo `=`. Usar `={{ $json.fullSystemPrompt }}` y construir el prompt en Build Context (ver CLAUDE.md)
+24. ✅ ¿AI Agent lanza "Expected string, received object → at input" al llamar un tool? → Hay un campo `$fromAI()` extra en `fields.values` del toolWorkflow. Mover ese dato al JSON del campo `query` vía descripción del tool (ver sección 21)
 
 ---
 
@@ -635,3 +636,26 @@ print("Workflow updatedAt:", wf["updatedAt"])
 ```
 
 **Consecuencia de ignorar esto:** Se declara un fix como "fallando" cuando en realidad nunca fue probado, desperdiciando tiempo en debuggear un problema que no existe.
+
+---
+
+## 21. `$fromAI()` en `fields.values` de toolWorkflow — rompe el schema del tool
+
+**Síntoma:** AI Agent falla con `"Received tool input did not match expected schema — Expected string, received object → at input"` al intentar llamar una tool.
+
+**Causa:** En un nodo `toolWorkflow` (typeVersion 1.3), los campos en `fields.values` con `$fromAI()` se exponen como parámetros adicionales en el schema JSON Schema del tool. Cuando hay más de un parámetro `$fromAI()` (el `query` implícito + el nuevo campo), GPT-4o pasa un objeto estructurado en el campo `input` en lugar de un string. n8n espera un string en `input` y el mismatch causa el error.
+
+**Regla:** Solo usar `$fromAI()` en `fields.values` para parámetros que n8n maneja como "input adicional controlado". El campo `query` es suficiente para pasar todo el contexto que necesita GPT-4o.
+
+**Fix:** Eliminar el campo extra `$fromAI()` de `fields.values` e incluir la información adicional en el JSON del campo `query`, documentándolo en la `description` del tool.
+
+```python
+# MAL — log_date como $fromAI() en fields.values rompe el schema
+{"name": "log_date", "type": "stringValue", "stringValue": "={{ $fromAI('log_date', '...', 'string') }}"}
+
+# BIEN — log_date va dentro del JSON en el campo 'query'
+# description del tool: "...JSON con este formato: {\"food_name\": \"...\", \"log_date\": \"YYYY-MM-DD\"}"
+# fields.values solo tiene userId y chatId (valores estáticos, sin $fromAI)
+```
+
+**Regla derivada:** `fields.values` debe contener solo valores estáticos (userId, chatId, etc.). Todo lo que GPT-4o debe "decidir" debe ir dentro del JSON del campo `query`.

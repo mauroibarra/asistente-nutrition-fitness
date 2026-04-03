@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T14:49:28.295Z",
+  "updatedAt": "2026-04-02T20:33:08.965Z",
   "createdAt": "2026-04-01T20:41:23.657Z",
   "id": "ytuz6H8cdBm8oyTx",
   "name": "FitAI - Silence Detector",
@@ -138,7 +138,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'silence_check', '[proactive]', $2, NOW());",
         "options": {
-          "queryReplacement": "={ [$('Build Silence Message').item.json.userId, $('Build Silence Message').item.json.message] }"
+          "queryReplacement": "={{ [$('Build Silence Message').item.json.userId, $('Build Silence Message').item.json.message] }}"
         }
       }
     }
@@ -214,9 +214,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "7c2a1ace-26c3-43a0-afb7-7cd363a81e65",
-  "activeVersionId": "7c2a1ace-26c3-43a0-afb7-7cd363a81e65",
-  "versionCounter": 13,
+  "versionId": "688a4d76-a836-4030-8c9e-b52c7f48b90b",
+  "activeVersionId": "688a4d76-a836-4030-8c9e-b52c7f48b90b",
+  "versionCounter": 24,
   "triggerCount": 1,
   "shared": [
     {
@@ -239,9 +239,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T14:49:28.295Z",
-    "createdAt": "2026-04-02T14:49:28.295Z",
-    "versionId": "7c2a1ace-26c3-43a0-afb7-7cd363a81e65",
+    "updatedAt": "2026-04-02T20:33:08.966Z",
+    "createdAt": "2026-04-02T20:33:08.966Z",
+    "versionId": "688a4d76-a836-4030-8c9e-b52c7f48b90b",
     "workflowId": "ytuz6H8cdBm8oyTx",
     "nodes": [
       {
@@ -375,7 +375,7 @@
           "operation": "executeQuery",
           "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'silence_check', '[proactive]', $2, NOW());",
           "options": {
-            "queryReplacement": "={ [$('Build Silence Message').item.json.userId, $('Build Silence Message').item.json.message] }"
+            "queryReplacement": "={{ [$('Build Silence Message').item.json.userId, $('Build Silence Message').item.json.message] }}"
           }
         }
       }
@@ -444,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T14:49:28.850Z",
-        "id": 365,
+        "createdAt": "2026-04-02T20:33:09.535Z",
+        "id": 401,
         "workflowId": "ytuz6H8cdBm8oyTx",
-        "versionId": "7c2a1ace-26c3-43a0-afb7-7cd363a81e65",
+        "versionId": "688a4d76-a836-4030-8c9e-b52c7f48b90b",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

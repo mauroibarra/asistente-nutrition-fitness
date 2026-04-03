@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T14:49:23.463Z",
+  "updatedAt": "2026-04-02T20:33:09.590Z",
   "createdAt": "2026-04-01T20:41:18.858Z",
   "id": "NFhsChTrhIc05uyc",
   "name": "FitAI - Morning Briefing",
@@ -138,7 +138,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'morning_briefing', '[proactive]', $2, NOW());",
         "options": {
-          "queryReplacement": "={ [$('Build Briefing Message').item.json.userId, $('Build Briefing Message').item.json.message] }"
+          "queryReplacement": "={{ [$('Build Briefing Message').item.json.userId, $('Build Briefing Message').item.json.message] }}"
         }
       }
     }
@@ -214,9 +214,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "607ca4db-fe4d-4f43-912e-893c34a82340",
-  "activeVersionId": "607ca4db-fe4d-4f43-912e-893c34a82340",
-  "versionCounter": 13,
+  "versionId": "d08dda5c-0fae-4f84-9302-ea1ce0392f68",
+  "activeVersionId": "d08dda5c-0fae-4f84-9302-ea1ce0392f68",
+  "versionCounter": 24,
   "triggerCount": 1,
   "shared": [
     {
@@ -239,9 +239,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T14:49:23.467Z",
-    "createdAt": "2026-04-02T14:49:23.467Z",
-    "versionId": "607ca4db-fe4d-4f43-912e-893c34a82340",
+    "updatedAt": "2026-04-02T20:33:09.591Z",
+    "createdAt": "2026-04-02T20:33:09.591Z",
+    "versionId": "d08dda5c-0fae-4f84-9302-ea1ce0392f68",
     "workflowId": "NFhsChTrhIc05uyc",
     "nodes": [
       {
@@ -375,7 +375,7 @@
           "operation": "executeQuery",
           "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'morning_briefing', '[proactive]', $2, NOW());",
           "options": {
-            "queryReplacement": "={ [$('Build Briefing Message').item.json.userId, $('Build Briefing Message').item.json.message] }"
+            "queryReplacement": "={{ [$('Build Briefing Message').item.json.userId, $('Build Briefing Message').item.json.message] }}"
           }
         }
       }
@@ -444,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T14:49:24.116Z",
-        "id": 357,
+        "createdAt": "2026-04-02T20:33:10.160Z",
+        "id": 403,
         "workflowId": "NFhsChTrhIc05uyc",
-        "versionId": "607ca4db-fe4d-4f43-912e-893c34a82340",
+        "versionId": "d08dda5c-0fae-4f84-9302-ea1ce0392f68",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

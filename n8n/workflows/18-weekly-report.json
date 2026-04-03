@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T14:49:27.158Z",
+  "updatedAt": "2026-04-02T20:33:10.904Z",
   "createdAt": "2026-04-01T20:41:22.079Z",
   "id": "gsIQcXRlMznc3uJ8",
   "name": "FitAI - Weekly Report",
@@ -138,7 +138,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'weekly_report', '[proactive]', $2, NOW());",
         "options": {
-          "queryReplacement": "={ [$('Build Weekly Report').item.json.userId, $('Build Weekly Report').item.json.message] }"
+          "queryReplacement": "={{ [$('Build Weekly Report').item.json.userId, $('Build Weekly Report').item.json.message] }}"
         }
       }
     }
@@ -214,9 +214,9 @@
   },
   "meta": null,
   "pinData": null,
-  "versionId": "70b5cecd-9670-42ae-be68-f43fd2853b1b",
-  "activeVersionId": "70b5cecd-9670-42ae-be68-f43fd2853b1b",
-  "versionCounter": 17,
+  "versionId": "a23bc096-34b6-41b8-af38-1abc31aa29e7",
+  "activeVersionId": "a23bc096-34b6-41b8-af38-1abc31aa29e7",
+  "versionCounter": 28,
   "triggerCount": 1,
   "shared": [
     {
@@ -239,9 +239,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T14:49:27.159Z",
-    "createdAt": "2026-04-02T14:49:27.159Z",
-    "versionId": "70b5cecd-9670-42ae-be68-f43fd2853b1b",
+    "updatedAt": "2026-04-02T20:33:10.904Z",
+    "createdAt": "2026-04-02T20:33:10.904Z",
+    "versionId": "a23bc096-34b6-41b8-af38-1abc31aa29e7",
     "workflowId": "gsIQcXRlMznc3uJ8",
     "nodes": [
       {
@@ -375,7 +375,7 @@
           "operation": "executeQuery",
           "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'weekly_report', '[proactive]', $2, NOW());",
           "options": {
-            "queryReplacement": "={ [$('Build Weekly Report').item.json.userId, $('Build Weekly Report').item.json.message] }"
+            "queryReplacement": "={{ [$('Build Weekly Report').item.json.userId, $('Build Weekly Report').item.json.message] }}"
           }
         }
       }
@@ -444,10 +444,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T14:49:27.723Z",
-        "id": 363,
+        "createdAt": "2026-04-02T20:33:11.474Z",
+        "id": 407,
         "workflowId": "gsIQcXRlMznc3uJ8",
-        "versionId": "70b5cecd-9670-42ae-be68-f43fd2853b1b",
+        "versionId": "a23bc096-34b6-41b8-af38-1abc31aa29e7",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

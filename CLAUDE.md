@@ -410,6 +410,14 @@ Para pasar `userId`, `chatId` u otro contexto del developer a sub-workflows, usa
 ```
 **NO** usar `workflowInputs.schema` de typeVersion 2 para esto.
 
+**REGLA CRÍTICA — `$fromAI()` en `fields.values` rompe el tool schema:**
+Agregar un campo con `$fromAI()` en `fields.values` hace que n8n exponga múltiples parámetros en el schema del tool. GPT-4o pasa un objeto estructurado en `input` en lugar de un string, causando: `"Expected string, received object → at input"`.
+
+`fields.values` debe contener SOLO valores estáticos (userId, chatId). Todo lo que GPT-4o deba decidir va dentro del JSON del campo `query`, documentado en la `description` del tool:
+```
+description: "...Pasa como JSON: {\"food_name\": \"...\", \"log_date\": \"YYYY-MM-DD\", ...}"
+```
+
 ### $json apunta al nodo ANTERIOR directo
 Si la cadena es `ParsePlan → UpdateSQL → SavePlan`, en `SavePlan` el `$json` es el output del UPDATE (vacío), no del ParsePlan. Siempre referenciar el nodo explícitamente: `$('Parse and Validate Plan').first().json.weekNumber`
 

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-02T14:49:25.988Z",
+  "updatedAt": "2026-04-02T20:33:08.272Z",
   "createdAt": "2026-03-27T16:33:56.395Z",
   "id": "SntGuE97yl9efvo5",
   "name": "FitAI - Meal Reminder Scheduler",
@@ -139,7 +139,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'meal_reminder', '[proactive]', $2, NOW());",
         "options": {
-          "queryReplacement": "={ [$('Build Reminder Message').item.json.userId, $('Build Reminder Message').item.json.message] }"
+          "queryReplacement": "={{ [$('Build Reminder Message').item.json.userId, $('Build Reminder Message').item.json.message] }}"
         }
       }
     }
@@ -218,9 +218,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "c4e54501-6f6c-4e32-8711-8e2bdb6dc0c3",
-  "activeVersionId": "c4e54501-6f6c-4e32-8711-8e2bdb6dc0c3",
-  "versionCounter": 42,
+  "versionId": "c1a23790-5d51-468a-aa3f-a633436a4973",
+  "activeVersionId": "c1a23790-5d51-468a-aa3f-a633436a4973",
+  "versionCounter": 53,
   "triggerCount": 1,
   "shared": [
     {
@@ -243,9 +243,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-02T14:49:25.989Z",
-    "createdAt": "2026-04-02T14:49:25.989Z",
-    "versionId": "c4e54501-6f6c-4e32-8711-8e2bdb6dc0c3",
+    "updatedAt": "2026-04-02T20:33:08.274Z",
+    "createdAt": "2026-04-02T20:33:08.274Z",
+    "versionId": "c1a23790-5d51-468a-aa3f-a633436a4973",
     "workflowId": "SntGuE97yl9efvo5",
     "nodes": [
       {
@@ -380,7 +380,7 @@
           "operation": "executeQuery",
           "query": "INSERT INTO conversation_logs (user_id, message_type, message_text, assistant_response, created_at) VALUES ($1, 'meal_reminder', '[proactive]', $2, NOW());",
           "options": {
-            "queryReplacement": "={ [$('Build Reminder Message').item.json.userId, $('Build Reminder Message').item.json.message] }"
+            "queryReplacement": "={{ [$('Build Reminder Message').item.json.userId, $('Build Reminder Message').item.json.message] }}"
           }
         }
       }
@@ -449,10 +449,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-02T14:49:26.573Z",
-        "id": 361,
+        "createdAt": "2026-04-02T20:33:08.888Z",
+        "id": 399,
         "workflowId": "SntGuE97yl9efvo5",
-        "versionId": "c4e54501-6f6c-4e32-8711-8e2bdb6dc0c3",
+        "versionId": "c1a23790-5d51-468a-aa3f-a633436a4973",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
