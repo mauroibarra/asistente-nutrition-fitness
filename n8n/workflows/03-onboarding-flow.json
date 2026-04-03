@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T18:03:54.946Z",
+  "updatedAt": "2026-04-03T19:45:36.478Z",
   "createdAt": "2026-04-01T20:02:43.200Z",
   "id": "yiUgnJ6gCoaIFVXe",
   "name": "FitAI - Onboarding Flow",
@@ -82,7 +82,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        912,
+        1008,
         160
       ]
     },
@@ -141,7 +141,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -171,6 +172,10 @@
       "parameters": {
         "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
         "text": "={{ $json.choices[0].message.content }}",
+        "replyMarkup": "={{ $('Prepare AI Message Input').first().json.replyMarkupType }}",
+        "inlineKeyboard": "={{ $('Prepare AI Message Input').first().json.inlineKeyboard }}",
+        "replyKeyboard": "={{ $('Prepare AI Message Input').first().json.replyKeyboard }}",
+        "replyKeyboardOptions": "={{ $('Prepare AI Message Input').first().json.replyKeyboardOptions }}",
         "additionalFields": {
           "appendAttribution": false,
           "parse_mode": "Markdown"
@@ -181,7 +186,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2272,
+        2240,
         640
       ],
       "webhookId": "dc041c40-9464-4c4c-ada3-1f9f266a9ba6",
@@ -202,7 +207,7 @@
       "typeVersion": 2,
       "position": [
         1792,
-        144
+        -16
       ]
     },
     {
@@ -219,7 +224,7 @@
       "typeVersion": 2.5,
       "position": [
         2000,
-        -16
+        -176
       ],
       "credentials": {
         "postgres": {
@@ -242,7 +247,7 @@
       "typeVersion": 2.5,
       "position": [
         2000,
-        144
+        -16
       ],
       "credentials": {
         "postgres": {
@@ -265,7 +270,7 @@
       "typeVersion": 2.5,
       "position": [
         2000,
-        304
+        144
       ],
       "credentials": {
         "postgres": {
@@ -288,7 +293,7 @@
       "typeVersion": 2.5,
       "position": [
         2000,
-        464
+        304
       ],
       "credentials": {
         "postgres": {
@@ -313,8 +318,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        2816,
-        288
+        2640,
+        128
       ]
     },
     {
@@ -327,8 +332,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        3040,
-        288
+        2864,
+        128
       ],
       "credentials": {
         "redis": {
@@ -353,8 +358,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        3264,
-        288
+        3088,
+        128
       ]
     },
     {
@@ -371,7 +376,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3472,
+        3360,
         128
       ],
       "webhookId": "8811e933-0c45-4e87-9a3b-02dbcca22f9b",
@@ -396,7 +401,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3696,
+        3584,
         128
       ],
       "webhookId": "7900a537-ea55-44f0-9fbd-6fee164c23c5",
@@ -417,12 +422,12 @@
       "typeVersion": 3.1,
       "position": [
         2400,
-        256
+        96
       ]
     },
     {
       "parameters": {
-        "jsCode": "const state = $json.state || {};\nconst stateData = state.data || {};\nconst replyMarkup = $json.replyMarkup !== undefined ? $json.replyMarkup : null;\nconst isNewUser = $json.isNewUser === true;\nconst isValidationError = !isNewUser && ($json.isValid === false);\n\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = $('Parse Onboarding State').first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\nconst userMessage = JSON.stringify({\n  step: state.step,\n  user_response: userResponse,\n  validation_error: isValidationError,\n  user_name: stateData.first_name || null,\n  collected_data: {\n    gender: stateData.gender || null,\n    age: stateData.age || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\n// Special reply markup for ask_phone: regular keyboard (request_contact)\nlet finalReplyMarkup = replyMarkup;\nif (state.step === 'ask_phone') {\n  finalReplyMarkup = {\n    keyboard: [[{ text: 'Compartir mi numero', request_contact: true }]],\n    resize_keyboard: true,\n    one_time_keyboard: true\n  };\n}\n\nreturn [{\n  json: {\n    userMessage,\n    replyMarkup: finalReplyMarkup,\n    chatId: $('Execute Workflow Trigger').first().json.chatId\n  }\n}];"
+        "jsCode": "\n// ─── Sources: resilient to what  contains after Redis SET ────────────────\nconst state     = .state     || {};\nconst stateData = state.data      || {};\nconst isNewUser          = .isNewUser  === true;\nconst isValidationError  = !isNewUser && (.isValid === false);\n\n// ─── User response (for existing sessions) ────────────────────────────────────\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = .first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\n// ─── Keyboard map: keyed by state.step ─────────────────────────────────────\n// Centralized here so it applies identically on first ask AND on validation error\n// (state.step does NOT change when isValid=false, so the right keyboard always returns)\nconst IK = (rows) => ({ type: 'inlineKeyboard', inlineKeyboard: { rows } });\nconst btn = (text, cb) => ({ text, additionalFields: { callbackData: cb } });\n\nconst KEYBOARDS = {\n  ask_gender: IK([\n    { row: { buttons: [btn('Hombre','male'), btn('Mujer','female')] } }\n  ]),\n  ask_goal: IK([\n    { row: { buttons: [btn('Perder grasa','lose_fat'), btn('Ganar musculo','gain_muscle')] } },\n    { row: { buttons: [btn('Mantener peso','maintain'), btn('Recomposicion corporal','recomposition')] } }\n  ]),\n  ask_dietary_restrictions_known: IK([\n    { row: { buttons: [btn('Si, tengo','yes'), btn('No, ninguna','no')] } }\n  ]),\n  ask_budget: IK([\n    { row: { buttons: [btn('Economico','low'), btn('Moderado','medium'), btn('Sin limite','high')] } }\n  ]),\n  ask_meals: IK([\n    { row: { buttons: [btn('3','3'), btn('4','4'), btn('5','5')] } }\n  ]),\n  ask_fitness_level: IK([\n    { row: { buttons: [btn('Principiante (< 6 meses)','beginner')] } },\n    { row: { buttons: [btn('Intermedio (6 meses - 2 anos)','intermediate')] } },\n    { row: { buttons: [btn('Avanzado (2+ anos)','advanced')] } }\n  ]),\n  ask_equipment: IK([\n    { row: { buttons: [btn('Casa sin equipo','bodyweight')] } },\n    { row: { buttons: [btn('Casa con mancuernas/bandas','home_basic')] } },\n    { row: { buttons: [btn('Gimnasio','full_gym')] } }\n  ]),\n  ask_training_days: IK([\n    { row: { buttons: [btn('2','2'),btn('3','3'),btn('4','4'),btn('5','5'),btn('6','6')] } }\n  ]),\n  ask_injuries: IK([\n    { row: { buttons: [btn('No, estoy bien','no'), btn('Si, tengo','yes')] } }\n  ]),\n  ask_wake_time: IK([\n    { row: { buttons: [\n      btn('5:00','05:00'),btn('6:00','06:00'),btn('7:00','07:00'),\n      btn('8:00','08:00'),btn('9:00','09:00'),btn('Otra','custom')\n    ] } }\n  ]),\n  ask_activity_level: IK([\n    { row: { buttons: [btn('Sentado casi todo el dia','sedentary')] } },\n    { row: { buttons: [btn('Camino algo, tareas ligeras','lightly_active')] } },\n    { row: { buttons: [btn('De pie bastante, camino mucho','moderately_active')] } },\n    { row: { buttons: [btn('Trabajo fisico pesado','very_active')] } }\n  ]),\n  confirm_profile: IK([\n    { row: { buttons: [btn('Todo bien, dale','confirm'), btn('Quiero corregir algo','correct')] } }\n  ]),\n  correct_block: IK([\n    { row: { buttons: [btn('Datos fisicos','block_1'), btn('Objetivo','block_2')] } },\n    { row: { buttons: [btn('Alimentacion','block_3'), btn('Ejercicio','block_4')] } },\n    { row: { buttons: [btn('Horarios','block_5')] } }\n  ]),\n  ask_phone: {\n    type: 'replyKeyboard',\n    replyKeyboard: {\n      rows: [{ row: { buttons: [{ text: 'Compartir mi numero', requestContact: true }] } }]\n    },\n    replyKeyboardOptions: { resizeKeyboard: true, oneTimeKeyboard: true }\n  }\n};\n\nconst kb = KEYBOARDS[state.step] || null;\n\n// ─── AI message payload ────────────────────────────────────────────────────────\nconst userMessage = JSON.stringify({\n  step:             state.step,\n  user_response:    userResponse,\n  validation_error: isValidationError,\n  user_name:        stateData.first_name || null,\n  collected_data: {\n    gender:    stateData.gender    || null,\n    age:       stateData.age       || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\nreturn [{\n  json: {\n    userMessage,\n    chatId:              .first().json.chatId,\n    replyMarkupType:     kb ? kb.type : 'none',\n    inlineKeyboard:      (kb && kb.type === 'inlineKeyboard')  ? kb.inlineKeyboard  : null,\n    replyKeyboard:       (kb && kb.type === 'replyKeyboard')   ? kb.replyKeyboard   : null,\n    replyKeyboardOptions:(kb && kb.replyKeyboardOptions)        ? kb.replyKeyboardOptions : null\n  }\n}];\n"
       },
       "id": "ob-ai-01",
       "name": "Prepare AI Message Input",
@@ -453,15 +458,14 @@
           "maxTokens": 100,
           "temperature": 0.7
         },
-        "requestOptions": {},
-        "operation": "complete"
+        "requestOptions": {}
       },
       "id": "ob-ai-02",
       "name": "Generate Onboarding Message",
       "type": "n8n-nodes-base.openAi",
       "typeVersion": 1.1,
       "position": [
-        2032,
+        2000,
         640
       ],
       "credentials": {
@@ -731,9 +735,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "ca6dc6c8-3954-4d52-97c9-e5f1725c9a3a",
-  "activeVersionId": "ca6dc6c8-3954-4d52-97c9-e5f1725c9a3a",
-  "versionCounter": 54,
+  "versionId": "f364305d-f9c7-4651-a3b4-3c1e7159eb42",
+  "activeVersionId": "f364305d-f9c7-4651-a3b4-3c1e7159eb42",
+  "versionCounter": 75,
   "triggerCount": 0,
   "shared": [
     {
@@ -756,9 +760,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T18:03:54.950Z",
-    "createdAt": "2026-04-03T18:03:54.950Z",
-    "versionId": "ca6dc6c8-3954-4d52-97c9-e5f1725c9a3a",
+    "updatedAt": "2026-04-03T19:45:36.481Z",
+    "createdAt": "2026-04-03T19:45:36.481Z",
+    "versionId": "f364305d-f9c7-4651-a3b4-3c1e7159eb42",
     "workflowId": "yiUgnJ6gCoaIFVXe",
     "nodes": [
       {
@@ -836,7 +840,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          912,
+          1008,
           160
         ]
       },
@@ -895,7 +899,8 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "strict",
+              "version": 1
             },
             "conditions": [
               {
@@ -925,6 +930,10 @@
         "parameters": {
           "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
           "text": "={{ $json.choices[0].message.content }}",
+          "replyMarkup": "={{ $('Prepare AI Message Input').first().json.replyMarkupType }}",
+          "inlineKeyboard": "={{ $('Prepare AI Message Input').first().json.inlineKeyboard }}",
+          "replyKeyboard": "={{ $('Prepare AI Message Input').first().json.replyKeyboard }}",
+          "replyKeyboardOptions": "={{ $('Prepare AI Message Input').first().json.replyKeyboardOptions }}",
           "additionalFields": {
             "appendAttribution": false,
             "parse_mode": "Markdown"
@@ -935,7 +944,7 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          2272,
+          2240,
           640
         ],
         "webhookId": "dc041c40-9464-4c4c-ada3-1f9f266a9ba6",
@@ -956,7 +965,7 @@
         "typeVersion": 2,
         "position": [
           1792,
-          144
+          -16
         ]
       },
       {
@@ -973,7 +982,7 @@
         "typeVersion": 2.5,
         "position": [
           2000,
-          -16
+          -176
         ],
         "credentials": {
           "postgres": {
@@ -996,7 +1005,7 @@
         "typeVersion": 2.5,
         "position": [
           2000,
-          144
+          -16
         ],
         "credentials": {
           "postgres": {
@@ -1019,7 +1028,7 @@
         "typeVersion": 2.5,
         "position": [
           2000,
-          304
+          144
         ],
         "credentials": {
           "postgres": {
@@ -1042,7 +1051,7 @@
         "typeVersion": 2.5,
         "position": [
           2000,
-          464
+          304
         ],
         "credentials": {
           "postgres": {
@@ -1067,8 +1076,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          2816,
-          288
+          2640,
+          128
         ]
       },
       {
@@ -1081,8 +1090,8 @@
         "type": "n8n-nodes-base.redis",
         "typeVersion": 1,
         "position": [
-          3040,
-          288
+          2864,
+          128
         ],
         "credentials": {
           "redis": {
@@ -1107,8 +1116,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          3264,
-          288
+          3088,
+          128
         ]
       },
       {
@@ -1125,7 +1134,7 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          3472,
+          3360,
           128
         ],
         "webhookId": "8811e933-0c45-4e87-9a3b-02dbcca22f9b",
@@ -1150,7 +1159,7 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          3696,
+          3584,
           128
         ],
         "webhookId": "7900a537-ea55-44f0-9fbd-6fee164c23c5",
@@ -1171,12 +1180,12 @@
         "typeVersion": 3.1,
         "position": [
           2400,
-          256
+          96
         ]
       },
       {
         "parameters": {
-          "jsCode": "const state = $json.state || {};\nconst stateData = state.data || {};\nconst replyMarkup = $json.replyMarkup !== undefined ? $json.replyMarkup : null;\nconst isNewUser = $json.isNewUser === true;\nconst isValidationError = !isNewUser && ($json.isValid === false);\n\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = $('Parse Onboarding State').first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\nconst userMessage = JSON.stringify({\n  step: state.step,\n  user_response: userResponse,\n  validation_error: isValidationError,\n  user_name: stateData.first_name || null,\n  collected_data: {\n    gender: stateData.gender || null,\n    age: stateData.age || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\n// Special reply markup for ask_phone: regular keyboard (request_contact)\nlet finalReplyMarkup = replyMarkup;\nif (state.step === 'ask_phone') {\n  finalReplyMarkup = {\n    keyboard: [[{ text: 'Compartir mi numero', request_contact: true }]],\n    resize_keyboard: true,\n    one_time_keyboard: true\n  };\n}\n\nreturn [{\n  json: {\n    userMessage,\n    replyMarkup: finalReplyMarkup,\n    chatId: $('Execute Workflow Trigger').first().json.chatId\n  }\n}];"
+          "jsCode": "\n// ─── Sources: resilient to what  contains after Redis SET ────────────────\nconst state     = .state     || {};\nconst stateData = state.data      || {};\nconst isNewUser          = .isNewUser  === true;\nconst isValidationError  = !isNewUser && (.isValid === false);\n\n// ─── User response (for existing sessions) ────────────────────────────────────\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = .first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\n// ─── Keyboard map: keyed by state.step ─────────────────────────────────────\n// Centralized here so it applies identically on first ask AND on validation error\n// (state.step does NOT change when isValid=false, so the right keyboard always returns)\nconst IK = (rows) => ({ type: 'inlineKeyboard', inlineKeyboard: { rows } });\nconst btn = (text, cb) => ({ text, additionalFields: { callbackData: cb } });\n\nconst KEYBOARDS = {\n  ask_gender: IK([\n    { row: { buttons: [btn('Hombre','male'), btn('Mujer','female')] } }\n  ]),\n  ask_goal: IK([\n    { row: { buttons: [btn('Perder grasa','lose_fat'), btn('Ganar musculo','gain_muscle')] } },\n    { row: { buttons: [btn('Mantener peso','maintain'), btn('Recomposicion corporal','recomposition')] } }\n  ]),\n  ask_dietary_restrictions_known: IK([\n    { row: { buttons: [btn('Si, tengo','yes'), btn('No, ninguna','no')] } }\n  ]),\n  ask_budget: IK([\n    { row: { buttons: [btn('Economico','low'), btn('Moderado','medium'), btn('Sin limite','high')] } }\n  ]),\n  ask_meals: IK([\n    { row: { buttons: [btn('3','3'), btn('4','4'), btn('5','5')] } }\n  ]),\n  ask_fitness_level: IK([\n    { row: { buttons: [btn('Principiante (< 6 meses)','beginner')] } },\n    { row: { buttons: [btn('Intermedio (6 meses - 2 anos)','intermediate')] } },\n    { row: { buttons: [btn('Avanzado (2+ anos)','advanced')] } }\n  ]),\n  ask_equipment: IK([\n    { row: { buttons: [btn('Casa sin equipo','bodyweight')] } },\n    { row: { buttons: [btn('Casa con mancuernas/bandas','home_basic')] } },\n    { row: { buttons: [btn('Gimnasio','full_gym')] } }\n  ]),\n  ask_training_days: IK([\n    { row: { buttons: [btn('2','2'),btn('3','3'),btn('4','4'),btn('5','5'),btn('6','6')] } }\n  ]),\n  ask_injuries: IK([\n    { row: { buttons: [btn('No, estoy bien','no'), btn('Si, tengo','yes')] } }\n  ]),\n  ask_wake_time: IK([\n    { row: { buttons: [\n      btn('5:00','05:00'),btn('6:00','06:00'),btn('7:00','07:00'),\n      btn('8:00','08:00'),btn('9:00','09:00'),btn('Otra','custom')\n    ] } }\n  ]),\n  ask_activity_level: IK([\n    { row: { buttons: [btn('Sentado casi todo el dia','sedentary')] } },\n    { row: { buttons: [btn('Camino algo, tareas ligeras','lightly_active')] } },\n    { row: { buttons: [btn('De pie bastante, camino mucho','moderately_active')] } },\n    { row: { buttons: [btn('Trabajo fisico pesado','very_active')] } }\n  ]),\n  confirm_profile: IK([\n    { row: { buttons: [btn('Todo bien, dale','confirm'), btn('Quiero corregir algo','correct')] } }\n  ]),\n  correct_block: IK([\n    { row: { buttons: [btn('Datos fisicos','block_1'), btn('Objetivo','block_2')] } },\n    { row: { buttons: [btn('Alimentacion','block_3'), btn('Ejercicio','block_4')] } },\n    { row: { buttons: [btn('Horarios','block_5')] } }\n  ]),\n  ask_phone: {\n    type: 'replyKeyboard',\n    replyKeyboard: {\n      rows: [{ row: { buttons: [{ text: 'Compartir mi numero', requestContact: true }] } }]\n    },\n    replyKeyboardOptions: { resizeKeyboard: true, oneTimeKeyboard: true }\n  }\n};\n\nconst kb = KEYBOARDS[state.step] || null;\n\n// ─── AI message payload ────────────────────────────────────────────────────────\nconst userMessage = JSON.stringify({\n  step:             state.step,\n  user_response:    userResponse,\n  validation_error: isValidationError,\n  user_name:        stateData.first_name || null,\n  collected_data: {\n    gender:    stateData.gender    || null,\n    age:       stateData.age       || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\nreturn [{\n  json: {\n    userMessage,\n    chatId:              .first().json.chatId,\n    replyMarkupType:     kb ? kb.type : 'none',\n    inlineKeyboard:      (kb && kb.type === 'inlineKeyboard')  ? kb.inlineKeyboard  : null,\n    replyKeyboard:       (kb && kb.type === 'replyKeyboard')   ? kb.replyKeyboard   : null,\n    replyKeyboardOptions:(kb && kb.replyKeyboardOptions)        ? kb.replyKeyboardOptions : null\n  }\n}];\n"
         },
         "id": "ob-ai-01",
         "name": "Prepare AI Message Input",
@@ -1207,15 +1216,14 @@
             "maxTokens": 100,
             "temperature": 0.7
           },
-          "requestOptions": {},
-          "operation": "complete"
+          "requestOptions": {}
         },
         "id": "ob-ai-02",
         "name": "Generate Onboarding Message",
         "type": "n8n-nodes-base.openAi",
         "typeVersion": 1.1,
         "position": [
-          2032,
+          2000,
           640
         ],
         "credentials": {
@@ -1483,10 +1491,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T18:03:56.017Z",
-        "id": 431,
+        "createdAt": "2026-04-03T19:45:37.577Z",
+        "id": 449,
         "workflowId": "yiUgnJ6gCoaIFVXe",
-        "versionId": "ca6dc6c8-3954-4d52-97c9-e5f1725c9a3a",
+        "versionId": "f364305d-f9c7-4651-a3b4-3c1e7159eb42",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
