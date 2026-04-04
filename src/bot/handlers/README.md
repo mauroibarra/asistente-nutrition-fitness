@@ -15,7 +15,7 @@ sequenceDiagram
     participant PG as PostgreSQL
     participant AI as GPT-4o
 
-    U->>TG: Envía mensaje (texto/voz/botón)
+    U->>TG: Envía mensaje (texto/voz)
     TG->>NGX: POST /webhook/fitai-telegram\n(HTTPS + secret token)
     NGX->>N8N: Reenvía el update
     N8N->>N8N: Determina tipo de mensaje
@@ -45,9 +45,7 @@ flowchart TD
 
     SW -->|"message.text"| T["💬 Texto\nProceso de debounce\n(espera 2s por mensajes múltiples)"]
 
-    SW -->|"callback_query"| C["🔘 Botón presionado\nLee callback_data del botón\n→ continúa como texto"]
-
-    V & T & C --> UC["Set User Context\n{chatId · telegramId · message.text · firstName}"]
+    V & T --> UC["Set User Context\n{chatId · telegramId · message.text · firstName}"]
     UC --> VER["Verificar usuario + membresía"]
     VER --> RT{¿Onboarding?}
 
@@ -86,17 +84,6 @@ Cualquier texto que no sea un comando va directamente al agente GPT-4o:
 
 El mensaje de voz se transcribe con Whisper API y luego se trata como texto. El usuario puede hablar naturalmente y el bot entiende.
 
-### Botones Inline (callback_query)
-
-Usados principalmente durante el onboarding para opciones rápidas:
-
-```
-[Perder peso] [Ganar músculo] [Mantenerme]
-[Sedentario] [Poco activo] [Moderado] [Muy activo]
-```
-
-Cada botón envía un `callback_data` que el handler lee y procesa como respuesta de texto.
-
 ---
 
 ## Verificaciones Pre-Handler
@@ -124,7 +111,7 @@ No hay verificación de rate limit individual por mensaje — el debounce de 2 s
 | Nodo n8n | Función del handler |
 |---------|-------------------|
 | `telegramTrigger` | Recibe el HTTP POST de Telegram |
-| `Switch` | Determina tipo (voice / text / callback_query) |
+| `Switch` | Determina tipo (voice / text) |
 | `Get Voice File` + Whisper | Transcripción de audio |
 | `executeWorkflow` → WF 02 | Debounce multi-mensaje |
 | `Set User Context` | Normaliza {chatId, telegramId, message.text} |

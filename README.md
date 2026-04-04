@@ -87,8 +87,7 @@ flowchart TD
     B --> C{Tipo de mensaje}
     C -->|"🎤 Voz"| D["Transcribir con Whisper"]
     C -->|"💬 Texto"| E["Debounce multi-mensaje\n(espera 2s por si envía más)"]
-    C -->|"🔘 Botón"| F["Leer callback_data"]
-    D & E & F --> G["Verificar usuario + membresía"]
+    D & E --> G["Verificar usuario + membresía"]
     G --> H{¿Membresía activa?}
     H -->|"No"| I["❌ Mensaje de suscripción"]
     H -->|"Sí"| J{¿Onboarding completo?}
@@ -321,7 +320,7 @@ curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
   -d "{
     \"url\": \"https://tudominio.com/webhook/fitai-telegram\",
     \"secret_token\": \"${TELEGRAM_WEBHOOK_SECRET}\",
-    \"allowed_updates\": [\"message\", \"callback_query\"]
+    \"allowed_updates\": [\"message\"]
   }"
 ```
 
