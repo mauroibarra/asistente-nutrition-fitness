@@ -1,110 +1,150 @@
 # Handlers del Bot de Telegram — FitAI Assistant
 
-## Arquitectura
-
-El bot de Telegram **no tiene handlers en código tradicional**. Toda la lógica de manejo de mensajes está implementada en workflows de n8n. Este directorio documenta cómo se integran los handlers lógicos con n8n.
+El bot **no tiene handlers en código tradicional**. Toda la lógica de manejo de mensajes está en workflows de n8n. Este directorio documenta la arquitectura lógica y su implementación en n8n.
 
 ---
 
-## Flujo de Mensajes
+## Flujo Completo de un Mensaje
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant TG as Telegram API
+    participant NGX as Nginx
+    participant N8N as n8n Handler
+    participant PG as PostgreSQL
+    participant AI as GPT-4o
+
+    U->>TG: Envía mensaje (texto/voz/botón)
+    TG->>NGX: POST /webhook/fitai-telegram\n(HTTPS + secret token)
+    NGX->>N8N: Reenvía el update
+    N8N->>N8N: Determina tipo de mensaje
+    N8N->>PG: Upsert usuario + verificar membresía
+    alt Sin membresía activa
+        N8N->>TG: Mensaje de suscripción
+        TG->>U: "Para continuar necesitas..."
+    else Membresía activa
+        N8N->>PG: Carga contexto completo del usuario
+        N8N->>AI: Mensaje + contexto + herramientas
+        AI->>N8N: Respuesta o llamada a tool
+        N8N->>PG: Guarda log de conversación
+        N8N->>TG: Envía respuesta
+        TG->>U: Respuesta del asistente
+    end
+```
+
+---
+
+## Tipos de Mensaje Manejados
+
+```mermaid
+flowchart TD
+    MSG["Telegram Update"] --> SW{Tipo}
+
+    SW -->|"message.voice"| V["🎤 Mensaje de Voz\nTranscripción con Whisper API\n→ continúa como texto"]
+
+    SW -->|"message.text"| T["💬 Texto\nProceso de debounce\n(espera 2s por mensajes múltiples)"]
+
+    SW -->|"callback_query"| C["🔘 Botón presionado\nLee callback_data del botón\n→ continúa como texto"]
+
+    V & T & C --> UC["Set User Context\n{chatId · telegramId · message.text · firstName}"]
+    UC --> VER["Verificar usuario + membresía"]
+    VER --> RT{¿Onboarding?}
+
+    RT -->|"Incompleto"| ON["Onboarding Flow\nRedis state machine"]
+    RT -->|"Completo"| AG["Main AI Agent\nGPT-4o + tools + memoria"]
+
+    style MSG fill:#0088cc,color:#fff
+    style AG fill:#10a37f,color:#fff
+    style ON fill:#ed8936,color:#fff
+```
+
+---
+
+## Handlers Lógicos
+
+### Comandos de Telegram
+
+| Comando | Acción | Implementado en |
+|---------|--------|----------------|
+| `/start` | Inicia onboarding (nuevo) o saluda (existente) | WF 03 - Onboarding Flow |
+| `/plan` | Muestra plan de comidas o ejercicio activo | WF 01 → GPT-4o tool |
+| `/progreso` | Calcula y muestra progreso actual | WF 07 - Progress Calculator |
+| `/ayuda` | Mensaje de ayuda con comandos disponibles | WF 01 - respuesta directa |
+
+### Texto Libre
+
+Cualquier texto que no sea un comando va directamente al agente GPT-4o:
+
+- Conversación sobre nutrición y fitness
+- "comí una pizza margarita al almuerzo" → registra en log
+- "¿cómo voy con mis calorías?" → consulta Daily Status
+- "quiero un plan de comidas para esta semana" → genera Meal Plan
+- "estoy desmotivado" → respuesta de coaching personalizada
+
+### Voz
+
+El mensaje de voz se transcribe con Whisper API y luego se trata como texto. El usuario puede hablar naturalmente y el bot entiende.
+
+### Botones Inline (callback_query)
+
+Usados principalmente durante el onboarding para opciones rápidas:
 
 ```
-Usuario envía mensaje en Telegram
-        ↓
-Telegram Bot API envía webhook POST
-        ↓
-Nginx (reverse proxy) → /webhook/fitai-telegram
-        ↓
-n8n: FitAI - Telegram Webhook Handler
-        ↓
-Parsea el update de Telegram → extrae tipo de mensaje
-        ↓
-[Router lógico]
+[Perder peso] [Ganar músculo] [Mantenerme]
+[Sedentario] [Poco activo] [Moderado] [Muy activo]
 ```
 
----
-
-## Handlers Lógicos (implementados en n8n)
-
-### 1. Handler de Comandos
-
-Detecta mensajes que empiezan con `/`:
-
-| Comando | Acción | Workflow |
-|---------|--------|----------|
-| `/start` | Inicia el proceso de onboarding o saluda si ya completó | FitAI - Onboarding Flow |
-| `/plan` | Muestra el plan de comidas o ejercicio activo | FitAI - Main AI Agent (tool: get_current_plan) |
-| `/progreso` | Calcula y muestra el progreso actual | FitAI - Main AI Agent (tool: calculate_progress) |
-| `/ayuda` | Muestra mensaje de ayuda con los comandos disponibles | FitAI - Telegram Webhook Handler (respuesta directa) |
-
-### 2. Handler de Texto Libre
-
-Mensajes de texto que no son comandos. Se envían al agente principal:
-
-- Conversación general sobre nutrición y fitness
-- Reportar comidas consumidas
-- Preguntas sobre el plan
-- Expresar emociones o reportar estado
-- Reportar peso actual
-
-Procesado por: `FitAI - Main AI Agent`
-
-### 3. Handler de Fotos
-
-Cuando el usuario envía una foto (por ejemplo, de su comida):
-
-- Se extrae la URL de la foto via Telegram API
-- Se envía al agente con contexto de que es una imagen
-- El agente puede analizar visualmente si se usa un modelo multimodal
-
-Procesado por: `FitAI - Main AI Agent` (con capacidad de visión de GPT-4o)
-
-### 4. Handler de Respuesta a Inline Keyboard
-
-Cuando el usuario presiona un botón de respuesta rápida:
-
-- Se recibe como `callback_query` en lugar de `message`
-- Se parsea el `callback_data` para identificar la acción
-- Se enruta según el contexto (onboarding, confirmación, selección)
-
-Procesado por: `FitAI - Telegram Webhook Handler` → Router por tipo de update
+Cada botón envía un `callback_data` que el handler lee y procesa como respuesta de texto.
 
 ---
 
-## Verificación Pre-Handler
+## Verificaciones Pre-Handler
 
-Antes de ejecutar cualquier handler, el `Webhook Handler` verifica:
+Antes de ejecutar cualquier lógica, el handler verifica en orden:
 
-1. **¿Existe el usuario?** — Busca en tabla `users` por `telegram_id`
-2. **¿Tiene membresía activa?** — `memberships.status = 'active' AND expires_at > NOW()`
-3. **¿Está dentro del rate limit?** — Verifica en Redis (`rate_limit:{telegram_id}`)
+```mermaid
+flowchart LR
+    A["Mensaje recibido"] --> B["¿Usuario existe?\n(tabla users)"]
+    B -->|"No"| C["Crear usuario\n(INSERT ON CONFLICT)"]
+    B & C --> D["¿Membresía activa?\n(status='active' AND expires_at > NOW())"]
+    D -->|"No"| E["❌ Mensaje: activa tu suscripción"]
+    D -->|"Sí"| F["✅ Procesar mensaje"]
 
-Si alguna verificación falla, se responde con un mensaje estándar y no se procesa el mensaje.
+    style E fill:#e53e3e,color:#fff
+    style F fill:#10a37f,color:#fff
+```
+
+No hay verificación de rate limit individual por mensaje — el debounce de 2 segundos actúa como throttle natural.
 
 ---
 
-## Integración con n8n
+## Nodos n8n que implementan los handlers
 
-Los handlers no existen como archivos de código en este directorio. Están implementados como nodos dentro de los workflows de n8n:
+| Nodo n8n | Función del handler |
+|---------|-------------------|
+| `telegramTrigger` | Recibe el HTTP POST de Telegram |
+| `Switch` | Determina tipo (voice / text / callback_query) |
+| `Get Voice File` + Whisper | Transcripción de audio |
+| `executeWorkflow` → WF 02 | Debounce multi-mensaje |
+| `Set User Context` | Normaliza {chatId, telegramId, message.text} |
+| `Postgres` (upsert) | Crea/actualiza usuario |
+| `Postgres` (check) | Verifica membresía activa |
+| `IF` → WF 03 | Enruta a onboarding si incompleto |
+| `AI Agent` (GPT-4o) | Procesa mensaje con contexto |
+| `Telegram Send` | Envía respuesta al usuario |
 
-- **Webhook Trigger Node** → Recibe el HTTP POST de Telegram
-- **Set Node** → Parsea y extrae datos del update
-- **IF Node** → Determina tipo de mensaje (comando, texto, foto, callback)
-- **Switch Node** → Enruta al workflow correspondiente
-- **Execute Workflow Node** → Llama al sub-workflow apropiado
-- **Telegram Node** → Envía la respuesta al usuario
-
-Consulta `docs/n8n-flows.md` para la documentación detallada de cada workflow.
+Documentación detallada de cada workflow: `docs/n8n-flows.md`
 
 ---
 
 ## Futuro: Handlers en Código
 
-En una fase futura, si se requiere lógica que no sea práctica implementar en n8n (procesamiento de imágenes, cálculos complejos en tiempo real), se podrían crear handlers en este directorio como funciones Node.js que n8n invoque via HTTP Request.
+Si en fases futuras se necesita lógica que supere las capacidades de un Code node de n8n (ej: procesamiento de imágenes pesado, cálculos en tiempo real muy complejos), se podrían agregar microservicios HTTP en este directorio que n8n invoca via HTTP Request node.
 
 ```
 src/bot/handlers/
 ├── README.md           # Este archivo
-├── imageAnalysis.js    # (futuro) Análisis de imágenes de comida
-└── complexCalc.js      # (futuro) Cálculos que excedan las capacidades de Code node
+├── imageAnalysis.js    # (futuro) Análisis visual de fotos de comida
+└── complexCalc.js      # (futuro) Cálculos que excedan Code node
 ```

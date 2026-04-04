@@ -445,6 +445,10 @@ Cuando un workflow no funciona como se espera:
 22. ✅ ¿Campo de Set node tiene punto en el nombre (ej: `message.text`)? → El output es anidado: `json.message.text`, no `json.text` (ver sección 18)
 23. ✅ ¿`systemMessage` del AI Agent no evalúa expresiones? → El campo necesita prefijo `=`. Usar `={{ $json.fullSystemPrompt }}` y construir el prompt en Build Context (ver CLAUDE.md)
 24. ✅ ¿AI Agent lanza "Expected string, received object → at input" al llamar un tool? → Hay un campo `$fromAI()` extra en `fields.values` del toolWorkflow. Mover ese dato al JSON del campo `query` vía descripción del tool (ver sección 21)
+25. ✅ ¿Downstream de un Merge se ejecuta N veces (ej: mensajes duplicados)? → Merge mal configurado: usar `mode: "append"` + Code node "Collapse to One Item" después (ver sección 22)
+26. ✅ ¿Error `column "X_kg" does not exist` o `invalid input value for enum`? → Auditar schema real con `\d tablename` y listar enums antes de escribir SQL (ver sección 23)
+27. ✅ ¿`ON CONFLICT (user_id)` falla con "no unique or exclusion constraint"? → La tabla no tiene unique constraint en esa columna. Usar DELETE + INSERT (ver sección 23)
+28. ✅ ¿Estado de prueba inyectado en Redis causa errores de enum? → Verificar que los valores coincidan exactamente con los enums del DB (ver sección 24)
 
 ---
 
@@ -636,6 +640,124 @@ print("Workflow updatedAt:", wf["updatedAt"])
 ```
 
 **Consecuencia de ignorar esto:** Se declara un fix como "fallando" cuando en realidad nunca fue probado, desperdiciando tiempo en debuggear un problema que no existe.
+
+---
+
+## 22. Merge node fan-out — downstream se ejecuta N veces
+
+**Síntoma:** Un nodo downstream (ej: `Send Message`) se ejecuta 4 veces, enviando 4 mensajes idénticos.
+
+**Causa:** Un nodo fuente (ej: `Calculate Metrics`) tiene conexiones salientes hacia N nodos en paralelo. Todos convergen en un nodo `Merge`. Si el Merge no está configurado correctamente, cada input que llega dispara el downstream de forma independiente.
+
+**Ejemplo:**
+```
+Calculate Metrics → Save User Profile    ─┐
+                  → Save Initial Goal     ├→ Merge → Send Message (ejecuta 4x)
+                  → Save Initial Weight   │
+                  → Create Daily Targets ─┘
+```
+
+**Fix — Merge `mode: "append"` + Code node "Collapse to One Item":**
+
+```python
+# Configurar el Merge node:
+node['parameters'] = {
+    "mode": "append",      # espera TODOS los inputs, sin config adicional
+    "numberInputs": 4
+}
+
+# Agregar nodo Code inmediatamente después del Merge:
+collapse_node = {
+    "id": "ob-collapse-01",
+    "name": "Collapse to One Item",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { done: true } }];"
+    }
+}
+# Conectar: Merge → Collapse → downstream
+```
+
+**Por qué `append` + Collapse:** `mode: "append"` espera todos los inputs antes de proceder (no dispara por cada input), pero concatena todos los items de todas las ramas (N items). El nodo Collapse reduce a 1 item para que el downstream corra una sola vez.
+
+**Modos del Merge node en n8n 2.x:**
+| Modo | Comportamiento | Requiere config |
+|------|---------------|-----------------|
+| `append` | Concatena todos los items de todas las ramas | No |
+| `combine` (sin combineMode) | Error: "You need to define at least one pair of fields" | Sí |
+| `combine` + `mergeByPosition` | Error: "You need to define at least one pair of fields" en n8n 2.11.3 | Sí |
+
+**Conectar las ramas al Merge con índices correctos:**
+```python
+conns['Save User Profile']['main']   = [[{"node": "Merge", "type": "main", "index": 0}]]
+conns['Save Initial Goal']['main']   = [[{"node": "Merge", "type": "main", "index": 1}]]
+conns['Save Initial Weight']['main'] = [[{"node": "Merge", "type": "main", "index": 2}]]
+conns['Create Targets']['main']      = [[{"node": "Merge", "type": "main", "index": 3}]]
+```
+
+---
+
+## 23. PostgreSQL — auditar schema ANTES de escribir SQL
+
+**Síntoma:** `column "target_weight_kg" of relation "goals" does not exist`, `invalid input value for enum activity_level: "moderate"`, `ON CONFLICT (user_id)` falla sin error de constraint único.
+
+**Causa:** Asumir nombres de columnas, valores de enum, o existencia de constraints sin verificar el schema real.
+
+**Regla obligatoria:** Antes de escribir cualquier INSERT/UPDATE/ON CONFLICT para una tabla nueva, ejecutar:
+```sql
+\d tablename
+```
+Y verificar:
+1. **Nombres exactos de columnas** — el DB puede tener `target_weight` cuando el código usaba `target_weight_kg`
+2. **Valores exactos de enums** — usar `SELECT typname, enumlabel FROM pg_enum JOIN pg_type ON ...` para listar todos los enums
+3. **Constraints existentes** — `ON CONFLICT (col)` solo funciona si hay un `UNIQUE CONSTRAINT` o `PRIMARY KEY` en esa columna. Un índice simple (no único) no es suficiente
+
+**Consulta para auditar todos los enums del proyecto:**
+```sql
+SELECT t.typname, e.enumlabel
+FROM pg_type t
+JOIN pg_enum e ON t.oid = e.enumtypid
+ORDER BY t.typname, e.enumsortorder;
+```
+
+**Patrón para tablas sin unique constraint en user_id (ej: `goals`):**
+```sql
+-- MAL — goals no tiene unique constraint en user_id
+INSERT INTO goals (...) VALUES (...) ON CONFLICT (user_id) DO UPDATE ...
+
+-- BIEN — DELETE + INSERT
+DELETE FROM goals WHERE user_id = $1 AND is_active = true;
+INSERT INTO goals (...) VALUES ($1, ...);
+```
+
+**Errores encontrados en FitAI (2026-04-04):**
+| Código incorrecto | Schema real | Fix |
+|---|---|---|
+| `target_weight_kg` | `target_weight` | Renombrar en SQL |
+| `start_weight_kg` | `start_weight` | Renombrar en SQL |
+| `activity_level: 'moderate'` | enum `moderately_active` | Corregir valor |
+| `ON CONFLICT (user_id)` en `goals` | Sin unique constraint en user_id | DELETE + INSERT |
+
+---
+
+## 24. Datos de prueba con valores de enum incorrectos — causa falsos errores
+
+**Síntoma:** El workflow falla con `invalid input value for enum X: "valor"` pero el código parece correcto.
+
+**Causa:** Los datos inyectados manualmente en Redis (o en cualquier otro estado de prueba) usan valores que no coinciden con los enums del DB. El workflow está correcto — los datos de prueba están mal.
+
+**Ejemplo real:**
+```bash
+# MAL — 'moderate' no existe en el enum activity_level
+redis-cli SET "onboarding:1435522255" '{"data": {"activity_level": "moderate"}}'
+
+# BIEN — usar el valor exacto del enum
+redis-cli SET "onboarding:1435522255" '{"data": {"activity_level": "moderately_active"}}'
+```
+
+**Regla:** Antes de inyectar cualquier estado de prueba en Redis, verificar que TODOS los valores de campo que mapean a enums de PostgreSQL usen los valores exactos del enum (ver sección 23 para listar enums).
 
 ---
 

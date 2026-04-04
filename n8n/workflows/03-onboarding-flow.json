@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T19:45:36.478Z",
+  "updatedAt": "2026-04-04T19:37:17.715Z",
   "createdAt": "2026-04-01T20:02:43.200Z",
   "id": "yiUgnJ6gCoaIFVXe",
   "name": "FitAI - Onboarding Flow",
@@ -82,8 +82,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1008,
-        160
+        1248,
+        112
       ]
     },
     {
@@ -108,8 +108,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1120,
-        448
+        1648,
+        432
       ]
     },
     {
@@ -125,8 +125,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        1344,
-        304
+        1856,
+        272
       ],
       "credentials": {
         "redis": {
@@ -164,18 +164,18 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1568,
-        304
+        2080,
+        272
       ]
     },
     {
       "parameters": {
-        "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
-        "text": "={{ $json.choices[0].message.content }}",
+        "chatId": "={{ $('Prepare AI Message Input').first().json.chatId }}",
+        "text": "={{ $json.output }}",
         "replyMarkup": "={{ $('Prepare AI Message Input').first().json.replyMarkupType }}",
-        "inlineKeyboard": "={{ $('Prepare AI Message Input').first().json.inlineKeyboard }}",
-        "replyKeyboard": "={{ $('Prepare AI Message Input').first().json.replyKeyboard }}",
-        "replyKeyboardOptions": "={{ $('Prepare AI Message Input').first().json.replyKeyboardOptions }}",
+        "forceReply": {},
+        "replyKeyboardOptions": {},
+        "replyKeyboardRemove": {},
         "additionalFields": {
           "appendAttribution": false,
           "parse_mode": "Markdown"
@@ -186,8 +186,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2240,
-        640
+        2928,
+        608
       ],
       "webhookId": "dc041c40-9464-4c4c-ada3-1f9f266a9ba6",
       "credentials": {
@@ -206,16 +206,16 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1792,
-        -16
+        2304,
+        -48
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO user_profiles (\n  user_id, gender, age, height_cm, weight_kg,\n  activity_level, fitness_level, goal,\n  dietary_restrictions, food_allergies, disliked_foods,\n  injuries, available_equipment, training_days_per_week,\n  wake_up_time, meals_per_day, budget_level,\n  onboarding_completed, onboarding_completed_at,\n  bmr, tdee, caloric_target,\n  protein_target_g, carb_target_g, fat_target_g\n) VALUES (\n  $1, $2, $3, $4, $5,\n  $6, $7, $8,\n  $9, $10, $11,\n  $12, $13, $14,\n  $15, $16, $17,\n  true, NOW(),\n  $18, $19, $20,\n  $21, $22, $23\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n  gender = EXCLUDED.gender, age = EXCLUDED.age,\n  height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg,\n  activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level,\n  goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions,\n  food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods,\n  injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment,\n  training_days_per_week = EXCLUDED.training_days_per_week,\n  wake_up_time = EXCLUDED.wake_up_time, meals_per_day = EXCLUDED.meals_per_day,\n  budget_level = EXCLUDED.budget_level, onboarding_completed = true,\n  onboarding_completed_at = NOW(),\n  bmr = EXCLUDED.bmr, tdee = EXCLUDED.tdee, caloric_target = EXCLUDED.caloric_target,\n  protein_target_g = EXCLUDED.protein_target_g, carb_target_g = EXCLUDED.carb_target_g,\n  fat_target_g = EXCLUDED.fat_target_g;",
+        "query": "INSERT INTO user_profiles (\n  user_id, gender, age, height_cm, weight_kg,\n  activity_level, fitness_level, goal,\n  dietary_restrictions, food_allergies, disliked_foods,\n  injuries, available_equipment, training_days_per_week,\n  wake_up_time, meal_count, budget_level,\n  onboarding_completed, onboarding_completed_at,\n  bmr, tdee, caloric_target,\n  protein_target_g, carb_target_g, fat_target_g\n) VALUES (\n  $1, $2, $3, $4, $5,\n  $6, $7, $8,\n  $9, $10, $11,\n  $12, $13, $14,\n  $15, $16, $17,\n  true, NOW(),\n  $18, $19, $20,\n  $21, $22, $23\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n  gender = EXCLUDED.gender, age = EXCLUDED.age,\n  height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg,\n  activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level,\n  goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions,\n  food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods,\n  injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment,\n  training_days_per_week = EXCLUDED.training_days_per_week,\n  wake_up_time = EXCLUDED.wake_up_time, meal_count = EXCLUDED.meal_count,\n  budget_level = EXCLUDED.budget_level, onboarding_completed = true,\n  onboarding_completed_at = NOW(),\n  bmr = EXCLUDED.bmr, tdee = EXCLUDED.tdee, caloric_target = EXCLUDED.caloric_target,\n  protein_target_g = EXCLUDED.protein_target_g, carb_target_g = EXCLUDED.carb_target_g,\n  fat_target_g = EXCLUDED.fat_target_g;",
         "options": {
-          "queryReplacement": "={{ [$json.userId, $json.gender, $json.age, $json.height_cm, $json.weight_kg, $json.activity_level, $json.fitness_level, $json.goal_type, JSON.stringify($json.dietary_restrictions || []), JSON.stringify($json.food_allergies || []), JSON.stringify($json.disliked_foods || []), $json.injuries || null, $json.equipment || 'none', $json.training_days_per_week, $json.wake_up_time || '07:00', $json.meals_per_day || 3, $json.budget_level || 'medium', $json.bmr, $json.tdee, $json.caloric_target, $json.protein_target_g, $json.carb_target_g, $json.fat_target_g] }}"
+          "queryReplacement": "={{ [\n  $json.userId,\n  $json.gender,\n  $json.age,\n  $json.height_cm,\n  $json.weight_kg,\n  $json.activity_level,\n  $json.fitness_level,\n  $json.goal_type,\n  '{' + ($json.dietary_restrictions||[]).map(function(v){return '\"'+String(v).replace(/\"/g,'\\\\\"')+'\"';}).join(',') + '}',\n  '{' + ($json.food_allergies||[]).map(function(v){return '\"'+String(v).replace(/\"/g,'\\\\\"')+'\"';}).join(',') + '}',\n  '{' + ($json.disliked_foods||[]).map(function(v){return '\"'+String(v).replace(/\"/g,'\\\\\"')+'\"';}).join(',') + '}',\n  $json.injuries ? '{\"' + String($json.injuries).replace(/\"/g,'\\\\\"') + '\"}' : '{}',\n  $json.equipment ? '{\"' + String($json.equipment) + '\"}' : '{}',\n  $json.training_days_per_week,\n  $json.wake_up_time || '07:00',\n  $json.meals_per_day || 3,\n  $json.budget_level || 'medium',\n  $json.bmr,\n  $json.tdee,\n  $json.caloric_target,\n  $json.protein_target_g,\n  $json.carb_target_g,\n  $json.fat_target_g\n] }}"
         }
       },
       "id": "ob-11",
@@ -223,8 +223,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2000,
-        -176
+        2512,
+        -208
       ],
       "credentials": {
         "postgres": {
@@ -236,7 +236,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO goals (user_id, goal_type, target_weight_kg, start_weight_kg, start_date, is_active)\nVALUES ($1, $2, $3, $4, CURRENT_DATE, true)\nON CONFLICT (user_id) DO UPDATE SET\n  goal_type = EXCLUDED.goal_type,\n  target_weight_kg = EXCLUDED.target_weight_kg,\n  start_weight_kg = EXCLUDED.start_weight_kg,\n  start_date = EXCLUDED.start_date,\n  is_active = true;",
+        "query": "DELETE FROM goals WHERE user_id = $1 AND is_active = true;\nINSERT INTO goals (user_id, goal_type, target_weight, start_weight, start_date, is_active)\nVALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')::date, true);",
         "options": {
           "queryReplacement": "={{ [$json.userId, $json.goal_type, $json.target_weight || null, $json.weight_kg] }}"
         }
@@ -246,8 +246,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2000,
-        -16
+        2512,
+        -48
       ],
       "credentials": {
         "postgres": {
@@ -259,7 +259,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO weight_logs (user_id, weight_kg, notes, logged_at)\nVALUES ($1, $2, 'Peso inicial - onboarding', CURRENT_DATE)\nON CONFLICT DO NOTHING;",
+        "query": "INSERT INTO weight_logs (user_id, weight_kg, notes, logged_at)\nVALUES ($1, $2, 'Peso inicial - onboarding', (NOW() AT TIME ZONE 'America/Bogota')::date)\nON CONFLICT DO NOTHING;",
         "options": {
           "queryReplacement": "={{ [$json.userId, $json.weight_kg] }}"
         }
@@ -269,8 +269,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2000,
-        144
+        2512,
+        112
       ],
       "credentials": {
         "postgres": {
@@ -282,7 +282,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n) VALUES (\n  $1,\n  (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day',\n  $2, $3, $4, $5,\n  0, 0, 0, 0\n)\nON CONFLICT (user_id, target_date) DO NOTHING;",
+        "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n) VALUES (\n  $1,\n  (NOW() AT TIME ZONE 'America/Bogota')::date + 1,\n  $2, $3, $4, $5,\n  0, 0, 0, 0\n)\nON CONFLICT (user_id, target_date) DO NOTHING;",
         "options": {
           "queryReplacement": "={{ [$json.userId, $json.caloric_target, $json.protein_target_g, $json.carb_target_g, $json.fat_target_g] }}"
         }
@@ -292,8 +292,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2000,
-        304
+        2512,
+        272
       ],
       "credentials": {
         "postgres": {
@@ -318,8 +318,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        2640,
-        128
+        3152,
+        96
       ]
     },
     {
@@ -332,8 +332,8 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        2864,
-        128
+        3376,
+        96
       ],
       "credentials": {
         "redis": {
@@ -358,8 +358,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        3088,
-        128
+        3600,
+        96
       ]
     },
     {
@@ -376,8 +376,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3360,
-        128
+        3872,
+        96
       ],
       "webhookId": "8811e933-0c45-4e87-9a3b-02dbcca22f9b",
       "credentials": {
@@ -401,8 +401,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3584,
-        128
+        4096,
+        96
       ],
       "webhookId": "7900a537-ea55-44f0-9fbd-6fee164c23c5",
       "credentials": {
@@ -414,6 +414,7 @@
     },
     {
       "parameters": {
+        "mode": "append",
         "numberInputs": 4
       },
       "id": "merge-merge-onboarding-save",
@@ -421,21 +422,52 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.1,
       "position": [
-        2400,
-        96
+        2912,
+        64
       ]
     },
     {
       "parameters": {
-        "jsCode": "\n// ─── Sources: resilient to what  contains after Redis SET ────────────────\nconst state     = .state     || {};\nconst stateData = state.data      || {};\nconst isNewUser          = .isNewUser  === true;\nconst isValidationError  = !isNewUser && (.isValid === false);\n\n// ─── User response (for existing sessions) ────────────────────────────────────\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = .first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\n// ─── Keyboard map: keyed by state.step ─────────────────────────────────────\n// Centralized here so it applies identically on first ask AND on validation error\n// (state.step does NOT change when isValid=false, so the right keyboard always returns)\nconst IK = (rows) => ({ type: 'inlineKeyboard', inlineKeyboard: { rows } });\nconst btn = (text, cb) => ({ text, additionalFields: { callbackData: cb } });\n\nconst KEYBOARDS = {\n  ask_gender: IK([\n    { row: { buttons: [btn('Hombre','male'), btn('Mujer','female')] } }\n  ]),\n  ask_goal: IK([\n    { row: { buttons: [btn('Perder grasa','lose_fat'), btn('Ganar musculo','gain_muscle')] } },\n    { row: { buttons: [btn('Mantener peso','maintain'), btn('Recomposicion corporal','recomposition')] } }\n  ]),\n  ask_dietary_restrictions_known: IK([\n    { row: { buttons: [btn('Si, tengo','yes'), btn('No, ninguna','no')] } }\n  ]),\n  ask_budget: IK([\n    { row: { buttons: [btn('Economico','low'), btn('Moderado','medium'), btn('Sin limite','high')] } }\n  ]),\n  ask_meals: IK([\n    { row: { buttons: [btn('3','3'), btn('4','4'), btn('5','5')] } }\n  ]),\n  ask_fitness_level: IK([\n    { row: { buttons: [btn('Principiante (< 6 meses)','beginner')] } },\n    { row: { buttons: [btn('Intermedio (6 meses - 2 anos)','intermediate')] } },\n    { row: { buttons: [btn('Avanzado (2+ anos)','advanced')] } }\n  ]),\n  ask_equipment: IK([\n    { row: { buttons: [btn('Casa sin equipo','bodyweight')] } },\n    { row: { buttons: [btn('Casa con mancuernas/bandas','home_basic')] } },\n    { row: { buttons: [btn('Gimnasio','full_gym')] } }\n  ]),\n  ask_training_days: IK([\n    { row: { buttons: [btn('2','2'),btn('3','3'),btn('4','4'),btn('5','5'),btn('6','6')] } }\n  ]),\n  ask_injuries: IK([\n    { row: { buttons: [btn('No, estoy bien','no'), btn('Si, tengo','yes')] } }\n  ]),\n  ask_wake_time: IK([\n    { row: { buttons: [\n      btn('5:00','05:00'),btn('6:00','06:00'),btn('7:00','07:00'),\n      btn('8:00','08:00'),btn('9:00','09:00'),btn('Otra','custom')\n    ] } }\n  ]),\n  ask_activity_level: IK([\n    { row: { buttons: [btn('Sentado casi todo el dia','sedentary')] } },\n    { row: { buttons: [btn('Camino algo, tareas ligeras','lightly_active')] } },\n    { row: { buttons: [btn('De pie bastante, camino mucho','moderately_active')] } },\n    { row: { buttons: [btn('Trabajo fisico pesado','very_active')] } }\n  ]),\n  confirm_profile: IK([\n    { row: { buttons: [btn('Todo bien, dale','confirm'), btn('Quiero corregir algo','correct')] } }\n  ]),\n  correct_block: IK([\n    { row: { buttons: [btn('Datos fisicos','block_1'), btn('Objetivo','block_2')] } },\n    { row: { buttons: [btn('Alimentacion','block_3'), btn('Ejercicio','block_4')] } },\n    { row: { buttons: [btn('Horarios','block_5')] } }\n  ]),\n  ask_phone: {\n    type: 'replyKeyboard',\n    replyKeyboard: {\n      rows: [{ row: { buttons: [{ text: 'Compartir mi numero', requestContact: true }] } }]\n    },\n    replyKeyboardOptions: { resizeKeyboard: true, oneTimeKeyboard: true }\n  }\n};\n\nconst kb = KEYBOARDS[state.step] || null;\n\n// ─── AI message payload ────────────────────────────────────────────────────────\nconst userMessage = JSON.stringify({\n  step:             state.step,\n  user_response:    userResponse,\n  validation_error: isValidationError,\n  user_name:        stateData.first_name || null,\n  collected_data: {\n    gender:    stateData.gender    || null,\n    age:       stateData.age       || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\nreturn [{\n  json: {\n    userMessage,\n    chatId:              .first().json.chatId,\n    replyMarkupType:     kb ? kb.type : 'none',\n    inlineKeyboard:      (kb && kb.type === 'inlineKeyboard')  ? kb.inlineKeyboard  : null,\n    replyKeyboard:       (kb && kb.type === 'replyKeyboard')   ? kb.replyKeyboard   : null,\n    replyKeyboardOptions:(kb && kb.replyKeyboardOptions)        ? kb.replyKeyboardOptions : null\n  }\n}];\n"
+        "jsCode": "const state     = $json.state  || {};\nconst stateData = state.data   || {};\nconst isNewUser         = $json.isNewUser === true;\nconst isValidationError = !isNewUser && ($json.isValid === false);\nconst trigger = $('Execute Workflow Trigger').first().json;\nconst userRaw = trigger.callbackData || trigger.text || '';\n\nconst STEP_DESC = {\n  ask_name:    'Saluda brevemente y pregunta como se llama.',\n  ask_gender:  'Pregunta el genero biologico (necesario para calcular el metabolismo TMB). Opciones con botones: Hombre o Mujer.',\n  ask_age:     'Pregunta la edad en anos (necesaria para calcular el TMB). Rango valido: 14-100.',\n  ask_height:  'Pregunta la estatura en centimetros (necesaria para calcular el TMB). Rango: 100-250 cm.',\n  ask_weight:  'Pregunta el peso actual en kilogramos (para calcular deficit/surplus calorico). Rango: 30-300 kg.',\n  ask_goal:    'Pregunta el objetivo principal. Opciones con botones: Perder grasa, Ganar musculo, Mantener peso, Recomposicion corporal.',\n  ask_target_weight: 'Pregunta el peso meta en kilogramos.',\n  ask_dietary_restrictions_known: 'Pregunta si tiene restricciones dieteticas o alergias. Opciones: Si o No.',\n  ask_dietary_input: 'Pide que escriba sus restricciones y alergias separadas por comas.',\n  ask_disliked_foods: 'Pregunta que alimentos no le gustan. Puede escribirlos o decir no.',\n  ask_budget:  'Pregunta el presupuesto para ingredientes. Opciones: Economico, Moderado, Sin limite.',\n  ask_meals:   'Pregunta cuantas comidas prefiere al dia. Opciones: 3, 4 o 5.',\n  ask_fitness_level: 'Pregunta el nivel de experiencia entrenando. Opciones: Principiante, Intermedio, Avanzado.',\n  ask_equipment: 'Pregunta donde entrena. Opciones: Casa sin equipo, Casa con mancuernas/bandas, Gimnasio.',\n  ask_training_days: 'Pregunta cuantos dias a la semana puede entrenar. Opciones: 2 a 6 dias.',\n  ask_injuries: 'Pregunta si tiene alguna lesion o limitacion fisica. Opciones: No o Si.',\n  ask_injuries_input: 'Pide que describa brevemente su lesion.',\n  ask_wake_time: 'Pregunta a que hora se despierta. Hay botones con horas comunes.',\n  ask_wake_time_custom: 'Pide la hora de despertar en formato HH:MM.',\n  ask_activity_level: 'Pregunta el nivel de actividad diaria fuera del ejercicio. Hay botones.',\n  confirm_profile: 'Presenta un resumen de los datos clave y pregunta si todo esta bien o quiere corregir algo.',\n  correct_block: 'Pregunta que bloque de datos quiere corregir. Hay botones.',\n  ask_phone:   'Pide el numero de telefono. Explica que es para el seguimiento. Hay un boton para compartirlo desde el telefono.'\n};\nconst stepDesc = STEP_DESC[state.step] || 'Continua el proceso.';\n\nconst ctx = [\n  stateData.first_name ? 'nombre: ' + stateData.first_name : null,\n  stateData.gender     ? 'genero: ' + stateData.gender     : null,\n  stateData.age        ? 'edad: '   + stateData.age + ' anos' : null,\n  stateData.height_cm  ? 'talla: '  + stateData.height_cm + ' cm' : null,\n  stateData.weight_kg  ? 'peso: '   + stateData.weight_kg + ' kg' : null,\n  stateData.goal_type  ? 'objetivo: ' + stateData.goal_type : null\n].filter(Boolean).join(', ') || 'ninguno aun';\n\n// ─── systemMessage: strict role, no free-form conversation ───────────────────\nconst systemMessage =\n  'Eres Fitnessia, coach de nutricion y fitness. Generas exactamente UN mensaje de Telegram para el onboarding.\\n\\n' +\n  'PASO ACTUAL: ' + state.step + '\\n' +\n  'Objetivo del paso: ' + stepDesc + '\\n' +\n  'Datos ya recopilados: ' + ctx + '\\n\\n' +\n  'REGLAS ABSOLUTAS (sin excepciones):\\n' +\n  '1. Maximo 2 oraciones. Una sola pregunta por mensaje.\\n' +\n  '2. NUNCA menciones el plan, ni des por terminado el onboarding. Eso no te corresponde decidir.\\n' +\n  '3. NUNCA prometas enviar nada ni hables del futuro del proceso.\\n' +\n  '4. NUNCA supongas cuantos pasos faltan.\\n' +\n  '5. Tu unica tarea: generar la pregunta del paso actual. Nada mas.\\n' +\n  '6. Si hay botones en este paso, menciona brevemente las opciones en el texto.\\n' +\n  '7. Tutea. Tono coloquial. Max 1 emoji si suma. Solo saluda con Hola en ask_name.';\n\n// ─── humanMessage: explicit task instruction, never raw user text ─────────────\nlet humanMessage;\nif (isNewUser) {\n  humanMessage = 'Tarea: ' + stepDesc;\n} else if (isValidationError) {\n  humanMessage =\n    'El usuario respondio: \"' + userRaw + '\" (no es la respuesta esperada para este paso).\\n' +\n    'Datos ya recopilados: ' + ctx + '.\\n' +\n    'Si fue una pregunta: respondela en 1 oracion con el contexto real (para que sirve ese dato) y redirige.\\n' +\n    'Si fue dato invalido: re-pregunta de forma mas clara diciendo para que se necesita ese dato.\\n' +\n    'Tarea final: ' + stepDesc;\n} else {\n  humanMessage = 'Dato anterior aceptado. Tarea: ' + stepDesc;\n}\n\n// ─── Keyboard map keyed by state.step ────────────────────────────────────────\nconst IK = (rows) => ({ type: 'inlineKeyboard', inlineKeyboard: { rows } });\nconst btn = (text, cb) => ({ text, additionalFields: { callbackData: cb } });\nconst KEYBOARDS = {\n  ask_gender: IK([{ row: { buttons: [btn('Hombre','male'), btn('Mujer','female')] } }]),\n  ask_goal: IK([\n    { row: { buttons: [btn('Perder grasa','lose_fat'), btn('Ganar musculo','gain_muscle')] } },\n    { row: { buttons: [btn('Mantener peso','maintain'), btn('Recomposicion corporal','recomposition')] } }\n  ]),\n  ask_dietary_restrictions_known: IK([{ row: { buttons: [btn('Si, tengo','yes'), btn('No, ninguna','no')] } }]),\n  ask_budget: IK([{ row: { buttons: [btn('Economico','low'), btn('Moderado','medium'), btn('Sin limite','high')] } }]),\n  ask_meals:  IK([{ row: { buttons: [btn('3','3'), btn('4','4'), btn('5','5')] } }]),\n  ask_fitness_level: IK([\n    { row: { buttons: [btn('Principiante (< 6 meses)','beginner')] } },\n    { row: { buttons: [btn('Intermedio (6 meses - 2 anos)','intermediate')] } },\n    { row: { buttons: [btn('Avanzado (2+ anos)','advanced')] } }\n  ]),\n  ask_equipment: IK([\n    { row: { buttons: [btn('Casa sin equipo','bodyweight')] } },\n    { row: { buttons: [btn('Casa con mancuernas/bandas','home_basic')] } },\n    { row: { buttons: [btn('Gimnasio','full_gym')] } }\n  ]),\n  ask_training_days: IK([{ row: { buttons: [btn('2','2'),btn('3','3'),btn('4','4'),btn('5','5'),btn('6','6')] } }]),\n  ask_injuries: IK([{ row: { buttons: [btn('No, estoy bien','no'), btn('Si, tengo','yes')] } }]),\n  ask_wake_time: IK([{ row: { buttons: [\n    btn('5:00','05:00'),btn('6:00','06:00'),btn('7:00','07:00'),\n    btn('8:00','08:00'),btn('9:00','09:00'),btn('Otra','custom')\n  ] } }]),\n  ask_activity_level: IK([\n    { row: { buttons: [btn('Sentado casi todo el dia','sedentary')] } },\n    { row: { buttons: [btn('Camino algo, tareas ligeras','lightly_active')] } },\n    { row: { buttons: [btn('De pie bastante, camino mucho','moderately_active')] } },\n    { row: { buttons: [btn('Trabajo fisico pesado','very_active')] } }\n  ]),\n  confirm_profile: IK([{ row: { buttons: [btn('Todo bien, dale','confirm'), btn('Quiero corregir algo','correct')] } }]),\n  correct_block: IK([\n    { row: { buttons: [btn('Datos fisicos','block_1'), btn('Objetivo','block_2')] } },\n    { row: { buttons: [btn('Alimentacion','block_3'), btn('Ejercicio','block_4')] } },\n    { row: { buttons: [btn('Horarios','block_5')] } }\n  ]),\n  ask_phone: {\n    type: 'replyKeyboard',\n    replyKeyboard: { rows: [{ row: { buttons: [{ text: 'Compartir mi numero', requestContact: true }] } }] },\n    replyKeyboardOptions: { resizeKeyboard: true, oneTimeKeyboard: true }\n  }\n};\nconst kb = KEYBOARDS[state.step] || null;\n\nreturn [{ json: {\n  systemMessage,\n  humanMessage,\n  chatId:              trigger.chatId,\n  replyMarkupType:     kb ? kb.type : 'none',\n  inlineKeyboard:      (kb && kb.type === 'inlineKeyboard')  ? kb.inlineKeyboard  : null,\n  replyKeyboard:       (kb && kb.type === 'replyKeyboard')   ? kb.replyKeyboard   : null,\n  replyKeyboardOptions:(kb && kb.replyKeyboardOptions)       ? kb.replyKeyboardOptions : null\n} }];\n"
       },
       "id": "ob-ai-01",
       "name": "Prepare AI Message Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1792,
-        640
+        2304,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "c1",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.callbackData || '' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ob-if-cb",
+      "name": "Has Callback?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        448
       ]
     },
     {
@@ -446,33 +478,105 @@
           "messages": [
             {
               "role": "system",
-              "content": "Eres el coach personal de nutricion y fitness en el registro inicial de un usuario nuevo por Telegram.\nTu trabajo: recopilar sus datos haciendo preguntas breves y naturales, como un amigo que sabe del tema.\n\nTONO (igual que en todo el sistema):\n- Tuteas siempre, lenguaje coloquial pero no vulgar\n- Vas al grano: la primera oracion ya hace la pregunta\n- Varias expresiones al acusar recibo: \"Va\", \"Listo\", \"Ok\", \"Dale\", \"Sale\", \"Bien\", \"Anotado\"\n- Emojis: maximo 1, solo si aporta. Ninguno si no suma nada.\n- Nunca repitas lo que el usuario dijo en modo confirmacion\n\nANTI-PATRONES (NUNCA hagas esto):\n- \"Entendido, has seleccionado Hombre\" — suena a formulario\n- \"Perfecto! Tu edad de 28 anos ha sido registrada\" — robotico\n- \"Excelente eleccion!\" — adulacion vacia  \n- \"Gracias por compartir esa informacion\" — robotico\n- Saludar con \"Hola [nombre]\" en cada respuesta — solo en el primer mensaje\n\nREGLAS DE FORMATO:\n- Maximo 2 oraciones por mensaje (es Telegram, no un formulario)\n- Si hay opciones con botones, mencionalas brevemente en el texto por si los botones no se ven\n- Si validation_error=true: solo re-pregunta de forma natural en 1 oracion. Nada de \"respuesta invalida\" ni \"usa los botones\".\n- Si validation_error=false: una sola palabra de ack + la pregunta\n\nEJEMPLOS CORRECTOS:\nask_gender primera vez: \"Genero biologico? Hombre o mujer.\"\nask_gender error (escribio \"biologico\"): \"Hombre o mujer?\"  \nask_age primera vez: \"Cuantos anos tenes?\"\nask_age error: \"Dame un numero entre 14 y 100.\"\nask_weight error (escribio \"muchos\"): \"Tu peso en kilos. Ej: 75\"\nask_goal primera vez: \"Cual es tu objetivo? Perder grasa, ganar musculo, mantener peso o recomposicion corporal.\"\nask_phone primera vez: \"Para terminar, necesito tu numero. Presiona el boton de abajo para compartirlo.\"\nask_phone error (escribio texto): \"Usa el boton de abajo para compartir tu numero de telefono.\"\n"
+              "content": "Eres un normalizador de respuestas para un chatbot de onboarding de nutricion y fitness.\nEl usuario responde preguntas en lenguaje natural y puede usar mala ortografia, frases indirectas o coloquiales.\nTu trabajo: extraer la respuesta canonica segun el paso actual.\n\nMAPA DE PASOS Y VALORES CANONICOS:\nask_name: texto libre -> devuelve el texto tal cual (solo trim)\nask_gender: \"male\"|\"female\" -> \"soy hombre\"->\"male\", \"chica\"->\"female\", \"masculino\"->\"male\", \"chico\"->\"male\"\nask_age: entero 14-100 como string -> \"veintiocho\"->\"28\", \"tengo 25 anos\"->\"25\"\nask_height: numero cm 100-250 como string -> \"1.70\"->\"170\", \"uno setenta\"->\"170\", \"175cm\"->\"175\"\nask_weight: numero kg 30-300 como string -> \"peso 80 kilos\"->\"80\", \"como 75\"->\"75\"\nask_goal: \"lose_fat\"|\"gain_muscle\"|\"maintain\"|\"recomposition\" -> \"adelgazar\"->\"lose_fat\", \"bajar de peso\"->\"lose_fat\", \"volumen\"->\"gain_muscle\", \"ganar masa\"->\"gain_muscle\"\nask_target_weight: numero kg 30-300 como string\nask_dietary_restrictions_known: \"yes\"|\"no\" -> \"si\"->\"yes\", \"ninguna\"->\"no\", \"nop\"->\"no\", \"no tengo\"->\"no\"\nask_dietary_input: texto libre -> devuelve tal cual\nask_disliked_foods: texto libre -> devuelve tal cual\nask_budget: \"low\"|\"medium\"|\"high\" -> \"barato\"->\"low\", \"economico\"->\"low\", \"normal\"->\"medium\", \"sin limite\"->\"high\"\nask_meals: \"3\"|\"4\"|\"5\" -> \"tres comidas\"->\"3\"\nask_fitness_level: \"beginner\"|\"intermediate\"|\"advanced\" -> \"soy nuevo\"->\"beginner\", \"llevo anos\"->\"advanced\"\nask_equipment: \"bodyweight\"|\"home_basic\"|\"full_gym\" -> \"gym\"->\"full_gym\", \"en casa sin nada\"->\"bodyweight\", \"tengo mancuernas\"->\"home_basic\"\nask_training_days: \"2\"|\"3\"|\"4\"|\"5\"|\"6\" -> \"tres dias\"->\"3\"\nask_injuries: \"yes\"|\"no\" -> \"ninguna\"->\"no\", \"tengo una\"->\"yes\", \"estoy bien\"->\"no\"\nask_injuries_input: texto libre -> devuelve tal cual\nask_wake_time: \"HH:MM\"|\"custom\" -> \"las 7\"->\"07:00\", \"a las 6 y media\"->\"06:30\", \"hora inusual\"->\"custom\"\nask_wake_time_custom: \"HH:MM\" -> \"7:30\"->\"07:30\", \"6 y cuarto\"->\"06:15\"\nask_activity_level: \"sedentary\"|\"lightly_active\"|\"moderately_active\"|\"very_active\" -> \"escritorio\"->\"sedentary\", \"camino bastante\"->\"lightly_active\", \"trabajo de pie\"->\"moderately_active\"\nconfirm_profile: \"confirm\"|\"correct\" -> \"todo bien\"->\"confirm\", \"esta bien\"->\"confirm\", \"cambiar\"->\"correct\"\ncorrect_block: \"block_1\"|\"block_2\"|\"block_3\"|\"block_4\"|\"block_5\"\n\nINSTRUCCIONES:\n1. Si el texto mapea claramente a un valor canonico: devuelve ese valor exacto\n2. Si es un paso de texto libre: devuelve el texto limpio\n3. Si no puedes determinar con seguridad: devuelve el texto original\n4. Responde SOLO con JSON valido, sin markdown: {\"normalized\": \"valor_aqui\"}"
             },
             {
-              "content": "={{ $('Prepare AI Message Input').first().json.userMessage }}"
+              "content": "={{ JSON.stringify({ step: $json.currentStep, user_text: $json.userText }) }}"
             }
           ]
         },
         "simplifyOutput": false,
         "options": {
-          "maxTokens": 100,
-          "temperature": 0.7
+          "maxTokens": 60,
+          "temperature": 0
         },
         "requestOptions": {}
       },
-      "id": "ob-ai-02",
-      "name": "Generate Onboarding Message",
+      "id": "ob-ai-03",
+      "name": "Parse User Intent",
       "type": "n8n-nodes-base.openAi",
       "typeVersion": 1.1,
       "position": [
-        2000,
-        640
+        1280,
+        528
       ],
       "credentials": {
         "openAiApi": {
           "id": "NOJoPVNWDXiywRgw",
           "name": "OpenAi account"
         }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const parseData = $('Parse Onboarding State').first().json;\nconst state = parseData.state;\nconst originalText = parseData.userText;\n\nlet normalizedText = originalText;\n\ntry {\n  const aiContent = $('Parse User Intent').first().json.choices[0].message.content;\n  const cleaned = aiContent.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  if (parsed.normalized !== undefined && parsed.normalized !== null) {\n    normalizedText = String(parsed.normalized);\n  }\n} catch(e) {\n  // Keep original text on any failure\n}\n\nreturn [{\n  json: {\n    state,\n    userText: normalizedText,\n    callbackData: null,\n    currentStep: state.step,\n    currentBlock: state.block\n  }\n}];\n"
+      },
+      "id": "ob-norm-01",
+      "name": "Normalize User Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.humanMessage }}",
+        "options": {
+          "systemMessage": "={{ $json.systemMessage }}"
+        }
+      },
+      "id": "ob-agent-01",
+      "name": "Onboarding AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2544,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "maxTokens": 200,
+          "temperature": 0.7
+        }
+      },
+      "id": "ob-llm-01",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2496,
+        816
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "NOJoPVNWDXiywRgw",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "id": "ob-collapse-01",
+      "name": "Collapse to One Item",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { done: true } }];"
       }
     }
   ],
@@ -532,7 +636,7 @@
       "main": [
         [
           {
-            "node": "Validate and Process Step",
+            "node": "Has Callback?",
             "type": "main",
             "index": 0
           }
@@ -622,7 +726,7 @@
           {
             "node": "Merge Onboarding Save",
             "type": "main",
-            "index": 2
+            "index": 1
           }
         ]
       ]
@@ -633,7 +737,7 @@
           {
             "node": "Merge Onboarding Save",
             "type": "main",
-            "index": 1
+            "index": 2
           }
         ]
       ]
@@ -693,33 +797,95 @@
         ]
       ]
     },
-    "Merge Onboarding Save": {
-      "main": [
-        [
-          {
-            "node": "Generate First Meal Plan",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Prepare AI Message Input": {
       "main": [
         [
           {
-            "node": "Generate Onboarding Message",
+            "node": "Onboarding AI Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Generate Onboarding Message": {
+    "Has Callback?": {
+      "main": [
+        [
+          {
+            "node": "Validate and Process Step",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse User Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse User Intent": {
+      "main": [
+        [
+          {
+            "node": "Normalize User Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize User Input": {
+      "main": [
+        [
+          {
+            "node": "Validate and Process Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Onboarding AI Agent": {
       "main": [
         [
           {
             "node": "Send Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Onboarding AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Onboarding Save": {
+      "main": [
+        [
+          {
+            "node": "Collapse to One Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collapse to One Item": {
+      "main": [
+        [
+          {
+            "node": "Generate First Meal Plan",
             "type": "main",
             "index": 0
           }
@@ -735,9 +901,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "f364305d-f9c7-4651-a3b4-3c1e7159eb42",
-  "activeVersionId": "f364305d-f9c7-4651-a3b4-3c1e7159eb42",
-  "versionCounter": 75,
+  "versionId": "aa29fb76-33d3-4f22-9f46-a75587537d49",
+  "activeVersionId": "aa29fb76-33d3-4f22-9f46-a75587537d49",
+  "versionCounter": 127,
   "triggerCount": 0,
   "shared": [
     {
@@ -760,9 +926,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T19:45:36.481Z",
-    "createdAt": "2026-04-03T19:45:36.481Z",
-    "versionId": "f364305d-f9c7-4651-a3b4-3c1e7159eb42",
+    "updatedAt": "2026-04-04T19:37:17.719Z",
+    "createdAt": "2026-04-04T19:37:17.719Z",
+    "versionId": "aa29fb76-33d3-4f22-9f46-a75587537d49",
     "workflowId": "yiUgnJ6gCoaIFVXe",
     "nodes": [
       {
@@ -840,8 +1006,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1008,
-          160
+          1248,
+          112
         ]
       },
       {
@@ -866,8 +1032,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1120,
-          448
+          1648,
+          432
         ]
       },
       {
@@ -883,8 +1049,8 @@
         "type": "n8n-nodes-base.redis",
         "typeVersion": 1,
         "position": [
-          1344,
-          304
+          1856,
+          272
         ],
         "credentials": {
           "redis": {
@@ -922,18 +1088,18 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          1568,
-          304
+          2080,
+          272
         ]
       },
       {
         "parameters": {
-          "chatId": "={{ $('Execute Workflow Trigger').item.json.chatId }}",
-          "text": "={{ $json.choices[0].message.content }}",
+          "chatId": "={{ $('Prepare AI Message Input').first().json.chatId }}",
+          "text": "={{ $json.output }}",
           "replyMarkup": "={{ $('Prepare AI Message Input').first().json.replyMarkupType }}",
-          "inlineKeyboard": "={{ $('Prepare AI Message Input').first().json.inlineKeyboard }}",
-          "replyKeyboard": "={{ $('Prepare AI Message Input').first().json.replyKeyboard }}",
-          "replyKeyboardOptions": "={{ $('Prepare AI Message Input').first().json.replyKeyboardOptions }}",
+          "forceReply": {},
+          "replyKeyboardOptions": {},
+          "replyKeyboardRemove": {},
           "additionalFields": {
             "appendAttribution": false,
             "parse_mode": "Markdown"
@@ -944,8 +1110,8 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          2240,
-          640
+          2928,
+          608
         ],
         "webhookId": "dc041c40-9464-4c4c-ada3-1f9f266a9ba6",
         "credentials": {
@@ -964,16 +1130,16 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1792,
-          -16
+          2304,
+          -48
         ]
       },
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO user_profiles (\n  user_id, gender, age, height_cm, weight_kg,\n  activity_level, fitness_level, goal,\n  dietary_restrictions, food_allergies, disliked_foods,\n  injuries, available_equipment, training_days_per_week,\n  wake_up_time, meals_per_day, budget_level,\n  onboarding_completed, onboarding_completed_at,\n  bmr, tdee, caloric_target,\n  protein_target_g, carb_target_g, fat_target_g\n) VALUES (\n  $1, $2, $3, $4, $5,\n  $6, $7, $8,\n  $9, $10, $11,\n  $12, $13, $14,\n  $15, $16, $17,\n  true, NOW(),\n  $18, $19, $20,\n  $21, $22, $23\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n  gender = EXCLUDED.gender, age = EXCLUDED.age,\n  height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg,\n  activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level,\n  goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions,\n  food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods,\n  injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment,\n  training_days_per_week = EXCLUDED.training_days_per_week,\n  wake_up_time = EXCLUDED.wake_up_time, meals_per_day = EXCLUDED.meals_per_day,\n  budget_level = EXCLUDED.budget_level, onboarding_completed = true,\n  onboarding_completed_at = NOW(),\n  bmr = EXCLUDED.bmr, tdee = EXCLUDED.tdee, caloric_target = EXCLUDED.caloric_target,\n  protein_target_g = EXCLUDED.protein_target_g, carb_target_g = EXCLUDED.carb_target_g,\n  fat_target_g = EXCLUDED.fat_target_g;",
+          "query": "INSERT INTO user_profiles (\n  user_id, gender, age, height_cm, weight_kg,\n  activity_level, fitness_level, goal,\n  dietary_restrictions, food_allergies, disliked_foods,\n  injuries, available_equipment, training_days_per_week,\n  wake_up_time, meal_count, budget_level,\n  onboarding_completed, onboarding_completed_at,\n  bmr, tdee, caloric_target,\n  protein_target_g, carb_target_g, fat_target_g\n) VALUES (\n  $1, $2, $3, $4, $5,\n  $6, $7, $8,\n  $9, $10, $11,\n  $12, $13, $14,\n  $15, $16, $17,\n  true, NOW(),\n  $18, $19, $20,\n  $21, $22, $23\n)\nON CONFLICT (user_id)\nDO UPDATE SET\n  gender = EXCLUDED.gender, age = EXCLUDED.age,\n  height_cm = EXCLUDED.height_cm, weight_kg = EXCLUDED.weight_kg,\n  activity_level = EXCLUDED.activity_level, fitness_level = EXCLUDED.fitness_level,\n  goal = EXCLUDED.goal, dietary_restrictions = EXCLUDED.dietary_restrictions,\n  food_allergies = EXCLUDED.food_allergies, disliked_foods = EXCLUDED.disliked_foods,\n  injuries = EXCLUDED.injuries, available_equipment = EXCLUDED.available_equipment,\n  training_days_per_week = EXCLUDED.training_days_per_week,\n  wake_up_time = EXCLUDED.wake_up_time, meal_count = EXCLUDED.meal_count,\n  budget_level = EXCLUDED.budget_level, onboarding_completed = true,\n  onboarding_completed_at = NOW(),\n  bmr = EXCLUDED.bmr, tdee = EXCLUDED.tdee, caloric_target = EXCLUDED.caloric_target,\n  protein_target_g = EXCLUDED.protein_target_g, carb_target_g = EXCLUDED.carb_target_g,\n  fat_target_g = EXCLUDED.fat_target_g;",
           "options": {
-            "queryReplacement": "={{ [$json.userId, $json.gender, $json.age, $json.height_cm, $json.weight_kg, $json.activity_level, $json.fitness_level, $json.goal_type, JSON.stringify($json.dietary_restrictions || []), JSON.stringify($json.food_allergies || []), JSON.stringify($json.disliked_foods || []), $json.injuries || null, $json.equipment || 'none', $json.training_days_per_week, $json.wake_up_time || '07:00', $json.meals_per_day || 3, $json.budget_level || 'medium', $json.bmr, $json.tdee, $json.caloric_target, $json.protein_target_g, $json.carb_target_g, $json.fat_target_g] }}"
+            "queryReplacement": "={{ [\n  $json.userId,\n  $json.gender,\n  $json.age,\n  $json.height_cm,\n  $json.weight_kg,\n  $json.activity_level,\n  $json.fitness_level,\n  $json.goal_type,\n  '{' + ($json.dietary_restrictions||[]).map(function(v){return '\"'+String(v).replace(/\"/g,'\\\\\"')+'\"';}).join(',') + '}',\n  '{' + ($json.food_allergies||[]).map(function(v){return '\"'+String(v).replace(/\"/g,'\\\\\"')+'\"';}).join(',') + '}',\n  '{' + ($json.disliked_foods||[]).map(function(v){return '\"'+String(v).replace(/\"/g,'\\\\\"')+'\"';}).join(',') + '}',\n  $json.injuries ? '{\"' + String($json.injuries).replace(/\"/g,'\\\\\"') + '\"}' : '{}',\n  $json.equipment ? '{\"' + String($json.equipment) + '\"}' : '{}',\n  $json.training_days_per_week,\n  $json.wake_up_time || '07:00',\n  $json.meals_per_day || 3,\n  $json.budget_level || 'medium',\n  $json.bmr,\n  $json.tdee,\n  $json.caloric_target,\n  $json.protein_target_g,\n  $json.carb_target_g,\n  $json.fat_target_g\n] }}"
           }
         },
         "id": "ob-11",
@@ -981,8 +1147,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2000,
-          -176
+          2512,
+          -208
         ],
         "credentials": {
           "postgres": {
@@ -994,7 +1160,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO goals (user_id, goal_type, target_weight_kg, start_weight_kg, start_date, is_active)\nVALUES ($1, $2, $3, $4, CURRENT_DATE, true)\nON CONFLICT (user_id) DO UPDATE SET\n  goal_type = EXCLUDED.goal_type,\n  target_weight_kg = EXCLUDED.target_weight_kg,\n  start_weight_kg = EXCLUDED.start_weight_kg,\n  start_date = EXCLUDED.start_date,\n  is_active = true;",
+          "query": "DELETE FROM goals WHERE user_id = $1 AND is_active = true;\nINSERT INTO goals (user_id, goal_type, target_weight, start_weight, start_date, is_active)\nVALUES ($1, $2, $3, $4, (NOW() AT TIME ZONE 'America/Bogota')::date, true);",
           "options": {
             "queryReplacement": "={{ [$json.userId, $json.goal_type, $json.target_weight || null, $json.weight_kg] }}"
           }
@@ -1004,8 +1170,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2000,
-          -16
+          2512,
+          -48
         ],
         "credentials": {
           "postgres": {
@@ -1017,7 +1183,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO weight_logs (user_id, weight_kg, notes, logged_at)\nVALUES ($1, $2, 'Peso inicial - onboarding', CURRENT_DATE)\nON CONFLICT DO NOTHING;",
+          "query": "INSERT INTO weight_logs (user_id, weight_kg, notes, logged_at)\nVALUES ($1, $2, 'Peso inicial - onboarding', (NOW() AT TIME ZONE 'America/Bogota')::date)\nON CONFLICT DO NOTHING;",
           "options": {
             "queryReplacement": "={{ [$json.userId, $json.weight_kg] }}"
           }
@@ -1027,8 +1193,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2000,
-          144
+          2512,
+          112
         ],
         "credentials": {
           "postgres": {
@@ -1040,7 +1206,7 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n) VALUES (\n  $1,\n  (CURRENT_DATE AT TIME ZONE 'America/Bogota') + INTERVAL '1 day',\n  $2, $3, $4, $5,\n  0, 0, 0, 0\n)\nON CONFLICT (user_id, target_date) DO NOTHING;",
+          "query": "INSERT INTO daily_targets (\n  user_id, target_date,\n  caloric_target, protein_target_g, carb_target_g, fat_target_g,\n  calories_consumed, protein_consumed_g, carbs_consumed_g, fat_consumed_g\n) VALUES (\n  $1,\n  (NOW() AT TIME ZONE 'America/Bogota')::date + 1,\n  $2, $3, $4, $5,\n  0, 0, 0, 0\n)\nON CONFLICT (user_id, target_date) DO NOTHING;",
           "options": {
             "queryReplacement": "={{ [$json.userId, $json.caloric_target, $json.protein_target_g, $json.carb_target_g, $json.fat_target_g] }}"
           }
@@ -1050,8 +1216,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2000,
-          304
+          2512,
+          272
         ],
         "credentials": {
           "postgres": {
@@ -1076,8 +1242,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          2640,
-          128
+          3152,
+          96
         ]
       },
       {
@@ -1090,8 +1256,8 @@
         "type": "n8n-nodes-base.redis",
         "typeVersion": 1,
         "position": [
-          2864,
-          128
+          3376,
+          96
         ],
         "credentials": {
           "redis": {
@@ -1116,8 +1282,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          3088,
-          128
+          3600,
+          96
         ]
       },
       {
@@ -1134,8 +1300,8 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          3360,
-          128
+          3872,
+          96
         ],
         "webhookId": "8811e933-0c45-4e87-9a3b-02dbcca22f9b",
         "credentials": {
@@ -1159,8 +1325,8 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          3584,
-          128
+          4096,
+          96
         ],
         "webhookId": "7900a537-ea55-44f0-9fbd-6fee164c23c5",
         "credentials": {
@@ -1172,6 +1338,7 @@
       },
       {
         "parameters": {
+          "mode": "append",
           "numberInputs": 4
         },
         "id": "merge-merge-onboarding-save",
@@ -1179,21 +1346,52 @@
         "type": "n8n-nodes-base.merge",
         "typeVersion": 3.1,
         "position": [
-          2400,
-          96
+          2912,
+          64
         ]
       },
       {
         "parameters": {
-          "jsCode": "\n// ─── Sources: resilient to what  contains after Redis SET ────────────────\nconst state     = .state     || {};\nconst stateData = state.data      || {};\nconst isNewUser          = .isNewUser  === true;\nconst isValidationError  = !isNewUser && (.isValid === false);\n\n// ─── User response (for existing sessions) ────────────────────────────────────\nlet userResponse = null;\nif (!isNewUser) {\n  const parseData = .first().json;\n  userResponse = parseData.callbackData || parseData.userText || null;\n}\n\n// ─── Keyboard map: keyed by state.step ─────────────────────────────────────\n// Centralized here so it applies identically on first ask AND on validation error\n// (state.step does NOT change when isValid=false, so the right keyboard always returns)\nconst IK = (rows) => ({ type: 'inlineKeyboard', inlineKeyboard: { rows } });\nconst btn = (text, cb) => ({ text, additionalFields: { callbackData: cb } });\n\nconst KEYBOARDS = {\n  ask_gender: IK([\n    { row: { buttons: [btn('Hombre','male'), btn('Mujer','female')] } }\n  ]),\n  ask_goal: IK([\n    { row: { buttons: [btn('Perder grasa','lose_fat'), btn('Ganar musculo','gain_muscle')] } },\n    { row: { buttons: [btn('Mantener peso','maintain'), btn('Recomposicion corporal','recomposition')] } }\n  ]),\n  ask_dietary_restrictions_known: IK([\n    { row: { buttons: [btn('Si, tengo','yes'), btn('No, ninguna','no')] } }\n  ]),\n  ask_budget: IK([\n    { row: { buttons: [btn('Economico','low'), btn('Moderado','medium'), btn('Sin limite','high')] } }\n  ]),\n  ask_meals: IK([\n    { row: { buttons: [btn('3','3'), btn('4','4'), btn('5','5')] } }\n  ]),\n  ask_fitness_level: IK([\n    { row: { buttons: [btn('Principiante (< 6 meses)','beginner')] } },\n    { row: { buttons: [btn('Intermedio (6 meses - 2 anos)','intermediate')] } },\n    { row: { buttons: [btn('Avanzado (2+ anos)','advanced')] } }\n  ]),\n  ask_equipment: IK([\n    { row: { buttons: [btn('Casa sin equipo','bodyweight')] } },\n    { row: { buttons: [btn('Casa con mancuernas/bandas','home_basic')] } },\n    { row: { buttons: [btn('Gimnasio','full_gym')] } }\n  ]),\n  ask_training_days: IK([\n    { row: { buttons: [btn('2','2'),btn('3','3'),btn('4','4'),btn('5','5'),btn('6','6')] } }\n  ]),\n  ask_injuries: IK([\n    { row: { buttons: [btn('No, estoy bien','no'), btn('Si, tengo','yes')] } }\n  ]),\n  ask_wake_time: IK([\n    { row: { buttons: [\n      btn('5:00','05:00'),btn('6:00','06:00'),btn('7:00','07:00'),\n      btn('8:00','08:00'),btn('9:00','09:00'),btn('Otra','custom')\n    ] } }\n  ]),\n  ask_activity_level: IK([\n    { row: { buttons: [btn('Sentado casi todo el dia','sedentary')] } },\n    { row: { buttons: [btn('Camino algo, tareas ligeras','lightly_active')] } },\n    { row: { buttons: [btn('De pie bastante, camino mucho','moderately_active')] } },\n    { row: { buttons: [btn('Trabajo fisico pesado','very_active')] } }\n  ]),\n  confirm_profile: IK([\n    { row: { buttons: [btn('Todo bien, dale','confirm'), btn('Quiero corregir algo','correct')] } }\n  ]),\n  correct_block: IK([\n    { row: { buttons: [btn('Datos fisicos','block_1'), btn('Objetivo','block_2')] } },\n    { row: { buttons: [btn('Alimentacion','block_3'), btn('Ejercicio','block_4')] } },\n    { row: { buttons: [btn('Horarios','block_5')] } }\n  ]),\n  ask_phone: {\n    type: 'replyKeyboard',\n    replyKeyboard: {\n      rows: [{ row: { buttons: [{ text: 'Compartir mi numero', requestContact: true }] } }]\n    },\n    replyKeyboardOptions: { resizeKeyboard: true, oneTimeKeyboard: true }\n  }\n};\n\nconst kb = KEYBOARDS[state.step] || null;\n\n// ─── AI message payload ────────────────────────────────────────────────────────\nconst userMessage = JSON.stringify({\n  step:             state.step,\n  user_response:    userResponse,\n  validation_error: isValidationError,\n  user_name:        stateData.first_name || null,\n  collected_data: {\n    gender:    stateData.gender    || null,\n    age:       stateData.age       || null,\n    weight_kg: stateData.weight_kg || null,\n    goal_type: stateData.goal_type || null\n  }\n});\n\nreturn [{\n  json: {\n    userMessage,\n    chatId:              .first().json.chatId,\n    replyMarkupType:     kb ? kb.type : 'none',\n    inlineKeyboard:      (kb && kb.type === 'inlineKeyboard')  ? kb.inlineKeyboard  : null,\n    replyKeyboard:       (kb && kb.type === 'replyKeyboard')   ? kb.replyKeyboard   : null,\n    replyKeyboardOptions:(kb && kb.replyKeyboardOptions)        ? kb.replyKeyboardOptions : null\n  }\n}];\n"
+          "jsCode": "const state     = $json.state  || {};\nconst stateData = state.data   || {};\nconst isNewUser         = $json.isNewUser === true;\nconst isValidationError = !isNewUser && ($json.isValid === false);\nconst trigger = $('Execute Workflow Trigger').first().json;\nconst userRaw = trigger.callbackData || trigger.text || '';\n\nconst STEP_DESC = {\n  ask_name:    'Saluda brevemente y pregunta como se llama.',\n  ask_gender:  'Pregunta el genero biologico (necesario para calcular el metabolismo TMB). Opciones con botones: Hombre o Mujer.',\n  ask_age:     'Pregunta la edad en anos (necesaria para calcular el TMB). Rango valido: 14-100.',\n  ask_height:  'Pregunta la estatura en centimetros (necesaria para calcular el TMB). Rango: 100-250 cm.',\n  ask_weight:  'Pregunta el peso actual en kilogramos (para calcular deficit/surplus calorico). Rango: 30-300 kg.',\n  ask_goal:    'Pregunta el objetivo principal. Opciones con botones: Perder grasa, Ganar musculo, Mantener peso, Recomposicion corporal.',\n  ask_target_weight: 'Pregunta el peso meta en kilogramos.',\n  ask_dietary_restrictions_known: 'Pregunta si tiene restricciones dieteticas o alergias. Opciones: Si o No.',\n  ask_dietary_input: 'Pide que escriba sus restricciones y alergias separadas por comas.',\n  ask_disliked_foods: 'Pregunta que alimentos no le gustan. Puede escribirlos o decir no.',\n  ask_budget:  'Pregunta el presupuesto para ingredientes. Opciones: Economico, Moderado, Sin limite.',\n  ask_meals:   'Pregunta cuantas comidas prefiere al dia. Opciones: 3, 4 o 5.',\n  ask_fitness_level: 'Pregunta el nivel de experiencia entrenando. Opciones: Principiante, Intermedio, Avanzado.',\n  ask_equipment: 'Pregunta donde entrena. Opciones: Casa sin equipo, Casa con mancuernas/bandas, Gimnasio.',\n  ask_training_days: 'Pregunta cuantos dias a la semana puede entrenar. Opciones: 2 a 6 dias.',\n  ask_injuries: 'Pregunta si tiene alguna lesion o limitacion fisica. Opciones: No o Si.',\n  ask_injuries_input: 'Pide que describa brevemente su lesion.',\n  ask_wake_time: 'Pregunta a que hora se despierta. Hay botones con horas comunes.',\n  ask_wake_time_custom: 'Pide la hora de despertar en formato HH:MM.',\n  ask_activity_level: 'Pregunta el nivel de actividad diaria fuera del ejercicio. Hay botones.',\n  confirm_profile: 'Presenta un resumen de los datos clave y pregunta si todo esta bien o quiere corregir algo.',\n  correct_block: 'Pregunta que bloque de datos quiere corregir. Hay botones.',\n  ask_phone:   'Pide el numero de telefono. Explica que es para el seguimiento. Hay un boton para compartirlo desde el telefono.'\n};\nconst stepDesc = STEP_DESC[state.step] || 'Continua el proceso.';\n\nconst ctx = [\n  stateData.first_name ? 'nombre: ' + stateData.first_name : null,\n  stateData.gender     ? 'genero: ' + stateData.gender     : null,\n  stateData.age        ? 'edad: '   + stateData.age + ' anos' : null,\n  stateData.height_cm  ? 'talla: '  + stateData.height_cm + ' cm' : null,\n  stateData.weight_kg  ? 'peso: '   + stateData.weight_kg + ' kg' : null,\n  stateData.goal_type  ? 'objetivo: ' + stateData.goal_type : null\n].filter(Boolean).join(', ') || 'ninguno aun';\n\n// ─── systemMessage: strict role, no free-form conversation ───────────────────\nconst systemMessage =\n  'Eres Fitnessia, coach de nutricion y fitness. Generas exactamente UN mensaje de Telegram para el onboarding.\\n\\n' +\n  'PASO ACTUAL: ' + state.step + '\\n' +\n  'Objetivo del paso: ' + stepDesc + '\\n' +\n  'Datos ya recopilados: ' + ctx + '\\n\\n' +\n  'REGLAS ABSOLUTAS (sin excepciones):\\n' +\n  '1. Maximo 2 oraciones. Una sola pregunta por mensaje.\\n' +\n  '2. NUNCA menciones el plan, ni des por terminado el onboarding. Eso no te corresponde decidir.\\n' +\n  '3. NUNCA prometas enviar nada ni hables del futuro del proceso.\\n' +\n  '4. NUNCA supongas cuantos pasos faltan.\\n' +\n  '5. Tu unica tarea: generar la pregunta del paso actual. Nada mas.\\n' +\n  '6. Si hay botones en este paso, menciona brevemente las opciones en el texto.\\n' +\n  '7. Tutea. Tono coloquial. Max 1 emoji si suma. Solo saluda con Hola en ask_name.';\n\n// ─── humanMessage: explicit task instruction, never raw user text ─────────────\nlet humanMessage;\nif (isNewUser) {\n  humanMessage = 'Tarea: ' + stepDesc;\n} else if (isValidationError) {\n  humanMessage =\n    'El usuario respondio: \"' + userRaw + '\" (no es la respuesta esperada para este paso).\\n' +\n    'Datos ya recopilados: ' + ctx + '.\\n' +\n    'Si fue una pregunta: respondela en 1 oracion con el contexto real (para que sirve ese dato) y redirige.\\n' +\n    'Si fue dato invalido: re-pregunta de forma mas clara diciendo para que se necesita ese dato.\\n' +\n    'Tarea final: ' + stepDesc;\n} else {\n  humanMessage = 'Dato anterior aceptado. Tarea: ' + stepDesc;\n}\n\n// ─── Keyboard map keyed by state.step ────────────────────────────────────────\nconst IK = (rows) => ({ type: 'inlineKeyboard', inlineKeyboard: { rows } });\nconst btn = (text, cb) => ({ text, additionalFields: { callbackData: cb } });\nconst KEYBOARDS = {\n  ask_gender: IK([{ row: { buttons: [btn('Hombre','male'), btn('Mujer','female')] } }]),\n  ask_goal: IK([\n    { row: { buttons: [btn('Perder grasa','lose_fat'), btn('Ganar musculo','gain_muscle')] } },\n    { row: { buttons: [btn('Mantener peso','maintain'), btn('Recomposicion corporal','recomposition')] } }\n  ]),\n  ask_dietary_restrictions_known: IK([{ row: { buttons: [btn('Si, tengo','yes'), btn('No, ninguna','no')] } }]),\n  ask_budget: IK([{ row: { buttons: [btn('Economico','low'), btn('Moderado','medium'), btn('Sin limite','high')] } }]),\n  ask_meals:  IK([{ row: { buttons: [btn('3','3'), btn('4','4'), btn('5','5')] } }]),\n  ask_fitness_level: IK([\n    { row: { buttons: [btn('Principiante (< 6 meses)','beginner')] } },\n    { row: { buttons: [btn('Intermedio (6 meses - 2 anos)','intermediate')] } },\n    { row: { buttons: [btn('Avanzado (2+ anos)','advanced')] } }\n  ]),\n  ask_equipment: IK([\n    { row: { buttons: [btn('Casa sin equipo','bodyweight')] } },\n    { row: { buttons: [btn('Casa con mancuernas/bandas','home_basic')] } },\n    { row: { buttons: [btn('Gimnasio','full_gym')] } }\n  ]),\n  ask_training_days: IK([{ row: { buttons: [btn('2','2'),btn('3','3'),btn('4','4'),btn('5','5'),btn('6','6')] } }]),\n  ask_injuries: IK([{ row: { buttons: [btn('No, estoy bien','no'), btn('Si, tengo','yes')] } }]),\n  ask_wake_time: IK([{ row: { buttons: [\n    btn('5:00','05:00'),btn('6:00','06:00'),btn('7:00','07:00'),\n    btn('8:00','08:00'),btn('9:00','09:00'),btn('Otra','custom')\n  ] } }]),\n  ask_activity_level: IK([\n    { row: { buttons: [btn('Sentado casi todo el dia','sedentary')] } },\n    { row: { buttons: [btn('Camino algo, tareas ligeras','lightly_active')] } },\n    { row: { buttons: [btn('De pie bastante, camino mucho','moderately_active')] } },\n    { row: { buttons: [btn('Trabajo fisico pesado','very_active')] } }\n  ]),\n  confirm_profile: IK([{ row: { buttons: [btn('Todo bien, dale','confirm'), btn('Quiero corregir algo','correct')] } }]),\n  correct_block: IK([\n    { row: { buttons: [btn('Datos fisicos','block_1'), btn('Objetivo','block_2')] } },\n    { row: { buttons: [btn('Alimentacion','block_3'), btn('Ejercicio','block_4')] } },\n    { row: { buttons: [btn('Horarios','block_5')] } }\n  ]),\n  ask_phone: {\n    type: 'replyKeyboard',\n    replyKeyboard: { rows: [{ row: { buttons: [{ text: 'Compartir mi numero', requestContact: true }] } }] },\n    replyKeyboardOptions: { resizeKeyboard: true, oneTimeKeyboard: true }\n  }\n};\nconst kb = KEYBOARDS[state.step] || null;\n\nreturn [{ json: {\n  systemMessage,\n  humanMessage,\n  chatId:              trigger.chatId,\n  replyMarkupType:     kb ? kb.type : 'none',\n  inlineKeyboard:      (kb && kb.type === 'inlineKeyboard')  ? kb.inlineKeyboard  : null,\n  replyKeyboard:       (kb && kb.type === 'replyKeyboard')   ? kb.replyKeyboard   : null,\n  replyKeyboardOptions:(kb && kb.replyKeyboardOptions)       ? kb.replyKeyboardOptions : null\n} }];\n"
         },
         "id": "ob-ai-01",
         "name": "Prepare AI Message Input",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1792,
-          640
+          2304,
+          608
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "typeValidation": "loose"
+            },
+            "combinator": "and",
+            "conditions": [
+              {
+                "id": "c1",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                },
+                "leftValue": "={{ $json.callbackData || '' }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "ob-if-cb",
+        "name": "Has Callback?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1088,
+          448
         ]
       },
       {
@@ -1204,33 +1402,105 @@
             "messages": [
               {
                 "role": "system",
-                "content": "Eres el coach personal de nutricion y fitness en el registro inicial de un usuario nuevo por Telegram.\nTu trabajo: recopilar sus datos haciendo preguntas breves y naturales, como un amigo que sabe del tema.\n\nTONO (igual que en todo el sistema):\n- Tuteas siempre, lenguaje coloquial pero no vulgar\n- Vas al grano: la primera oracion ya hace la pregunta\n- Varias expresiones al acusar recibo: \"Va\", \"Listo\", \"Ok\", \"Dale\", \"Sale\", \"Bien\", \"Anotado\"\n- Emojis: maximo 1, solo si aporta. Ninguno si no suma nada.\n- Nunca repitas lo que el usuario dijo en modo confirmacion\n\nANTI-PATRONES (NUNCA hagas esto):\n- \"Entendido, has seleccionado Hombre\" — suena a formulario\n- \"Perfecto! Tu edad de 28 anos ha sido registrada\" — robotico\n- \"Excelente eleccion!\" — adulacion vacia  \n- \"Gracias por compartir esa informacion\" — robotico\n- Saludar con \"Hola [nombre]\" en cada respuesta — solo en el primer mensaje\n\nREGLAS DE FORMATO:\n- Maximo 2 oraciones por mensaje (es Telegram, no un formulario)\n- Si hay opciones con botones, mencionalas brevemente en el texto por si los botones no se ven\n- Si validation_error=true: solo re-pregunta de forma natural en 1 oracion. Nada de \"respuesta invalida\" ni \"usa los botones\".\n- Si validation_error=false: una sola palabra de ack + la pregunta\n\nEJEMPLOS CORRECTOS:\nask_gender primera vez: \"Genero biologico? Hombre o mujer.\"\nask_gender error (escribio \"biologico\"): \"Hombre o mujer?\"  \nask_age primera vez: \"Cuantos anos tenes?\"\nask_age error: \"Dame un numero entre 14 y 100.\"\nask_weight error (escribio \"muchos\"): \"Tu peso en kilos. Ej: 75\"\nask_goal primera vez: \"Cual es tu objetivo? Perder grasa, ganar musculo, mantener peso o recomposicion corporal.\"\nask_phone primera vez: \"Para terminar, necesito tu numero. Presiona el boton de abajo para compartirlo.\"\nask_phone error (escribio texto): \"Usa el boton de abajo para compartir tu numero de telefono.\"\n"
+                "content": "Eres un normalizador de respuestas para un chatbot de onboarding de nutricion y fitness.\nEl usuario responde preguntas en lenguaje natural y puede usar mala ortografia, frases indirectas o coloquiales.\nTu trabajo: extraer la respuesta canonica segun el paso actual.\n\nMAPA DE PASOS Y VALORES CANONICOS:\nask_name: texto libre -> devuelve el texto tal cual (solo trim)\nask_gender: \"male\"|\"female\" -> \"soy hombre\"->\"male\", \"chica\"->\"female\", \"masculino\"->\"male\", \"chico\"->\"male\"\nask_age: entero 14-100 como string -> \"veintiocho\"->\"28\", \"tengo 25 anos\"->\"25\"\nask_height: numero cm 100-250 como string -> \"1.70\"->\"170\", \"uno setenta\"->\"170\", \"175cm\"->\"175\"\nask_weight: numero kg 30-300 como string -> \"peso 80 kilos\"->\"80\", \"como 75\"->\"75\"\nask_goal: \"lose_fat\"|\"gain_muscle\"|\"maintain\"|\"recomposition\" -> \"adelgazar\"->\"lose_fat\", \"bajar de peso\"->\"lose_fat\", \"volumen\"->\"gain_muscle\", \"ganar masa\"->\"gain_muscle\"\nask_target_weight: numero kg 30-300 como string\nask_dietary_restrictions_known: \"yes\"|\"no\" -> \"si\"->\"yes\", \"ninguna\"->\"no\", \"nop\"->\"no\", \"no tengo\"->\"no\"\nask_dietary_input: texto libre -> devuelve tal cual\nask_disliked_foods: texto libre -> devuelve tal cual\nask_budget: \"low\"|\"medium\"|\"high\" -> \"barato\"->\"low\", \"economico\"->\"low\", \"normal\"->\"medium\", \"sin limite\"->\"high\"\nask_meals: \"3\"|\"4\"|\"5\" -> \"tres comidas\"->\"3\"\nask_fitness_level: \"beginner\"|\"intermediate\"|\"advanced\" -> \"soy nuevo\"->\"beginner\", \"llevo anos\"->\"advanced\"\nask_equipment: \"bodyweight\"|\"home_basic\"|\"full_gym\" -> \"gym\"->\"full_gym\", \"en casa sin nada\"->\"bodyweight\", \"tengo mancuernas\"->\"home_basic\"\nask_training_days: \"2\"|\"3\"|\"4\"|\"5\"|\"6\" -> \"tres dias\"->\"3\"\nask_injuries: \"yes\"|\"no\" -> \"ninguna\"->\"no\", \"tengo una\"->\"yes\", \"estoy bien\"->\"no\"\nask_injuries_input: texto libre -> devuelve tal cual\nask_wake_time: \"HH:MM\"|\"custom\" -> \"las 7\"->\"07:00\", \"a las 6 y media\"->\"06:30\", \"hora inusual\"->\"custom\"\nask_wake_time_custom: \"HH:MM\" -> \"7:30\"->\"07:30\", \"6 y cuarto\"->\"06:15\"\nask_activity_level: \"sedentary\"|\"lightly_active\"|\"moderately_active\"|\"very_active\" -> \"escritorio\"->\"sedentary\", \"camino bastante\"->\"lightly_active\", \"trabajo de pie\"->\"moderately_active\"\nconfirm_profile: \"confirm\"|\"correct\" -> \"todo bien\"->\"confirm\", \"esta bien\"->\"confirm\", \"cambiar\"->\"correct\"\ncorrect_block: \"block_1\"|\"block_2\"|\"block_3\"|\"block_4\"|\"block_5\"\n\nINSTRUCCIONES:\n1. Si el texto mapea claramente a un valor canonico: devuelve ese valor exacto\n2. Si es un paso de texto libre: devuelve el texto limpio\n3. Si no puedes determinar con seguridad: devuelve el texto original\n4. Responde SOLO con JSON valido, sin markdown: {\"normalized\": \"valor_aqui\"}"
               },
               {
-                "content": "={{ $('Prepare AI Message Input').first().json.userMessage }}"
+                "content": "={{ JSON.stringify({ step: $json.currentStep, user_text: $json.userText }) }}"
               }
             ]
           },
           "simplifyOutput": false,
           "options": {
-            "maxTokens": 100,
-            "temperature": 0.7
+            "maxTokens": 60,
+            "temperature": 0
           },
           "requestOptions": {}
         },
-        "id": "ob-ai-02",
-        "name": "Generate Onboarding Message",
+        "id": "ob-ai-03",
+        "name": "Parse User Intent",
         "type": "n8n-nodes-base.openAi",
         "typeVersion": 1.1,
         "position": [
-          2000,
-          640
+          1280,
+          528
         ],
         "credentials": {
           "openAiApi": {
             "id": "NOJoPVNWDXiywRgw",
             "name": "OpenAi account"
           }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const parseData = $('Parse Onboarding State').first().json;\nconst state = parseData.state;\nconst originalText = parseData.userText;\n\nlet normalizedText = originalText;\n\ntry {\n  const aiContent = $('Parse User Intent').first().json.choices[0].message.content;\n  const cleaned = aiContent.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  const parsed = JSON.parse(cleaned);\n  if (parsed.normalized !== undefined && parsed.normalized !== null) {\n    normalizedText = String(parsed.normalized);\n  }\n} catch(e) {\n  // Keep original text on any failure\n}\n\nreturn [{\n  json: {\n    state,\n    userText: normalizedText,\n    callbackData: null,\n    currentStep: state.step,\n    currentBlock: state.block\n  }\n}];\n"
+        },
+        "id": "ob-norm-01",
+        "name": "Normalize User Input",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1456,
+          528
+        ]
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.humanMessage }}",
+          "options": {
+            "systemMessage": "={{ $json.systemMessage }}"
+          }
+        },
+        "id": "ob-agent-01",
+        "name": "Onboarding AI Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2,
+        "position": [
+          2544,
+          608
+        ]
+      },
+      {
+        "parameters": {
+          "model": {
+            "__rl": true,
+            "mode": "list",
+            "value": "gpt-4o-mini",
+            "cachedResultName": "gpt-4o-mini"
+          },
+          "options": {
+            "maxTokens": 200,
+            "temperature": 0.7
+          }
+        },
+        "id": "ob-llm-01",
+        "name": "OpenAI Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1.2,
+        "position": [
+          2496,
+          816
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "NOJoPVNWDXiywRgw",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "id": "ob-collapse-01",
+        "name": "Collapse to One Item",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2600,
+          300
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "return [{ json: { done: true } }];"
         }
       }
     ],
@@ -1290,7 +1560,7 @@
         "main": [
           [
             {
-              "node": "Validate and Process Step",
+              "node": "Has Callback?",
               "type": "main",
               "index": 0
             }
@@ -1380,7 +1650,7 @@
             {
               "node": "Merge Onboarding Save",
               "type": "main",
-              "index": 2
+              "index": 1
             }
           ]
         ]
@@ -1391,7 +1661,7 @@
             {
               "node": "Merge Onboarding Save",
               "type": "main",
-              "index": 1
+              "index": 2
             }
           ]
         ]
@@ -1451,33 +1721,95 @@
           ]
         ]
       },
-      "Merge Onboarding Save": {
-        "main": [
-          [
-            {
-              "node": "Generate First Meal Plan",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
       "Prepare AI Message Input": {
         "main": [
           [
             {
-              "node": "Generate Onboarding Message",
+              "node": "Onboarding AI Agent",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Generate Onboarding Message": {
+      "Has Callback?": {
+        "main": [
+          [
+            {
+              "node": "Validate and Process Step",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Parse User Intent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse User Intent": {
+        "main": [
+          [
+            {
+              "node": "Normalize User Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize User Input": {
+        "main": [
+          [
+            {
+              "node": "Validate and Process Step",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Onboarding AI Agent": {
         "main": [
           [
             {
               "node": "Send Question",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Onboarding AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge Onboarding Save": {
+        "main": [
+          [
+            {
+              "node": "Collapse to One Item",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Collapse to One Item": {
+        "main": [
+          [
+            {
+              "node": "Generate First Meal Plan",
               "type": "main",
               "index": 0
             }
@@ -1491,10 +1823,10 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T19:45:37.577Z",
-        "id": 449,
+        "createdAt": "2026-04-04T19:37:19.803Z",
+        "id": 471,
         "workflowId": "yiUgnJ6gCoaIFVXe",
-        "versionId": "f364305d-f9c7-4651-a3b4-3c1e7159eb42",
+        "versionId": "aa29fb76-33d3-4f22-9f46-a75587537d49",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

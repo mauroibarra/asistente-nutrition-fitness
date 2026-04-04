@@ -1,6 +1,6 @@
 # Estado del Proyecto — FitAI Assistant
 
-**Última actualización:** 2026-04-02 (v2.1 post-sesión)
+**Última actualización:** 2026-04-04 (v2.2 post-sesión onboarding)
 
 ---
 
@@ -31,7 +31,7 @@
 |----|--------|-------|--------|-------|
 | `fI5u4rs3iXPfeXFl` | FitAI - Telegram Webhook Handler | 65 | ✅ Activo | v2.1: fullSystemPrompt dinámico, anti-hallucination rules, cadena post-respuesta (Log Conversation + Build RAG Payload + Trigger RAG Indexer), timezone fix |
 | `CCkMv75zwDDoj513` | FitAI - Process text message | 7 | ✅ Activo | Debounce multi-mensaje via message_buffer |
-| `yiUgnJ6gCoaIFVXe` | FitAI - Onboarding Flow | 19 | ✅ Activo | v2: Redis state machine, 21 pasos, TTL 48h, fórmulas v2 (TDEE×%), post-completion automático |
+| `yiUgnJ6gCoaIFVXe` | FitAI - Onboarding Flow | 27 | ✅ Activo | v2.2: AI Agent (sin memory), intent parser, 21 pasos, Redis TTL 48h, Merge append+Collapse, fixes SQL schema |
 | `KQhP9lQNxCKeOsbJ` | FitAI - Meal Plan Generator | 13 | ✅ Activo | v2: plan diario (plan_date), 4 contextos paralelos, gpt-4o temp=0.85 max_tokens=2048 |
 | `SntGuE97yl9efvo5` | FitAI - Meal Reminder Scheduler | 6 | ✅ Activo | v2: jsonb_array_elements → meals[], balance día, dedup por meal_name |
 | `tkSAHhjJnO4nTFsM` | FitAI - Weight Update Requester | 6 | ✅ Activo | Cron lunes 9am |
@@ -108,6 +108,16 @@
 - **Weekly Report dedup**: faltaba cláusula `NOT EXISTS` — añadida en segunda iteración.
 - **appendAttribution=false**: todos los nodos Telegram de los 5 workflows proactivos.
 
+### Onboarding v2.2 — Fixes de Sesión 2026-04-04
+
+- **AI Agent reemplaza nodo OpenAI deprecated**: `Generate Onboarding Message` (openAi v1.1) reemplazado por `@n8n/n8n-nodes-langchain.agent` (tv=2) + `lmChatOpenAi` (tv=1.2) con gpt-4o-mini. Evita el deprecation y soporta conversación real.
+- **memoryBufferWindow eliminado del onboarding**: la memoria in-RAM causaba que el agente "doblara" sobre respuestas anteriores alucinadas, concluyendo el onboarding por su cuenta y saltando pasos. Fix: sin memoria. Cada ejecución es stateless — el contexto viene del system prompt.
+- **humanMessage estructurado (no texto crudo)**: en lugar de pasar el texto del usuario al agente, se pasa una instrucción explícita de tarea: `"Dato anterior aceptado. Tarea: [descripción del paso]"`. Previene que el agente free-forme basado en texto ambiguo.
+- **Intent parser para texto libre**: nodo `Parse User Intent` (openAi gpt-4o-mini, temp=0) normaliza respuestas naturales a valores canónicos (`"soy un chico"` → `"male"`, `"camino bastante"` → `"lightly_active"`). El `Has Callback?` IF node enruta callbacks directo a validación (sin parser).
+- **Merge fan-out 4× → append + Collapse**: `Calculate Metrics` abanica a 4 nodos DB en paralelo. Merge `mode: "append"` espera todos los inputs. Nodo `Collapse to One Item` (Code) reduce a 1 item antes de continuar. Sin esto, todos los downstream (Send Metrics Message, Send Welcome Message, Generate First Meal Plan) se ejecutaban 4 veces.
+- **SQL schema audit — columnas y enums incorrectos**: múltiples mismatches corregidos en `Save Initial Goal` (ob-12): `target_weight_kg`→`target_weight`, `start_weight_kg`→`start_weight`, `ON CONFLICT (user_id)` inválido (goals sin unique constraint en user_id) → reemplazado por DELETE+INSERT, `CURRENT_DATE`→`(NOW() AT TIME ZONE 'America/Bogota')::date`.
+- **PostgreSQL text[] array literal format**: `JSON.stringify([])` produce `"[]"` (JSON válido pero inválido para `text[]` de PG). Fix en `Save User Profile` (ob-11): usar formato `{}`: `'{' + arr.map(v => '"' + v + '"').join(',') + '}'`.
+
 ### Post-v2: Fixes de Sesión 2026-04-02
 
 - **systemMessage sin `=` prefix**: El campo `options.systemMessage` del AI Agent trata el contenido como string estático sin el prefijo `=`. `{{variable}}` llegaba literal a GPT-4o. Fix: cambiar a `={{ $json.fullSystemPrompt }}` y construir el prompt completo en Build Context.
@@ -139,7 +149,7 @@
 | 11 | `docs/admin-panel.md` | ✅ Completo | Wireframes, endpoints, auth |
 | 12 | `docs/deployment.md` | ✅ Completo | Guía VPS, Docker, SSL, backups |
 | 13 | `docs/project-status.md` | ✅ v2 Completo | Este archivo |
-| 14 | `skills/dev/n8n-workflow-debugging.md` | ✅ v2 Completo | 14 lecciones incluyendo timezone bug + conversation_logs NOT NULL |
+| 14 | `skills/dev/n8n-workflow-debugging.md` | ✅ v2.2 Completo | 24 lecciones: incluye Merge fan-out, PostgreSQL schema audit, test data enums, array literals |
 | 15 | `skills/dev/n8n-ai-agent-tools.md` | ✅ Completo | Patrones AI Agent + toolWorkflow |
 | 16-19 | `skills/business/*.md` | ✅ Completo | nutrition, fitness, habit-psychology, metrics-calculation |
 | 20 | `prompts/system-prompt.md` | ✅ v2 Completo | dailyStatus, weeklyTrend, nextAction, 14 secciones |

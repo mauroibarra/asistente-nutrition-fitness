@@ -528,6 +528,23 @@ El nodo Build Context retorna `fullSystemPrompt` como string que concatena las r
 
 **NUNCA** usar `{{variable}}` directamente en `systemMessage` sin el `=` — no se evalúa.
 
+### Merge node fan-out — N ramas paralelas ejecuta downstream N veces
+Cuando un nodo abanica a N ramas paralelas que convergen en un Merge, el Merge con config incorrecta dispara el downstream una vez por cada input. Fix:
+1. `mode: "append"`, `numberInputs: N` (sin config adicional — no usar `combine`/`mergeByPosition`)
+2. Agregar Code node "Collapse to One Item" después: `return [{ json: { done: true } }];` con `mode: runOnceForAllItems`
+
+### PostgreSQL — array literal format para parámetros `text[]`
+`JSON.stringify([])` produce `"[]"` — inválido para `text[]`. Usar formato `{}`:
+```javascript
+// Correcto:
+'{' + (arr||[]).map(v => '"' + String(v).replace(/"/g,'\\"') + '"').join(',') + '}'
+// Para escalar → text[]:
+val ? '{"' + String(val) + '"}' : '{}'
+```
+
+### PostgreSQL — auditar schema antes de escribir SQL
+Antes de cualquier INSERT/UPDATE en tabla nueva: `\d tablename` (columnas exactas) y listar enums. `ON CONFLICT (col)` requiere UNIQUE CONSTRAINT — un índice simple no sirve. Para tablas sin unique constraint en user_id (ej: `goals`), usar DELETE + INSERT.
+
 ### memoryBufferWindow — memoria in-RAM, se pierde en restart
 El nodo `FitAI Memory` (`memoryBufferWindow`, typeVersion 1.3) almacena el historial de conversaciones **en RAM** del proceso n8n. No persiste en SQLite, Redis ni ninguna base de datos.
 
