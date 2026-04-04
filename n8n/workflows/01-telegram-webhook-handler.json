@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T19:12:22.849Z",
+  "updatedAt": "2026-04-04T22:23:36.928Z",
   "createdAt": "2026-03-27T19:56:57.516Z",
   "id": "fI5u4rs3iXPfeXFl",
   "name": "FitAI - Telegram Webhook Handler",
@@ -20,8 +20,8 @@
       "typeVersion": 1.2,
       "name": "Telegram Trigger",
       "position": [
-        -560,
-        368
+        -320,
+        336
       ],
       "webhookId": "63001b72-4471-4896-b3b3-8ec56a0d9da6",
       "credentials": {
@@ -84,56 +84,6 @@
               },
               "renameOutput": true,
               "outputKey": "voice"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "operator": {
-                      "type": "boolean",
-                      "operation": "exists",
-                      "singleValue": true
-                    },
-                    "leftValue": "={{ $json.callback_query.data }}",
-                    "rightValue": "",
-                    "id": "8b3e071a-17fa-47fb-952d-211894958596"
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "callback"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "operator": {
-                      "type": "boolean",
-                      "operation": "exists",
-                      "singleValue": true
-                    },
-                    "leftValue": "={{ $json.message.contact.phone_number }}",
-                    "rightValue": "",
-                    "id": "e2d15420-ab30-44b7-891b-633a7e4dad62"
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "contact"
             }
           ]
         },
@@ -160,7 +110,7 @@
       "typeVersion": 1.2,
       "name": "Get Voice File",
       "position": [
-        192,
+        160,
         496
       ],
       "webhookId": "5debfbcc-0498-4e8f-a50a-4b70b1694912",
@@ -182,7 +132,7 @@
       "typeVersion": 1.8,
       "name": "Transcribe Voice",
       "position": [
-        496,
+        464,
         496
       ],
       "credentials": {
@@ -229,7 +179,7 @@
       "typeVersion": 3.4,
       "name": "Set Text from Voice",
       "position": [
-        800,
+        768,
         496
       ]
     },
@@ -246,8 +196,8 @@
       "typeVersion": 2.5,
       "name": "Check User & Membership",
       "position": [
-        1568,
-        512
+        1536,
+        480
       ],
       "credentials": {
         "postgres": {
@@ -269,8 +219,8 @@
       "typeVersion": 2.5,
       "name": "Upsert User",
       "position": [
-        1280,
-        512
+        1248,
+        480
       ],
       "credentials": {
         "postgres": {
@@ -310,8 +260,8 @@
       "typeVersion": 2,
       "name": "Has Active Membership?",
       "position": [
-        1936,
-        400
+        1824,
+        192
       ]
     },
     {
@@ -327,8 +277,8 @@
       "typeVersion": 1.2,
       "name": "No Membership Message",
       "position": [
-        2192,
-        560
+        2080,
+        352
       ],
       "webhookId": "20379d01-666f-4ea3-834a-e62dc6c5ff5a",
       "retryOnFail": true,
@@ -372,8 +322,8 @@
       "typeVersion": 2,
       "name": "Onboarding Complete?",
       "position": [
-        2208,
-        208
+        2096,
+        0
       ]
     },
     {
@@ -389,8 +339,8 @@
       "typeVersion": 2,
       "name": "FitAI Main AI Agent",
       "position": [
-        3664,
-        -656
+        4688,
+        -80
       ]
     },
     {
@@ -411,8 +361,8 @@
       "typeVersion": 1.2,
       "name": "OpenAI Chat Model",
       "position": [
-        3520,
-        -512
+        4544,
+        192
       ],
       "credentials": {
         "openAiApi": {
@@ -432,8 +382,8 @@
       "typeVersion": 1.3,
       "name": "FitAI Memory",
       "position": [
-        3664,
-        -512
+        4688,
+        160
       ]
     },
     {
@@ -450,8 +400,8 @@
       "typeVersion": 1.2,
       "name": "Send Response",
       "position": [
-        4704,
-        -640
+        5216,
+        -80
       ],
       "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
       "retryOnFail": true,
@@ -493,8 +443,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        4208,
-        -368
+        5184,
+        464
       ]
     },
     {
@@ -530,8 +480,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3888,
-        -368
+        4864,
+        464
       ]
     },
     {
@@ -563,8 +513,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        4048,
-        -368
+        5024,
+        464
       ]
     },
     {
@@ -599,8 +549,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3728,
-        -368
+        4704,
+        464
       ]
     },
     {
@@ -620,8 +570,8 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1.3,
       "position": [
-        4336,
-        -368
+        5312,
+        464
       ],
       "credentials": {
         "qdrantApi": {
@@ -640,71 +590,13 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1,
       "position": [
-        4336,
-        -192
+        5312,
+        640
       ],
       "credentials": {
         "openAiApi": {
           "id": "NOJoPVNWDXiywRgw",
           "name": "OpenAi account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "cp1",
-              "name": "phone_number",
-              "type": "string",
-              "value": "={{ $json.message.contact.phone_number }}"
-            },
-            {
-              "id": "cp2",
-              "name": "telegram_id",
-              "type": "string",
-              "value": "={{ $json.message.contact.user_id }}"
-            },
-            {
-              "id": "cp3",
-              "name": "chatId",
-              "type": "string",
-              "value": "={{ $json.message.chat.id }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "contact-set-001",
-      "name": "Set Phone Data",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        192,
-        864
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE users SET phone_number = $1, updated_at = NOW() WHERE telegram_id = $2",
-        "options": {
-          "queryReplacement": "={{ [$json.phone_number, String($json.telegram_id)] }}"
-        }
-      },
-      "id": "contact-pg-001",
-      "name": "Save Phone Number",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        480,
-        864
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
         }
       }
     },
@@ -721,8 +613,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        624,
-        112
+        576,
+        176
       ],
       "credentials": {
         "postgres": {
@@ -763,8 +655,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1056,
-        112
+        1008,
+        176
       ]
     },
     {
@@ -780,8 +672,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        1280,
-        96
+        1248,
+        -48
       ],
       "credentials": {
         "postgres": {
@@ -804,8 +696,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1552,
-        96
+        1520,
+        -48
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -827,8 +719,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        800,
-        112
+        784,
+        176
       ]
     },
     {
@@ -889,8 +781,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        192,
-        112
+        144,
+        176
       ],
       "name": "Call process text message",
       "id": "bb616577-3076-40d8-8cd0-f6bdee27e9a9"
@@ -932,8 +824,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        416,
-        112
+        368,
+        176
       ]
     },
     {
@@ -949,8 +841,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2544,
-        -784
+        3568,
+        -208
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -973,8 +865,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2544,
-        -624
+        3568,
+        -48
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -997,8 +889,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2544,
-        -464
+        3568,
+        112
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -1021,8 +913,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2544,
-        -288
+        3568,
+        288
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -1045,8 +937,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2544,
-        -128
+        3568,
+        448
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -1069,8 +961,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2544,
-        32
+        3568,
+        608
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -1089,8 +981,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3232,
-        -432
+        4256,
+        144
       ]
     },
     {
@@ -1122,8 +1014,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3888,
-        -208
+        4864,
+        624
       ]
     },
     {
@@ -1155,8 +1047,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.3,
       "position": [
-        4048,
-        -208
+        5024,
+        624
       ]
     },
     {
@@ -1168,40 +1060,6 @@
         },
         "options": {
           "waitForSubWorkflow": true
-        },
-        "fields": {
-          "values": [
-            {
-              "name": "telegramId",
-              "type": "stringValue",
-              "stringValue": "={{ $json.telegramId }}"
-            },
-            {
-              "name": "chatId",
-              "type": "stringValue",
-              "stringValue": "={{ $json.chatId }}"
-            },
-            {
-              "name": "userId",
-              "type": "numberValue",
-              "numberValue": "={{ $json.userId }}"
-            },
-            {
-              "name": "text",
-              "type": "stringValue",
-              "stringValue": "={{ $json.text }}"
-            },
-            {
-              "name": "callbackData",
-              "type": "stringValue",
-              "stringValue": "={{ $json.callbackData }}"
-            },
-            {
-              "name": "phone_number",
-              "type": "stringValue",
-              "stringValue": "={{ $json.phone_number }}"
-            }
-          ]
         }
       },
       "id": "ob-call-v2",
@@ -1209,8 +1067,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        3040,
-        560
+        2736,
+        400
       ]
     },
     {
@@ -1222,8 +1080,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.1,
       "position": [
-        2928,
-        -416
+        3952,
+        160
       ]
     },
     {
@@ -1242,8 +1100,8 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1.3,
       "position": [
-        4624,
-        -368
+        5600,
+        464
       ],
       "credentials": {
         "qdrantApi": {
@@ -1262,8 +1120,8 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1,
       "position": [
-        4624,
-        -192
+        5600,
+        640
       ],
       "credentials": {
         "openAiApi": {
@@ -1285,8 +1143,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        4928,
-        -640
+        5440,
+        -80
       ],
       "credentials": {
         "postgres": {
@@ -1304,8 +1162,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5152,
-        -640
+        5664,
+        -80
       ]
     },
     {
@@ -1324,58 +1182,22 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        5376,
-        -640
+        5888,
+        -80
       ]
     },
     {
+      "parameters": {
+        "jsCode": "// Build the explicit payload for Call Onboarding Flow v2\nconst trig = $('Telegram Trigger').item.json;\nconst telegramId = String(trig.message?.from?.id || trig.callback_query?.from?.id || '');\nconst chatId     = String(trig.message?.chat?.id  || trig.callback_query?.message?.chat?.id || '');\nconst userId     = $('Check User & Membership').item.json.user_id;\nconst userCtx    = $('Set User Context').first().json;\nconst text       = userCtx.message?.text || userCtx['message.text'] || '';\nconst callbackData = trig.callback_query?.data || null;\n\nreturn [{ json: { telegramId, chatId, userId, text, callbackData, phone_number: null } }];"
+      },
       "id": "build-ob-input-001",
       "name": "Build Onboarding Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2544,
-        608
-      ],
-      "parameters": {
-        "jsCode": "// Build the explicit payload for Call Onboarding Flow v2\nconst trig = $('Telegram Trigger').item.json;\nconst telegramId = String(trig.message?.from?.id || trig.callback_query?.from?.id || '');\nconst chatId     = String(trig.message?.chat?.id  || trig.callback_query?.message?.chat?.id || '');\nconst userId     = $('Check User & Membership').item.json.user_id;\nconst userCtx    = $('Set User Context').first().json;\nconst text       = userCtx.message?.text || userCtx['message.text'] || '';\nconst callbackData = trig.callback_query?.data || null;\n\nreturn [{ json: { telegramId, chatId, userId, text, callbackData, phone_number: null } }];"
-      }
-    },
-    {
-      "id": "get-user-phone-001",
-      "name": "Get User for Phone",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        784,
-        864
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "QLEgAnHDncQkLeNb",
-          "name": "Postgres account Fitia"
-        }
-      },
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT id as user_id FROM users WHERE telegram_id = $1",
-        "options": {
-          "queryReplacement": "={{ [String($('Set Phone Data').item.json.telegram_id)] }}"
-        }
-      }
-    },
-    {
-      "id": "build-contact-input-001",
-      "name": "Build Contact Input",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1104,
-        864
-      ],
-      "parameters": {
-        "jsCode": "const phoneData = $('Set Phone Data').item.json;\nreturn [{ json: {\n  telegramId:   String(phoneData.telegram_id),\n  chatId:       String(phoneData.chatId),\n  userId:       $json.user_id,\n  text:         '',\n  callbackData: null,\n  phone_number: phoneData.phone_number\n} }];"
-      }
+        2432,
+        400
+      ]
     }
   ],
   "connections": {
@@ -1402,20 +1224,6 @@
         [
           {
             "node": "Get Voice File",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Call process text message",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Set Phone Data",
             "type": "main",
             "index": 0
           }
@@ -1632,28 +1440,6 @@
           {
             "node": "FitAI Main AI Agent",
             "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Set Phone Data": {
-      "main": [
-        [
-          {
-            "node": "Save Phone Number",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Save Phone Number": {
-      "main": [
-        [
-          {
-            "node": "Get User for Phone",
-            "type": "main",
             "index": 0
           }
         ]
@@ -1902,18 +1688,7 @@
         ]
       ]
     },
-    "Get User for Phone": {
-      "main": [
-        [
-          {
-            "node": "Build Contact Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Contact Input": {
+    "Build Onboarding Input": {
       "main": [
         [
           {
@@ -1935,9 +1710,9 @@
   },
   "meta": null,
   "pinData": {},
-  "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
-  "activeVersionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
-  "versionCounter": 625,
+  "versionId": "5f3b85ae-a619-432d-81bd-029ed52a3af7",
+  "activeVersionId": "5f3b85ae-a619-432d-81bd-029ed52a3af7",
+  "versionCounter": 684,
   "triggerCount": 1,
   "shared": [
     {
@@ -1960,9 +1735,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T19:12:22.852Z",
-    "createdAt": "2026-04-03T19:12:22.852Z",
-    "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
+    "updatedAt": "2026-04-04T22:23:43.000Z",
+    "createdAt": "2026-04-04T22:23:36.930Z",
+    "versionId": "5f3b85ae-a619-432d-81bd-029ed52a3af7",
     "workflowId": "fI5u4rs3iXPfeXFl",
     "nodes": [
       {
@@ -1978,8 +1753,8 @@
         "typeVersion": 1.2,
         "name": "Telegram Trigger",
         "position": [
-          -560,
-          368
+          -320,
+          336
         ],
         "webhookId": "63001b72-4471-4896-b3b3-8ec56a0d9da6",
         "credentials": {
@@ -2042,56 +1817,6 @@
                 },
                 "renameOutput": true,
                 "outputKey": "voice"
-              },
-              {
-                "conditions": {
-                  "options": {
-                    "caseSensitive": true,
-                    "leftValue": "",
-                    "typeValidation": "loose",
-                    "version": 2
-                  },
-                  "conditions": [
-                    {
-                      "operator": {
-                        "type": "boolean",
-                        "operation": "exists",
-                        "singleValue": true
-                      },
-                      "leftValue": "={{ $json.callback_query.data }}",
-                      "rightValue": "",
-                      "id": "8b3e071a-17fa-47fb-952d-211894958596"
-                    }
-                  ],
-                  "combinator": "and"
-                },
-                "renameOutput": true,
-                "outputKey": "callback"
-              },
-              {
-                "conditions": {
-                  "options": {
-                    "caseSensitive": true,
-                    "leftValue": "",
-                    "typeValidation": "loose",
-                    "version": 2
-                  },
-                  "conditions": [
-                    {
-                      "operator": {
-                        "type": "boolean",
-                        "operation": "exists",
-                        "singleValue": true
-                      },
-                      "leftValue": "={{ $json.message.contact.phone_number }}",
-                      "rightValue": "",
-                      "id": "e2d15420-ab30-44b7-891b-633a7e4dad62"
-                    }
-                  ],
-                  "combinator": "and"
-                },
-                "renameOutput": true,
-                "outputKey": "contact"
               }
             ]
           },
@@ -2118,7 +1843,7 @@
         "typeVersion": 1.2,
         "name": "Get Voice File",
         "position": [
-          192,
+          160,
           496
         ],
         "webhookId": "5debfbcc-0498-4e8f-a50a-4b70b1694912",
@@ -2140,7 +1865,7 @@
         "typeVersion": 1.8,
         "name": "Transcribe Voice",
         "position": [
-          496,
+          464,
           496
         ],
         "credentials": {
@@ -2187,7 +1912,7 @@
         "typeVersion": 3.4,
         "name": "Set Text from Voice",
         "position": [
-          800,
+          768,
           496
         ]
       },
@@ -2204,8 +1929,8 @@
         "typeVersion": 2.5,
         "name": "Check User & Membership",
         "position": [
-          1568,
-          512
+          1536,
+          480
         ],
         "credentials": {
           "postgres": {
@@ -2227,8 +1952,8 @@
         "typeVersion": 2.5,
         "name": "Upsert User",
         "position": [
-          1280,
-          512
+          1248,
+          480
         ],
         "credentials": {
           "postgres": {
@@ -2268,8 +1993,8 @@
         "typeVersion": 2,
         "name": "Has Active Membership?",
         "position": [
-          1936,
-          400
+          1824,
+          192
         ]
       },
       {
@@ -2285,8 +2010,8 @@
         "typeVersion": 1.2,
         "name": "No Membership Message",
         "position": [
-          2192,
-          560
+          2080,
+          352
         ],
         "webhookId": "20379d01-666f-4ea3-834a-e62dc6c5ff5a",
         "retryOnFail": true,
@@ -2330,8 +2055,8 @@
         "typeVersion": 2,
         "name": "Onboarding Complete?",
         "position": [
-          2208,
-          208
+          2096,
+          0
         ]
       },
       {
@@ -2347,8 +2072,8 @@
         "typeVersion": 2,
         "name": "FitAI Main AI Agent",
         "position": [
-          3664,
-          -656
+          4688,
+          -80
         ]
       },
       {
@@ -2369,8 +2094,8 @@
         "typeVersion": 1.2,
         "name": "OpenAI Chat Model",
         "position": [
-          3520,
-          -512
+          4544,
+          192
         ],
         "credentials": {
           "openAiApi": {
@@ -2390,8 +2115,8 @@
         "typeVersion": 1.3,
         "name": "FitAI Memory",
         "position": [
-          3664,
-          -512
+          4688,
+          160
         ]
       },
       {
@@ -2408,8 +2133,8 @@
         "typeVersion": 1.2,
         "name": "Send Response",
         "position": [
-          4704,
-          -640
+          5216,
+          -80
         ],
         "webhookId": "a599e63d-7899-46a8-944b-e9d2d9c289f9",
         "retryOnFail": true,
@@ -2451,8 +2176,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          4208,
-          -368
+          5184,
+          464
         ]
       },
       {
@@ -2488,8 +2213,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3888,
-          -368
+          4864,
+          464
         ]
       },
       {
@@ -2521,8 +2246,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          4048,
-          -368
+          5024,
+          464
         ]
       },
       {
@@ -2557,8 +2282,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3728,
-          -368
+          4704,
+          464
         ]
       },
       {
@@ -2578,8 +2303,8 @@
         "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
         "typeVersion": 1.3,
         "position": [
-          4336,
-          -368
+          5312,
+          464
         ],
         "credentials": {
           "qdrantApi": {
@@ -2598,71 +2323,13 @@
         "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
         "typeVersion": 1,
         "position": [
-          4336,
-          -192
+          5312,
+          640
         ],
         "credentials": {
           "openAiApi": {
             "id": "NOJoPVNWDXiywRgw",
             "name": "OpenAi account"
-          }
-        }
-      },
-      {
-        "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "id": "cp1",
-                "name": "phone_number",
-                "type": "string",
-                "value": "={{ $json.message.contact.phone_number }}"
-              },
-              {
-                "id": "cp2",
-                "name": "telegram_id",
-                "type": "string",
-                "value": "={{ $json.message.contact.user_id }}"
-              },
-              {
-                "id": "cp3",
-                "name": "chatId",
-                "type": "string",
-                "value": "={{ $json.message.chat.id }}"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "id": "contact-set-001",
-        "name": "Set Phone Data",
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-          192,
-          864
-        ]
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "UPDATE users SET phone_number = $1, updated_at = NOW() WHERE telegram_id = $2",
-          "options": {
-            "queryReplacement": "={{ [$json.phone_number, String($json.telegram_id)] }}"
-          }
-        },
-        "id": "contact-pg-001",
-        "name": "Save Phone Number",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          480,
-          864
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
           }
         }
       },
@@ -2679,8 +2346,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          624,
-          112
+          576,
+          176
         ],
         "credentials": {
           "postgres": {
@@ -2721,8 +2388,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          1056,
-          112
+          1008,
+          176
         ]
       },
       {
@@ -2738,8 +2405,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          1280,
-          96
+          1248,
+          -48
         ],
         "credentials": {
           "postgres": {
@@ -2762,8 +2429,8 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          1552,
-          96
+          1520,
+          -48
         ],
         "retryOnFail": true,
         "maxTries": 3,
@@ -2785,8 +2452,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          800,
-          112
+          784,
+          176
         ]
       },
       {
@@ -2847,8 +2514,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.2,
         "position": [
-          192,
-          112
+          144,
+          176
         ],
         "name": "Call process text message",
         "id": "bb616577-3076-40d8-8cd0-f6bdee27e9a9"
@@ -2890,8 +2557,8 @@
         "type": "n8n-nodes-base.set",
         "typeVersion": 3.4,
         "position": [
-          416,
-          112
+          368,
+          176
         ]
       },
       {
@@ -2907,8 +2574,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2544,
-          -784
+          3568,
+          -208
         ],
         "alwaysOutputData": true,
         "credentials": {
@@ -2931,8 +2598,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2544,
-          -624
+          3568,
+          -48
         ],
         "alwaysOutputData": true,
         "credentials": {
@@ -2955,8 +2622,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2544,
-          -464
+          3568,
+          112
         ],
         "alwaysOutputData": true,
         "credentials": {
@@ -2979,8 +2646,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2544,
-          -288
+          3568,
+          288
         ],
         "alwaysOutputData": true,
         "credentials": {
@@ -3003,8 +2670,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2544,
-          -128
+          3568,
+          448
         ],
         "alwaysOutputData": true,
         "credentials": {
@@ -3027,8 +2694,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          2544,
-          32
+          3568,
+          608
         ],
         "alwaysOutputData": true,
         "credentials": {
@@ -3047,8 +2714,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          3232,
-          -432
+          4256,
+          144
         ]
       },
       {
@@ -3080,8 +2747,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          3888,
-          -208
+          4864,
+          624
         ]
       },
       {
@@ -3113,8 +2780,8 @@
         "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
         "typeVersion": 1.3,
         "position": [
-          4048,
-          -208
+          5024,
+          624
         ]
       },
       {
@@ -3126,40 +2793,6 @@
           },
           "options": {
             "waitForSubWorkflow": true
-          },
-          "fields": {
-            "values": [
-              {
-                "name": "telegramId",
-                "type": "stringValue",
-                "stringValue": "={{ $json.telegramId }}"
-              },
-              {
-                "name": "chatId",
-                "type": "stringValue",
-                "stringValue": "={{ $json.chatId }}"
-              },
-              {
-                "name": "userId",
-                "type": "numberValue",
-                "numberValue": "={{ $json.userId }}"
-              },
-              {
-                "name": "text",
-                "type": "stringValue",
-                "stringValue": "={{ $json.text }}"
-              },
-              {
-                "name": "callbackData",
-                "type": "stringValue",
-                "stringValue": "={{ $json.callbackData }}"
-              },
-              {
-                "name": "phone_number",
-                "type": "stringValue",
-                "stringValue": "={{ $json.phone_number }}"
-              }
-            ]
           }
         },
         "id": "ob-call-v2",
@@ -3167,8 +2800,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          3040,
-          560
+          2736,
+          400
         ]
       },
       {
@@ -3180,8 +2813,8 @@
         "type": "n8n-nodes-base.merge",
         "typeVersion": 3.1,
         "position": [
-          2928,
-          -416
+          3952,
+          160
         ]
       },
       {
@@ -3200,8 +2833,8 @@
         "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
         "typeVersion": 1.3,
         "position": [
-          4624,
-          -368
+          5600,
+          464
         ],
         "credentials": {
           "qdrantApi": {
@@ -3220,8 +2853,8 @@
         "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
         "typeVersion": 1,
         "position": [
-          4624,
-          -192
+          5600,
+          640
         ],
         "credentials": {
           "openAiApi": {
@@ -3243,8 +2876,8 @@
         "type": "n8n-nodes-base.postgres",
         "typeVersion": 2.5,
         "position": [
-          4928,
-          -640
+          5440,
+          -80
         ],
         "credentials": {
           "postgres": {
@@ -3262,8 +2895,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          5152,
-          -640
+          5664,
+          -80
         ]
       },
       {
@@ -3282,58 +2915,22 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          5376,
-          -640
+          5888,
+          -80
         ]
       },
       {
+        "parameters": {
+          "jsCode": "// Build the explicit payload for Call Onboarding Flow v2\nconst trig = $('Telegram Trigger').item.json;\nconst telegramId = String(trig.message?.from?.id || trig.callback_query?.from?.id || '');\nconst chatId     = String(trig.message?.chat?.id  || trig.callback_query?.message?.chat?.id || '');\nconst userId     = $('Check User & Membership').item.json.user_id;\nconst userCtx    = $('Set User Context').first().json;\nconst text       = userCtx.message?.text || userCtx['message.text'] || '';\nconst callbackData = trig.callback_query?.data || null;\n\nreturn [{ json: { telegramId, chatId, userId, text, callbackData, phone_number: null } }];"
+        },
         "id": "build-ob-input-001",
         "name": "Build Onboarding Input",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2544,
-          608
-        ],
-        "parameters": {
-          "jsCode": "// Build the explicit payload for Call Onboarding Flow v2\nconst trig = $('Telegram Trigger').item.json;\nconst telegramId = String(trig.message?.from?.id || trig.callback_query?.from?.id || '');\nconst chatId     = String(trig.message?.chat?.id  || trig.callback_query?.message?.chat?.id || '');\nconst userId     = $('Check User & Membership').item.json.user_id;\nconst userCtx    = $('Set User Context').first().json;\nconst text       = userCtx.message?.text || userCtx['message.text'] || '';\nconst callbackData = trig.callback_query?.data || null;\n\nreturn [{ json: { telegramId, chatId, userId, text, callbackData, phone_number: null } }];"
-        }
-      },
-      {
-        "id": "get-user-phone-001",
-        "name": "Get User for Phone",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          784,
-          864
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "QLEgAnHDncQkLeNb",
-            "name": "Postgres account Fitia"
-          }
-        },
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "SELECT id as user_id FROM users WHERE telegram_id = $1",
-          "options": {
-            "queryReplacement": "={{ [String($('Set Phone Data').item.json.telegram_id)] }}"
-          }
-        }
-      },
-      {
-        "id": "build-contact-input-001",
-        "name": "Build Contact Input",
-        "type": "n8n-nodes-base.code",
-        "typeVersion": 2,
-        "position": [
-          1104,
-          864
-        ],
-        "parameters": {
-          "jsCode": "const phoneData = $('Set Phone Data').item.json;\nreturn [{ json: {\n  telegramId:   String(phoneData.telegram_id),\n  chatId:       String(phoneData.chatId),\n  userId:       $json.user_id,\n  text:         '',\n  callbackData: null,\n  phone_number: phoneData.phone_number\n} }];"
-        }
+          2432,
+          400
+        ]
       }
     ],
     "connections": {
@@ -3360,20 +2957,6 @@
           [
             {
               "node": "Get Voice File",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Call process text message",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Set Phone Data",
               "type": "main",
               "index": 0
             }
@@ -3590,28 +3173,6 @@
             {
               "node": "FitAI Main AI Agent",
               "type": "ai_tool",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Set Phone Data": {
-        "main": [
-          [
-            {
-              "node": "Save Phone Number",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Save Phone Number": {
-        "main": [
-          [
-            {
-              "node": "Get User for Phone",
-              "type": "main",
               "index": 0
             }
           ]
@@ -3860,18 +3421,7 @@
           ]
         ]
       },
-      "Get User for Phone": {
-        "main": [
-          [
-            {
-              "node": "Build Contact Input",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Build Contact Input": {
+      "Build Onboarding Input": {
         "main": [
           [
             {
@@ -3884,32 +3434,16 @@
       }
     },
     "authors": "Mauro Ibarra ",
-    "name": null,
-    "description": null,
-    "autosaved": false,
+    "name": "Version 5f3b85ae",
+    "description": "",
+    "autosaved": true,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T19:12:25.142Z",
-        "id": 435,
+        "createdAt": "2026-04-04T22:23:43.790Z",
+        "id": 489,
         "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
+        "versionId": "5f3b85ae-a619-432d-81bd-029ed52a3af7",
         "event": "activated",
-        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
-      },
-      {
-        "createdAt": "2026-04-03T19:12:35.995Z",
-        "id": 437,
-        "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
-        "event": "activated",
-        "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
-      },
-      {
-        "createdAt": "2026-04-03T19:12:34.791Z",
-        "id": 436,
-        "workflowId": "fI5u4rs3iXPfeXFl",
-        "versionId": "a3f39797-8552-4621-a0c5-ea9e06ad55fa",
-        "event": "deactivated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }
     ]

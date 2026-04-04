@@ -146,7 +146,6 @@ Mapa de IDs → archivos del repo:
 |-------------|---------|
 | `fI5u4rs3iXPfeXFl` | `n8n/workflows/01-telegram-webhook-handler.json` |
 | `CCkMv75zwDDoj513` | `n8n/workflows/02-process-text-message.json` |
-| `Gr7BeeNHBx6ZtQGS` | `n8n/workflows/02-main-ai-agent.json` |
 | `yiUgnJ6gCoaIFVXe` | `n8n/workflows/03-onboarding-flow.json` |
 | `KQhP9lQNxCKeOsbJ` | `n8n/workflows/04-meal-plan-generator.json` |
 | `SntGuE97yl9efvo5` | `n8n/workflows/05-meal-reminder-scheduler.json` |
@@ -290,9 +289,8 @@ El repositorio https://github.com/czlonkowski/n8n-skills contiene patrones y ski
 ### Estructura de Workflows de n8n
 - Prefijo: `FitAI - ` seguido del nombre descriptivo
 - Los 12 workflows del sistema:
-  1. `FitAI - Telegram Webhook Handler` — punto de entrada, enruta texto/voz/callbacks
+  1. `FitAI - Telegram Webhook Handler` — punto de entrada, enruta texto/voz
   2. `FitAI - Process text message` — subprocess de debounce multi-mensaje (PostgreSQL)
-  3. `FitAI - Main AI Agent` — agente OpenAI con tools, integrado en el handler
   4. `FitAI - Onboarding Flow` — sub-workflow de onboarding, integrado en el handler
   5. `FitAI - Meal Plan Generator` — tool llamada por el AI Agent
   6. `FitAI - Workout Plan Generator` — tool llamada por el AI Agent
@@ -432,7 +430,7 @@ El contenedor `n8n` es standalone — **no** está en `docker-compose.yml`. No p
 
 ### Convergencia voz + texto — nodo `Set User Context`
 El handler tiene dos paths para obtener el texto del usuario:
-- **Texto/callback**: `Call process text message` (subprocess con debounce) → `Set User Context`
+- **Texto**: `Call process text message` (subprocess con debounce) → `Set User Context`
 - **Voz**: `Transcribe Voice` → `Set Text from Voice` → `Set User Context`
 
 Ambos paths convergen en `Set User Context` (Set node). **Todos los nodos downstream deben referenciar `$('Set User Context').item.json.*`** para obtener `message.text`, `chatId`, `telegramId`, `firstName`. Nunca referenciar `$('Call process text message').item.json.*` — ese nodo no existe en el path de voz.
@@ -544,6 +542,13 @@ val ? '{"' + String(val) + '"}' : '{}'
 
 ### PostgreSQL — auditar schema antes de escribir SQL
 Antes de cualquier INSERT/UPDATE en tabla nueva: `\d tablename` (columnas exactas) y listar enums. `ON CONFLICT (col)` requiere UNIQUE CONSTRAINT — un índice simple no sirve. Para tablas sin unique constraint en user_id (ej: `goals`), usar DELETE + INSERT.
+
+### Onboarding — sin teclados, solo texto libre (desde 2026-04-04)
+El onboarding opera 100% en texto libre. El mapa `KEYBOARDS` en `ob-ai-01` está vacío (`{}`). Todos los pasos retornan `replyMarkupType: 'none'`.
+
+- El nodo `Has Callback?` sigue en el workflow pero en producción normal siempre va por la rama false (texto).
+- `ask_phone` acepta número escrito (`/^\+?[\d]{7,15}$/` sobre `userText`) además del contacto nativo. Guarda en `state.data.phone_number`.
+- El AI parser (`ob-ai-03`, gpt-4o-mini temp=0) normaliza texto libre a valores canónicos: `"soy hombre"` → `"male"`, `"gym"` → `"full_gym"`, `"si"` → `"yes"`, etc.
 
 ### memoryBufferWindow — memoria in-RAM, se pierde en restart
 El nodo `FitAI Memory` (`memoryBufferWindow`, typeVersion 1.3) almacena el historial de conversaciones **en RAM** del proceso n8n. No persiste en SQLite, Redis ni ninguna base de datos.

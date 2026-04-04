@@ -360,14 +360,14 @@ Cuando un usuario envía varios mensajes en ráfaga (ej: "hola" → "me puedes a
 ### Nodos en Orden
 
 #### Nodo 1: Start (executeWorkflowTrigger)
-Recibe el payload del handler: `{message: {...}, callback_query: {...}}`
+Recibe el payload del handler: `{message: {...}}`
 
 #### Nodo 2: Extract Message (Code)
 Extrae `chatId`, `text` y genera `ts = Date.now()`:
 ```javascript
 const trigger = $('Start').item.json;
-const chatId = String(trigger.message?.chat?.id || trigger.callback_query?.message?.chat?.id || '');
-const text = String(trigger.message?.text || trigger.callback_query?.data || '');
+const chatId = String(trigger.message?.chat?.id || '');
+const text = String(trigger.message?.text || '');
 const ts = Date.now();
 return [{ json: { chatId, text, ts } }];
 ```
@@ -1162,27 +1162,27 @@ Steps válidos del onboarding v2 (21 total):
 | Step | Bloque | Campo | Tipo | Validación |
 |------|--------|-------|------|------------|
 | `ask_name` | 1 | `first_name` | Texto libre | 2-40 caracteres, letras/espacios/guiones |
-| `ask_gender` | 1 | `gender` | Inline keyboard | `male` / `female` |
+| `ask_gender` | 1 | `gender` | Texto libre (opciones) | `male` / `female` — normalizado por AI parser |
 | `ask_age` | 1 | `age` | Número | Entero 14-100 |
 | `ask_height` | 1 | `height_cm` | Número | 100-250, 1 decimal |
 | `ask_weight` | 1 | `weight_kg` | Número | 30-300, 1 decimal |
-| `ask_goal` | 2 | `goal_type` | Inline keyboard | `lose_fat` / `gain_muscle` / `maintain` / `recomposition` |
+| `ask_goal` | 2 | `goal_type` | Texto libre (opciones) | `lose_fat` / `gain_muscle` / `maintain` / `recomposition` — normalizado por AI parser |
 | `ask_target_weight` | 2 | `target_weight` | Número (condicional) | Solo si `lose_fat` o `gain_muscle` |
-| `ask_dietary_restrictions_known` | 3 | — | Inline keyboard | `yes` / `no` |
+| `ask_dietary_restrictions_known` | 3 | — | Texto libre (opciones) | `yes` / `no` — normalizado por AI parser |
 | `ask_dietary_input` | 3 | `dietary_restrictions`, `food_allergies` | Texto libre (condicional) | Solo si respondió "Si" |
 | `ask_disliked_foods` | 3 | `disliked_foods` | Texto libre | 1-300 caracteres, "no" → `[]` |
-| `ask_budget` | 3 | `budget_level` | Inline keyboard | `low` / `medium` / `high` |
-| `ask_meals` | 3 | `meals_per_day` | Inline keyboard | 3 / 4 / 5 |
-| `ask_fitness_level` | 4 | `fitness_level` | Inline keyboard | `beginner` / `intermediate` / `advanced` |
-| `ask_equipment` | 4 | `equipment` | Inline keyboard | `bodyweight` / `home_basic` / `full_gym` |
-| `ask_training_days` | 4 | `training_days_per_week` | Inline keyboard | 2-6 |
-| `ask_injuries` | 4 | — | Inline keyboard | `yes` / `no` |
+| `ask_budget` | 3 | `budget_level` | Texto libre (opciones) | `low` / `medium` / `high` — normalizado por AI parser |
+| `ask_meals` | 3 | `meals_per_day` | Texto libre (opciones) | 3 / 4 / 5 |
+| `ask_fitness_level` | 4 | `fitness_level` | Texto libre (opciones) | `beginner` / `intermediate` / `advanced` — normalizado por AI parser |
+| `ask_equipment` | 4 | `equipment` | Texto libre (opciones) | `bodyweight` / `home_basic` / `full_gym` — normalizado por AI parser |
+| `ask_training_days` | 4 | `training_days_per_week` | Texto libre (opciones) | 2-6 |
+| `ask_injuries` | 4 | — | Texto libre (opciones) | `yes` / `no` — normalizado por AI parser |
 | `ask_injuries_input` | 4 | `injuries` | Texto libre (condicional) | 3-500 caracteres, Solo si respondió "Si" |
-| `ask_wake_time` | 5 | `wake_up_time` | Inline keyboard | HH:00 o "Otra" |
-| `ask_wake_time_custom` | 5 | `wake_up_time` | Texto libre (condicional) | Formato HH:MM, Solo si "Otra" |
-| `ask_activity_level` | 5 | `activity_level` | Inline keyboard | `sedentary` / `lightly_active` / `moderately_active` / `very_active` |
-| `confirm_profile` | — | — | Inline keyboard | `confirm` / `correct` |
-| `correct_block` | — | — | Inline keyboard | Bloque 1-5 |
+| `ask_wake_time` | 5 | `wake_up_time` | Texto libre (opciones) | HH:MM o "custom" para hora no listada |
+| `ask_wake_time_custom` | 5 | `wake_up_time` | Texto libre (condicional) | Formato HH:MM, Solo si respondió hora inusual |
+| `ask_activity_level` | 5 | `activity_level` | Texto libre (opciones) | `sedentary` / `lightly_active` / `moderately_active` / `very_active` — normalizado por AI parser |
+| `confirm_profile` | — | — | Texto libre (opciones) | `confirm` / `correct` — normalizado por AI parser |
+| `correct_block` | — | — | Texto libre (opciones) | `block_1`…`block_5` — normalizado por AI parser |
 | `calculate_and_complete` | — | — | — | Trigger de finalización |
 
 #### Nodo 3: Initialize or Resume? (IF)
@@ -1256,7 +1256,7 @@ return [{
 - **Tipo**: Code (JavaScript)
 - **Propósito**: validar la respuesta del usuario según el step actual, actualizar `state.data`, avanzar al siguiente step y preparar el mensaje de respuesta (siguiente pregunta o error de validación).
 
-Este nodo implementa la lógica de bloques conversacionales v2. No hay confirmaciones intermedias — el acuse de recibo es la siguiente pregunta:
+> ⚠️ **Snapshot v2.2** — el código embebido a continuación refleja v2.2. En v2.3 (2026-04-04) se eliminaron todos los `inline_keyboard`/`replyMarkup`, se removió `callbackData`, se actualizaron los `errorMessage` para no mencionar botones, y `ask_phone` acepta número escrito. Ver código actualizado en `n8n/workflows/03-onboarding-flow.json`.
 
 ```javascript
 const { state, userText, callbackData } = $json;

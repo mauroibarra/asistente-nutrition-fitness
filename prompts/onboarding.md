@@ -73,10 +73,8 @@ El onboarding se organiza en 5 bloques tematicos. Dentro de cada bloque, las pre
 ```text
 {{first_name}}, mucho gusto. Necesito unos datos fisicos basicos para calcular tus requerimientos. Empezamos:
 
-Genero biologico?
+Genero biologico? Escribe Hombre o Mujer.
 ```
-
-`[ Hombre ]  [ Mujer ]`
 
 **Notas:**
 - Se usa el nombre inmediatamente para personalizar
@@ -87,9 +85,9 @@ Genero biologico?
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard |
-| **Botones** | `[ Hombre ]  [ Mujer ]` |
-| **Mapping** | Hombre → `male`, Mujer → `female` |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `Hombre` o `Mujer` |
+| **Mapping** | Hombre → `male`, Mujer → `female` (normalizado por AI parser) |
 | **Variable** | `gender` |
 | **Step** | `ask_gender` |
 
@@ -147,10 +145,8 @@ Y peso actual en kg? (ej: 80)
 **Transicion al Bloque 2:**
 
 ```text
-Listo, ahora lo mas importante: que quieres lograr?
+Listo, ahora lo mas importante: que quieres lograr? Opciones: Perder grasa, Ganar musculo, Mantener peso o Recomposicion corporal.
 ```
-
-`[ Perder grasa ]  [ Ganar musculo ]  [ Mantener peso ]  [ Recomposicion corporal ]`
 
 **Notas sobre el Bloque 1:**
 - Las preguntas de datos fisicos se sienten como un solo flujo rapido (genero → edad → estatura → peso)
@@ -165,9 +161,9 @@ Listo, ahora lo mas importante: que quieres lograr?
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard |
-| **Botones** | `[ Perder grasa ]  [ Ganar musculo ]  [ Mantener peso ]  [ Recomposicion corporal ]` |
-| **Mapping** | Perder grasa → `lose_fat`, Ganar musculo → `gain_muscle`, Mantener peso → `maintain`, Recomposicion corporal → `recomposition` |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `Perder grasa`, `Ganar musculo`, `Mantener peso`, `Recomposicion corporal` |
+| **Mapping** | Perder grasa → `lose_fat`, Ganar musculo → `gain_muscle`, Mantener peso → `maintain`, Recomposicion corporal → `recomposition` (normalizado por AI parser) |
 | **Variable** | `goal_type` |
 | **Step** | `ask_goal` |
 
@@ -198,10 +194,8 @@ Si `goal_type` es `maintain` o `recomposition`:
 ```text
 Va. Ahora unas preguntas sobre como comes.
 
-Tienes alguna restriccion dietaria o alergia alimentaria?
+Tienes alguna restriccion dietaria o alergia alimentaria? Escribe Si o No.
 ```
-
-`[ Si, tengo ]  [ No, ninguna ]`
 
 ---
 
@@ -213,8 +207,8 @@ Tienes alguna restriccion dietaria o alergia alimentaria?
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard |
-| **Botones** | `[ Si, tengo ]  [ No, ninguna ]` |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `Si` o `No` (normalizado por AI parser a `yes` / `no`) |
 | **Step** | `ask_dietary_restrictions_known` |
 
 Si "No, ninguna": `dietary_restrictions = []`, `food_allergies = []` → Saltar a paso 9
@@ -257,15 +251,14 @@ Hay alimentos que no te gusten? Escribelos o pon "no" si comes de todo.
 **Transicion:**
 
 ```text
-Ok. Y tu presupuesto para ingredientes?
+Ok. Y tu presupuesto para ingredientes? Opciones: Economico, Moderado o Sin limite.
 ```
-
-`[ Economico ]  [ Moderado ]  [ Sin limite ]`
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard |
-| **Mapping** | Economico → `low`, Moderado → `medium`, Sin limite → `high` |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `Economico`, `Moderado`, `Sin limite` |
+| **Mapping** | Economico → `low`, Moderado → `medium`, Sin limite → `high` (normalizado por AI parser) |
 | **Variable** | `budget_level` |
 | **Step** | `ask_budget` |
 
@@ -274,14 +267,13 @@ Ok. Y tu presupuesto para ingredientes?
 **Transicion:**
 
 ```text
-Cuantas comidas al dia prefieres?
+Cuantas comidas al dia prefieres? Opciones: 3, 4 o 5.
 ```
-
-`[ 3 ]  [ 4 ]  [ 5 ]`
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `3`, `4`, `5` |
 | **Variable** | `meals_per_day` |
 | **Step** | `ask_meals` |
 
@@ -290,10 +282,8 @@ Cuantas comidas al dia prefieres?
 ```text
 Bien, ahora el tema del ejercicio.
 
-Como describirias tu experiencia entrenando?
+Como describirias tu experiencia entrenando? Opciones: Principiante, Intermedio o Avanzado.
 ```
-
-`[ Principiante (< 6 meses) ]  [ Intermedio (6 meses - 2 anos) ]  [ Avanzado (2+ anos) ]`
 
 ---
 
@@ -303,9 +293,9 @@ Como describirias tu experiencia entrenando?
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard |
-| **Botones** | `[ Principiante (< 6 meses) ]  [ Intermedio (6 meses - 2 anos) ]  [ Avanzado (2+ anos) ]` |
-| **Mapping** | Principiante → `beginner`, Intermedio → `intermediate`, Avanzado → `advanced` |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `Principiante` (< 6 meses), `Intermedio` (6 meses - 2 anos), `Avanzado` (2+ anos) |
+| **Mapping** | Principiante → `beginner`, Intermedio → `intermediate`, Avanzado → `advanced` (normalizado por AI parser) |
 | **Variable** | `fitness_level` |
 | **Step** | `ask_fitness_level` |
 
@@ -314,15 +304,14 @@ Como describirias tu experiencia entrenando?
 **Transicion:**
 
 ```text
-Donde entrenas o planeas entrenar?
+Donde entrenas o planeas entrenar? Opciones: Casa sin equipo, Casa con mancuernas/bandas o Gimnasio.
 ```
-
-`[ Casa sin equipo ]  [ Casa con mancuernas/bandas ]  [ Gimnasio ]`
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard |
-| **Mapping** | Casa sin equipo → `bodyweight`, Casa con mancuernas/bandas → `home_basic`, Gimnasio → `full_gym` |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `Casa sin equipo`, `Casa con mancuernas/bandas`, `Gimnasio` |
+| **Mapping** | Casa sin equipo → `bodyweight`, Casa con mancuernas/bandas → `home_basic`, Gimnasio → `full_gym` (normalizado por AI parser) |
 | **Variable** | `equipment` |
 | **Step** | `ask_equipment` |
 
@@ -331,14 +320,13 @@ Donde entrenas o planeas entrenar?
 **Transicion:**
 
 ```text
-Cuantos dias a la semana puedes entrenar?
+Cuantos dias a la semana puedes entrenar? Escribe un numero del 2 al 6.
 ```
-
-`[ 2 ]  [ 3 ]  [ 4 ]  [ 5 ]  [ 6 ]`
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `2`, `3`, `4`, `5`, `6` |
 | **Variable** | `training_days_per_week` |
 | **Step** | `ask_training_days` |
 
@@ -347,14 +335,13 @@ Cuantos dias a la semana puedes entrenar?
 **Transicion:**
 
 ```text
-Alguna lesion o condicion fisica que deba saber?
+Alguna lesion o condicion fisica que deba saber? Responde Si o No.
 ```
-
-`[ No, estoy bien ]  [ Si, tengo ]`
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard + texto libre condicional |
+| **Tipo** | Texto libre (opciones + condicional) |
+| **Opciones** | `Si` o `No` (normalizado por AI parser a `yes` / `no`) |
 | **Step** | `ask_injuries` |
 
 Si "Si, tengo":
@@ -381,19 +368,17 @@ Si "No, estoy bien": `injuries = null`
 ```text
 Casi terminamos. Solo necesito saber tus horarios.
 
-A que hora te despiertas normalmente?
+A que hora te despiertas normalmente? Puedes escribir la hora directamente (ej: 6:00, 7:30).
 ```
-
-`[ 5:00 ]  [ 6:00 ]  [ 7:00 ]  [ 8:00 ]  [ 9:00 ]  [ Otra ]`
 
 **Paso 16 - Hora de despertar**
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard + texto libre si "Otra" |
-| **Mapping** | Cada boton → valor string "HH:00". "Otra" → pide texto libre formato HH:MM |
+| **Tipo** | Texto libre |
+| **Formato** | HH:MM — el AI parser normaliza "las 7" → `07:00`, "6 y media" → `06:30` |
 | **Variable** | `wake_up_time` |
-| **Step** | `ask_wake_time` |
+| **Step** | `ask_wake_time` / `ask_wake_time_custom` (un solo flujo en la practica) |
 
 Si "Otra":
 
@@ -406,18 +391,14 @@ Escribe la hora en formato HH:MM (ej: 06:30)
 **Transicion:**
 
 ```text
-Fuera del ejercicio, como es tu dia a dia?
+Fuera del ejercicio, como es tu dia a dia? Opciones: Sedentario, Ligero (camino algo), Moderado (de pie bastante) o Muy activo (trabajo fisico).
 ```
-
-`[ Sentado casi todo el dia ]`
-`[ Camino algo, tareas ligeras ]`
-`[ De pie bastante, camino mucho ]`
-`[ Trabajo fisico pesado ]`
 
 | Campo | Valor |
 |---|---|
-| **Tipo** | Inline keyboard (botones apilados) |
-| **Mapping** | Sentado → `sedentary`, Camino algo → `lightly_active`, De pie bastante → `moderately_active`, Trabajo fisico → `very_active` |
+| **Tipo** | Texto libre (opciones) |
+| **Opciones** | `Sedentario`, `Ligero` (camino algo), `Moderado` (de pie bastante), `Muy activo` (trabajo fisico pesado) |
+| **Mapping** | Sedentario → `sedentary`, Ligero → `lightly_active`, Moderado → `moderately_active`, Muy activo → `very_active` (normalizado por AI parser) |
 | **Variable** | `activity_level` |
 | **Step** | `ask_activity_level` |
 
@@ -441,29 +422,25 @@ Listo, {{first_name}}. Confirmo los datos clave:
 Objetivo: {{goal_display}}{{#if target_weight}} → meta: {{target_weight}} kg{{/if}}
 {{training_days_per_week}} dias de ejercicio, {{meals_per_day}} comidas al dia
 
-Todo bien o quieres corregir algo?
+Todo bien o quieres corregir algo? Escribe "si" para confirmar o "corregir" si quieres cambiar algo.
 ```
-
-`[ Todo bien, dale ]  [ Quiero corregir algo ]`
 
 **Step Redis:** `confirm_profile`
 
-**Si "Quiero corregir algo":**
+**Si quiere corregir:**
 
 ```text
-Que quieres cambiar?
+Que quieres cambiar? Opciones: Datos fisicos, Objetivo, Alimentacion, Ejercicio u Horarios.
 ```
 
-`[ Datos fisicos ]  [ Objetivo ]  [ Alimentacion ]  [ Ejercicio ]  [ Horarios ]`
-
-Al seleccionar una categoria, se re-hacen SOLO las preguntas de ese bloque. Al terminar, se vuelve a mostrar el resumen breve.
+Al responder el bloque, se re-hacen SOLO las preguntas de ese bloque. Al terminar, se vuelve a mostrar el resumen breve.
 
 **Step Redis:** `correct_block`
 
 **Notas:**
 - El resumen v1 mostraba 20+ campos. El v2 muestra solo lo critico (5-6 datos)
 - Se corrige por bloque, no campo por campo — mas rapido y menos tedioso
-- El boton dice "Todo bien, dale" no "Confirmar" — lenguaje natural
+- El usuario escribe su confirmacion en texto natural ("si", "dale", "todo bien")
 
 ---
 
@@ -677,7 +654,7 @@ BIENVENIDA + ask_name
 
 Identico al v1 con estos ajustes:
 
-1. **Timeout de 48h** (era 24h): mensaje de retoma mas amigable: `Ey, parece que no terminamos tu registro. Quieres retomar donde lo dejamos o empezar de nuevo?` con botones `[ Retomar ]  [ Empezar de nuevo ]`
+1. **Timeout de 48h** (era 24h): mensaje de retoma mas amigable: `Ey, parece que no terminamos tu registro. Quieres retomar donde lo dejamos o empezar de nuevo? Escribe "retomar" o "nuevo".`
 2. **Comando /cancelar**: `Cancelado. Cuando quieras retomar solo escribeme.` (sin mencionar /start)
 3. **Mensaje inesperado**: se repite la pregunta actual SIN mensajes de error largos. Solo: `No entendi eso. [pregunta original]`
 

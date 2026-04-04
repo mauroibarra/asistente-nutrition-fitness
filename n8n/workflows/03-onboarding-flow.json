@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-04T19:37:17.715Z",
+  "updatedAt": "2026-04-04T22:26:10.279Z",
   "createdAt": "2026-04-01T20:02:43.200Z",
   "id": "yiUgnJ6gCoaIFVXe",
   "name": "FitAI - Onboarding Flow",
@@ -46,7 +46,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -318,7 +319,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        3152,
+        3408,
         96
       ]
     },
@@ -332,7 +333,7 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        3376,
+        3632,
         96
       ],
       "credentials": {
@@ -358,7 +359,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.1,
       "position": [
-        3600,
+        3856,
         96
       ]
     },
@@ -376,7 +377,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3872,
+        4128,
         96
       ],
       "webhookId": "8811e933-0c45-4e87-9a3b-02dbcca22f9b",
@@ -401,7 +402,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        4096,
+        4352,
         96
       ],
       "webhookId": "7900a537-ea55-44f0-9fbd-6fee164c23c5",
@@ -414,7 +415,6 @@
     },
     {
       "parameters": {
-        "mode": "append",
         "numberInputs": 4
       },
       "id": "merge-merge-onboarding-save",
@@ -566,18 +566,17 @@
       }
     },
     {
+      "parameters": {
+        "jsCode": "return [{ json: { done: true } }];"
+      },
       "id": "ob-collapse-01",
       "name": "Collapse to One Item",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2600,
-        300
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "return [{ json: { done: true } }];"
-      }
+        3184,
+        96
+      ]
     }
   ],
   "connections": {
@@ -901,9 +900,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "aa29fb76-33d3-4f22-9f46-a75587537d49",
-  "activeVersionId": "aa29fb76-33d3-4f22-9f46-a75587537d49",
-  "versionCounter": 127,
+  "versionId": "551465cb-b854-4fd1-84bb-63ce6fd39652",
+  "activeVersionId": "551465cb-b854-4fd1-84bb-63ce6fd39652",
+  "versionCounter": 152,
   "triggerCount": 0,
   "shared": [
     {
@@ -926,9 +925,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-04T19:37:17.719Z",
-    "createdAt": "2026-04-04T19:37:17.719Z",
-    "versionId": "aa29fb76-33d3-4f22-9f46-a75587537d49",
+    "updatedAt": "2026-04-04T22:26:16.000Z",
+    "createdAt": "2026-04-04T22:26:10.289Z",
+    "versionId": "551465cb-b854-4fd1-84bb-63ce6fd39652",
     "workflowId": "yiUgnJ6gCoaIFVXe",
     "nodes": [
       {
@@ -970,7 +969,8 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "strict",
+              "version": 1
             },
             "conditions": [
               {
@@ -1242,7 +1242,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          3152,
+          3408,
           96
         ]
       },
@@ -1256,7 +1256,7 @@
         "type": "n8n-nodes-base.redis",
         "typeVersion": 1,
         "position": [
-          3376,
+          3632,
           96
         ],
         "credentials": {
@@ -1282,7 +1282,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.1,
         "position": [
-          3600,
+          3856,
           96
         ]
       },
@@ -1300,7 +1300,7 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          3872,
+          4128,
           96
         ],
         "webhookId": "8811e933-0c45-4e87-9a3b-02dbcca22f9b",
@@ -1325,7 +1325,7 @@
         "type": "n8n-nodes-base.telegram",
         "typeVersion": 1.2,
         "position": [
-          4096,
+          4352,
           96
         ],
         "webhookId": "7900a537-ea55-44f0-9fbd-6fee164c23c5",
@@ -1338,7 +1338,6 @@
       },
       {
         "parameters": {
-          "mode": "append",
           "numberInputs": 4
         },
         "id": "merge-merge-onboarding-save",
@@ -1490,18 +1489,17 @@
         }
       },
       {
+        "parameters": {
+          "jsCode": "return [{ json: { done: true } }];"
+        },
         "id": "ob-collapse-01",
         "name": "Collapse to One Item",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2600,
-          300
-        ],
-        "parameters": {
-          "mode": "runOnceForAllItems",
-          "jsCode": "return [{ json: { done: true } }];"
-        }
+          3184,
+          96
+        ]
       }
     ],
     "connections": {
@@ -1818,15 +1816,15 @@
       }
     },
     "authors": "Mauro Ibarra ",
-    "name": null,
-    "description": null,
-    "autosaved": false,
+    "name": "Version 551465cb",
+    "description": "",
+    "autosaved": true,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-04T19:37:19.803Z",
-        "id": 471,
+        "createdAt": "2026-04-04T22:26:16.724Z",
+        "id": 491,
         "workflowId": "yiUgnJ6gCoaIFVXe",
-        "versionId": "aa29fb76-33d3-4f22-9f46-a75587537d49",
+        "versionId": "551465cb-b854-4fd1-84bb-63ce6fd39652",
         "event": "activated",
         "userId": "819e8e30-8c22-45f5-bfc4-a0c15b406dea"
       }

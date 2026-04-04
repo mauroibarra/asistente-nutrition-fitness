@@ -108,6 +108,14 @@
 - **Weekly Report dedup**: faltaba cláusula `NOT EXISTS` — añadida en segunda iteración.
 - **appendAttribution=false**: todos los nodos Telegram de los 5 workflows proactivos.
 
+### Onboarding v2.3 — Eliminacion de teclados Telegram (2026-04-04)
+
+- **Teclados removidos en su totalidad**: `KEYBOARDS = {}` en nodo `ob-ai-01`. Todos los pasos retornan `replyMarkupType: 'none'`. Causa raíz: los inline keyboards no renderizaban en algunos clientes Telegram, generando UX rota ("Cuál botón?").
+- **Flujo de texto activo para TODOS los pasos**: el path `text → Parse User Intent (AI) → Normalize → Validate` ya existía y ahora es el único. El nodo `Has Callback?` queda funcional pero la rama true es redundante en producción.
+- **`ask_phone` acepta número escrito**: antes solo aceptaba `phone_number` del contacto nativo de Telegram (via `requestContact`). Ahora también acepta texto libre con regex `/^\+?[\d]{7,15}$/`. El número se guarda en `state.data.phone_number`.
+- **Error messages actualizados en `ob-06`**: eliminadas todas las referencias a "Usa los botones para seleccionar...". Cada paso indica qué escribir (ej: "Responde Si o No", "Escribe: Economico, Moderado o Sin limite").
+- **STEP_DESC de `ask_phone` en `ob-ai-01`**: incluye aclaración explícita "NO hay ningun boton — el usuario debe escribir el numero directamente en el chat".
+
 ### Onboarding v2.2 — Fixes de Sesión 2026-04-04
 
 - **AI Agent reemplaza nodo OpenAI deprecated**: `Generate Onboarding Message` (openAi v1.1) reemplazado por `@n8n/n8n-nodes-langchain.agent` (tv=2) + `lmChatOpenAi` (tv=1.2) con gpt-4o-mini. Evita el deprecation y soporta conversación real.

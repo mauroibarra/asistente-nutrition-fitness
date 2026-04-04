@@ -91,11 +91,9 @@ flowchart TD
 
     SW -->|"🎤 voice"| VF["Get Voice File"]
     SW -->|"💬 text"| PT["Call Process Text Message\n(debounce 2s)"]
-    SW -->|"🔘 callback_query"| CB["Set Text from Callback"]
 
     VF --> TR["Transcribe\n(Whisper API)"] --> SV["Set Text from Voice"]
     PT --> SUC
-    CB --> SUC
     SV --> SUC["Set User Context\n{chatId · telegramId · message.text}"]
 
     SUC --> UU["Upsert User\n(PostgreSQL ON CONFLICT)"]
@@ -127,7 +125,7 @@ Recopila el perfil del usuario mediante conversación natural. Estado persistido
 ```mermaid
 stateDiagram-v2
     [*] --> welcome : Usuario sin onboarding
-    welcome --> personal_info : Mensaje de bienvenida\n+ botones de inicio
+    welcome --> personal_info : Mensaje de bienvenida\n(preguntas en texto libre)
     personal_info --> goals : Nombre · Edad · Sexo\nAltura · Peso actual
     goals --> activity : Objetivo principal\n(perder / ganar / mantener)
     activity --> dietary : Nivel de actividad\n(sedentario → muy activo)
